@@ -4,7 +4,7 @@
 # Multi-stage build for optimized image size
 
 # Stage 1: Base
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 LABEL maintainer="Shadan - DevOps Engineer"
 LABEL project="FullPrep Backend"
 
@@ -19,7 +19,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm install --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # Stage 3: Build
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev)
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 
 # Copy source code
 COPY . .

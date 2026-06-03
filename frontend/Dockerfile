@@ -4,7 +4,7 @@
 # Multi-stage build for Next.js application
 
 # Stage 1: Base
-FROM node:18-alpine AS base
+FROM node:22-alpine AS base
 LABEL maintainer="Shadan - DevOps Engineer"
 LABEL project="FullPrep Frontend"
 
@@ -20,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 
 # Stage 3: Builder
 FROM base AS builder
