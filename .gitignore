@@ -1,0 +1,41 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!*.example.tfvars
+
+# Environment
+.env
+.env.local
+.env.docker
+
+# AWS
+*.pem
+*.key
+
+# Secrets
+secrets/
+*.secret
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Kubernetes
+kubeconfig
+
+# Temp
+temp/
+tmp/
+*.tmp

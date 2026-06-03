@@ -1,0 +1,173 @@
+# =============================================
+# Kubernetes Deployment Configuration
+# Alternative to ECS for K8s deployments
+# =============================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fullprep
+  labels:
+    name: fullprep
+    environment: production
+
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fullprep-backend
+  namespace: fullprep
+  labels:
+    app: fullprep-backend
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fullprep-backend
+  template:
+    metadata:
+      labels:
+        app: fullprep-backend
+        tier: backend
+    spec:
+      containers:
+      - name: backend
+        image: ghcr.io/YOUR_USERNAME/fullprep-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "5000"
+        envFrom:
+        - secretRef:
+            name: fullprep-backend-secrets
+        - configMapRef:
+            name: fullprep-backend-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/ready
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fullprep-frontend
+  namespace: fullprep
+  labels:
+    app: fullprep-frontend
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fullprep-frontend
+  template:
+    metadata:
+      labels:
+        app: fullprep-frontend
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ghcr.io/YOUR_USERNAME/fullprep-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_BASE_URL
+          value: "http://fullprep-backend:5000/api"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: fullprep-backend
+  namespace: fullprep
+  labels:
+    app: fullprep-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: fullprep-backend
+
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: fullprep-frontend
+  namespace: fullprep
+  labels:
+    app: fullprep-frontend
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: fullprep-frontend
+
+---
+# ConfigMap for Backend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fullprep-backend-config
+  namespace: fullprep
+data:
+  ALLOWED_ORIGINS: "https://fullprep.example.com"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX: "100"
