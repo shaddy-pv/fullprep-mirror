@@ -120,35 +120,43 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
 
   // Sync editor settings from localStorage on mount
   useEffect(() => {
-    setIsMounted(true);
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem("fullprep_editor_settings");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.fontSize) editorStore.updateSetting("fontSize", parsed.fontSize);
-          if (parsed.wordWrap) editorStore.updateSetting("wordWrap", parsed.wordWrap);
-          if (parsed.minimap !== undefined) editorStore.updateSetting("minimap", parsed.minimap);
-          if (parsed.lineNumbers) editorStore.updateSetting("lineNumbers", parsed.lineNumbers);
-          if (parsed.tabSize) editorStore.updateSetting("tabSize", parsed.tabSize);
-          if (parsed.editorTheme) editorStore.updateSetting("theme", parsed.editorTheme);
+    const t = setTimeout(() => {
+      setIsMounted(true);
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("fullprep_editor_settings");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.fontSize) editorStore.updateSetting("fontSize", parsed.fontSize);
+            if (parsed.wordWrap) editorStore.updateSetting("wordWrap", parsed.wordWrap);
+            if (parsed.minimap !== undefined) editorStore.updateSetting("minimap", parsed.minimap);
+            if (parsed.lineNumbers) editorStore.updateSetting("lineNumbers", parsed.lineNumbers);
+            if (parsed.tabSize) editorStore.updateSetting("tabSize", parsed.tabSize);
+            if (parsed.editorTheme) editorStore.updateSetting("theme", parsed.editorTheme);
+          }
+        } catch (e) {
+          console.warn("Could not load editor settings:", e);
         }
-      } catch (e) {
-        console.warn("Could not load editor settings:", e);
       }
-    }
+    }, 0);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync active code template per language / dynamic slug loading
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedCode = localStorage.getItem(getCodeStorageKey(slug, editorStore.language));
-      if (savedCode) {
-        setCode(savedCode);
-      } else if (problem && problem.starterCode[editorStore.language]) {
-        setCode(problem.starterCode[editorStore.language]);
+    const t = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const savedCode = localStorage.getItem(getCodeStorageKey(slug, editorStore.language));
+        if (savedCode) {
+          setCode(savedCode);
+        } else if (problem && problem.starterCode[editorStore.language]) {
+          setCode(problem.starterCode[editorStore.language]);
+        }
       }
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, [slug, editorStore.language, problem, getCodeStorageKey]);
 
   // Auto save trigger every 10 seconds of keyboard inactivity

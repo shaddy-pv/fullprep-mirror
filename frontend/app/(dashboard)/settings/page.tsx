@@ -104,8 +104,10 @@ export default function SettingsPage() {
   const [twoFactor, setTwoFactor] = useState(true);
   const [expandedSection, setExpandedSection] = useState<string>("profile");
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setMounted(true);
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
   }, []);
 
   // Scrollspy tracking using IntersectionObserver

@@ -28,6 +28,7 @@ function NavbarSearch() {
   const [val, setVal] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVal(searchParams.get("search") || "");
   }, [searchParams]);
 

@@ -80,7 +80,7 @@ interface RecentBookmark {
   badgeType: "problem" | "chat" | "contest";
   time: string;
   color: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<unknown>;
 }
 
 export default function BookmarksPage() {

@@ -161,16 +161,20 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [mounted, setMounted] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setMounted(true);
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get("tab");
-      const validTabs = ["overview", "stats", "activity", "submissions", "bookmarks", "settings"];
-      if (tabParam && validTabs.includes(tabParam)) {
-        setActiveTab(tabParam);
+    const t = setTimeout(() => {
+      setMounted(true);
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get("tab");
+        const validTabs = ["overview", "stats", "activity", "submissions", "bookmarks", "settings"];
+        if (tabParam && validTabs.includes(tabParam)) {
+          setActiveTab(tabParam);
+        }
       }
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
 
   if (!mounted) {

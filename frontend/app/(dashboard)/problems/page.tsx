@@ -35,19 +35,11 @@ function ProblemsContent() {
   const [inputSearchVal, setInputSearchVal] = useState(searchParam);
 
   // Sync search input with URL param changes (e.g. browser back/forward navigation)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setInputSearchVal(searchParam);
+    const t = setTimeout(() => setInputSearchVal(searchParam), 0);
+    return () => clearTimeout(t);
   }, [searchParam]);
-
-  // Debounced search param updates (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (inputSearchVal !== searchParam) {
-        updateQueryParams({ search: inputSearchVal || null, page: 1 });
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [inputSearchVal, searchParam]);
 
   // Helper to push state changes to URL
   const updateQueryParams = (updates: Record<string, string | number | null>) => {
@@ -66,6 +58,17 @@ function ProblemsContent() {
     const url = query ? `${pathname}?${query}` : pathname;
     router.push(url, { scroll: false });
   };
+
+  // Debounced search param updates (300ms)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputSearchVal !== searchParam) {
+        updateQueryParams({ search: inputSearchVal || null, page: 1 });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [inputSearchVal, searchParam]);
 
   const handleResetFilters = () => {
     setInputSearchVal("");

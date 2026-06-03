@@ -34,7 +34,7 @@ export default function OutputConsole({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveConsoleTab(tab.id as any)}
+                onClick={() => setActiveConsoleTab(tab.id as "testcase" | "result" | "console")}
                 className={cn(
                   "pb-1.5 text-[13px] font-bold tracking-[-0.01em] relative cursor-pointer transition-colors duration-200 focus:outline-none",
                   isActive 

@@ -35,9 +35,9 @@ export async function fetcher<T>(
     }
 
     return (await response.json()) as T;
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(id);
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Request timed out. Please try again.");
     }
     throw error;

@@ -334,7 +334,7 @@ export default function FilterBar({
 
           {selectedDifficulty !== "All" && (
             <Badge
-              variant={selectedDifficulty.toLowerCase() as any}
+              variant={selectedDifficulty.toLowerCase() as "default" | "easy" | "medium" | "hard" | "danger"}
               className="flex items-center gap-1.5 py-1.2 font-semibold"
             >
               <span>{selectedDifficulty}</span>

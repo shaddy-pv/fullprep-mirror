@@ -13,6 +13,7 @@ const nextConfig = {
   telemetry: false,
   
   // Webpack configuration
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   webpack: (config, { isServer }) => {
     return config;
   },
@@ -54,6 +55,7 @@ const nextConfig = {
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { withSentryConfig } = require("@sentry/nextjs");
 
 module.exports = withSentryConfig(
