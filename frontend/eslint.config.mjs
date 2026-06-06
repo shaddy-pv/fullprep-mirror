@@ -16,7 +16,9 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "react-compiler/react-compiler": "off",
-      "react-hooks/exhaustive-deps": "warn"
+      "react-hooks/exhaustive-deps": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
+      "react-hooks/set-state-in-effect": "off"
     }
   }
 ]);

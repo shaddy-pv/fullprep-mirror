@@ -39,17 +39,6 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const [problem, setProblem] = useState<any>(null);
   const [loadingProblem, setLoadingProblem] = useState(true);
 
-  useEffect(() => {
-    ProblemsService.getProblemBySlug(slug).then((data) => {
-      if (data) {
-        setProblem(data);
-        setUpvotes(data.upvotes);
-        setDownvotes(data.downvotes);
-      }
-      setLoadingProblem(false);
-    });
-  }, [slug]);
-
   // Zustand stores bindings
   const editorStore = useEditorStore();
   const { toast, showToast } = useNotificationStore();
@@ -67,6 +56,17 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    ProblemsService.getProblemBySlug(slug).then((data) => {
+      if (data) {
+        setProblem(data);
+        setUpvotes(data.upvotes);
+        setDownvotes(data.downvotes);
+      }
+      setLoadingProblem(false);
+    });
+  }, [slug]);
 
   // Monaco local code buffer
   const [code, setCode] = useState("");
