@@ -19,6 +19,8 @@ import {
   logout,
   getMe,
   updateProfile,
+  resendVerification,
+  syncVerification,
 } from "../controllers/authController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
@@ -37,6 +39,9 @@ router.use(protect);
 
 router.get("/me", getMe);
 router.patch("/update-profile", updateProfile);
+
+router.post("/resend-verification", resendVerification);
+router.post("/sync-verification", syncVerification);
 
 // ── Example Admin-only Route ──────────────────────────────────────────────────
 // Demonstrates combining protect + restrictTo for RBAC

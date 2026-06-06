@@ -6,6 +6,8 @@
 
 import User from "../models/User.js";
 import { sendTokenResponse } from "../utils/generateToken.js";
+import firebaseAdmin from "../config/firebase.js";
+import { sendEmail } from "../utils/emailService.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -59,8 +61,43 @@ export const register = async (req, res) => {
     password,
   });
 
-  // ── 4. Respond with token ───────────────────────────────────
-  sendTokenResponse(user, 201, res, "Account created successfully! Welcome to FullPrep 🎉");
+  // ── 4. Firebase Email Verification (Hybrid) ─────────────────
+  if (firebaseAdmin) {
+    try {
+      // Create user in Firebase Auth
+      await firebaseAdmin.auth().createUser({
+        uid: user._id.toString(),
+        email: user.email,
+        password: password,
+        displayName: user.name,
+      });
+
+      // Generate verification link
+      // Redirects user back to frontend after Firebase verifies the email
+      const actionCodeSettings = {
+        url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
+      };
+      const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
+
+      // Send via Nodemailer
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email for FullPrep",
+        html: `
+          <h2>Welcome to FullPrep, ${user.name}!</h2>
+          <p>Please verify your email by clicking the link below:</p>
+          <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
+          <p>Or paste this link into your browser: <br/> ${link}</p>
+        `,
+      });
+    } catch (err) {
+      console.error("Firebase Auth creation/email error:", err.message);
+      // We don't fail the registration if this fails, but they might need to request a new link later
+    }
+  }
+
+  // ── 5. Respond with token ───────────────────────────────────
+  sendTokenResponse(user, 201, res, "Account created! Please check your email to verify your account.");
 };
 
 // ── @desc    Authenticate user & return token
@@ -192,4 +229,75 @@ export const updateProfile = async (req, res) => {
     data:    publicUser, // consistent with all other endpoints
     user:    publicUser, // kept for backward compat
   });
+};
+
+// ── @desc    Resend verification email
+// ── @route   POST /api/auth/resend-verification
+// ── @access  Private
+export const resendVerification = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user.isEmailVerified) {
+    return res.status(400).json({ success: false, message: "Email is already verified." });
+  }
+
+  if (!firebaseAdmin) {
+    return res.status(500).json({ success: false, message: "Email verification is not configured on the server." });
+  }
+
+  try {
+    const actionCodeSettings = {
+      url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
+    };
+    const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
+    
+    const sent = await sendEmail({
+      to: user.email,
+      subject: "Verify your email for FullPrep",
+      html: `
+        <h2>Hello ${user.name},</h2>
+        <p>Please verify your email by clicking the link below:</p>
+        <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
+      `,
+    });
+
+    if (!sent) {
+      throw new Error("Failed to send email");
+    }
+
+    res.status(200).json({ success: true, message: "Verification email sent!" });
+  } catch (err) {
+    console.error("Resend verification error:", err.message);
+    res.status(500).json({ success: false, message: "Could not send verification email." });
+  }
+};
+
+// ── @desc    Sync verification status from Firebase
+// ── @route   POST /api/auth/sync-verification
+// ── @access  Private
+export const syncVerification = async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (user.isEmailVerified) {
+    return res.status(200).json({ success: true, message: "Already verified.", isVerified: true });
+  }
+
+  if (!firebaseAdmin) {
+    return res.status(500).json({ success: false, message: "Firebase not configured." });
+  }
+
+  try {
+    const fbUser = await firebaseAdmin.auth().getUserByEmail(user.email);
+    
+    if (fbUser.emailVerified) {
+      user.isEmailVerified = true;
+      await user.save({ validateBeforeSave: false });
+      return res.status(200).json({ success: true, message: "Email successfully verified!", isVerified: true });
+    }
+
+    res.status(200).json({ success: true, message: "Email not verified yet.", isVerified: false });
+  } catch (err) {
+    console.error("Sync verification error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to check verification status." });
+  }
 };

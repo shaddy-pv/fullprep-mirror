@@ -63,6 +63,7 @@ Create a `.env` file inside `backend/`:
 # Server
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 
 # MongoDB Atlas
 MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/fullprep
@@ -74,6 +75,15 @@ JWT_COOKIE_EXPIRES_IN=7
 
 # CORS — comma-separated list of allowed frontend origins
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Email Verification (Hybrid Firebase approach)
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Nodemailer SMTP (Gmail app password recommended)
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
@@ -203,6 +213,39 @@ Update name / bio / avatar / socialLinks. 🔒 **Requires JWT.**
 **Success `200`:**
 ```json
 { "success": true, "message": "Profile updated successfully.", "data": { ...user... }, "user": { ...user... } }
+```
+
+---
+
+### POST `/api/auth/resend-verification`
+Resend the Firebase email verification link via Nodemailer. 🔒 **Requires JWT.**
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Success `200`:**
+```json
+{ "success": true, "message": "Verification email sent!" }
+```
+
+| Error | Reason |
+|-------|--------|
+| `400` | Email is already verified |
+| `500` | Firebase/SMTP not configured |
+
+---
+
+### POST `/api/auth/sync-verification`
+Check Firebase to see if the user clicked the verification link, and syncs status to MongoDB. 🔒 **Requires JWT.**
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Success `200`:**
+```json
+{
+  "success": true,
+  "message": "Email successfully verified!",
+  "isVerified": true
+}
 ```
 
 ---
