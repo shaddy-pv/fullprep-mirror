@@ -47,7 +47,10 @@ npm install
 # 3. Copy the example env file and fill in your values
 cp .env.example .env
 
-# 4. Start the dev server
+# 4. Seed the database with problems from Codnite API
+npm run seed
+
+# 5. Start the dev server
 npm run dev
 ```
 

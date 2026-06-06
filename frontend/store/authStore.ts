@@ -1,23 +1,34 @@
 import { create } from "zustand";
 
 interface UserProfile {
+  _id: string;
   name: string;
   email: string;
+  role?: string;
+  avatarUrl?: string;
+  streak?: number;
+  level?: number;
+  xp?: number;
 }
 
 interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
-  login: (credentials: { email: string }) => void;
+  login: (user: UserProfile) => void;
   logout: () => void;
+  setUser: (user: UserProfile | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: { name: "Khushi", email: "khushi.dev" },
-  isAuthenticated: true,
-  login: (credentials) => set({ 
-    user: { name: credentials.email.split("@")[0] || "User", email: credentials.email },
+  user: null,
+  isAuthenticated: false,
+  login: (user) => set({ 
+    user,
     isAuthenticated: true 
   }),
   logout: () => set({ user: null, isAuthenticated: false }),
+  setUser: (user) => set({
+    user,
+    isAuthenticated: !!user
+  }),
 }));

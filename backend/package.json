@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node --import ./instrument.js server.js",
     "dev": "nodemon --import ./instrument.js server.js",
+    "seed": "node seed.js",
     "test": "echo \"No tests yet\" && exit 0"
   },
   "keywords": [

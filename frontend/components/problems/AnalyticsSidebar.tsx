@@ -19,20 +19,45 @@ import DashboardCard from "@/components/ui/DashboardCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Badge from "@/components/ui/Badge";
 import { 
-  DIFFICULTY_PIE_DATA, 
   CHART_MOCK_DATA, 
-  TOP_TAGS_MOCK_DATA, 
   STREAK_DAYS 
 } from "@/constants/navigation";
+import { useAuthStore } from "@/store/authStore";
+import { ProblemsService } from "@/services/problems.service";
 
 export default function AnalyticsSidebar() {
   const { theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const [stats, setStats] = useState<any>(null);
+  const [tagsList, setTagsList] = useState<any[]>([]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
+    ProblemsService.getStats().then((data) => {
+      setStats(data);
+    });
+    ProblemsService.getTags().then((data) => {
+      setTagsList(data.slice(0, 6));
+    });
   }, []);
+
+  const easyCount = stats?.byDifficulty?.EASY || 0;
+  const mediumCount = stats?.byDifficulty?.MEDIUM || 0;
+  const hardCount = (stats?.byDifficulty?.HARD || 0) + 
+                    (stats?.byDifficulty?.HARDER || 0) + 
+                    (stats?.byDifficulty?.HARDEST || 0) + 
+                    (stats?.byDifficulty?.EXPERT || 0);
+
+  const totalDiffSolved = easyCount + mediumCount + hardCount;
+
+  const pieData = [
+    { name: "Easy", value: easyCount, percentage: totalDiffSolved ? `${Math.round(easyCount / totalDiffSolved * 100)}%` : "0%", color: "#10b981" },
+    { name: "Medium", value: mediumCount, percentage: totalDiffSolved ? `${Math.round(mediumCount / totalDiffSolved * 100)}%` : "0%", color: "#ff6a00" },
+    { name: "Hard", value: hardCount, percentage: totalDiffSolved ? `${Math.round(hardCount / totalDiffSolved * 100)}%` : "0%", color: "#ef4444" }
+  ];
+
+  const totalSolved = stats?.totalProblems || 0;
 
   const isDark = isMounted ? theme === "dark" : false;
 
@@ -67,7 +92,7 @@ export default function AnalyticsSidebar() {
           </span>
           <div className="flex flex-col text-left mt-0.5">
             <span className="text-[24px] font-bold text-text-primary leading-none tracking-[-0.02em]">
-              342
+              {totalSolved}
             </span>
             <span className="text-[11px] font-bold text-[#3b82f6] mt-1 tracking-[-0.01em]">
               Top 12.3%
@@ -84,7 +109,7 @@ export default function AnalyticsSidebar() {
             <span>Current Streak</span>
           </div>
           <div className="text-xl font-bold text-brand-orange flex items-baseline gap-1 tracking-[-0.02em]">
-            12 Days
+            {user?.streak || 0} Days
           </div>
           <span className="text-[10px] text-brand-orange/80 font-bold tracking-[-0.01em]">
             Keep it up!
@@ -121,7 +146,7 @@ export default function AnalyticsSidebar() {
               <ResponsiveContainer width="99%" height="100%">
                 <PieChart>
                   <Pie
-                    data={DIFFICULTY_PIE_DATA}
+                    data={pieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={20}
@@ -129,7 +154,7 @@ export default function AnalyticsSidebar() {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {DIFFICULTY_PIE_DATA.map((entry, index) => (
+                    {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -140,14 +165,14 @@ export default function AnalyticsSidebar() {
             )}
             {/* Center aggregate number absolute overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[11px] font-bold text-text-primary leading-none">342</span>
+              <span className="text-[11px] font-bold text-text-primary leading-none">{totalSolved}</span>
               <span className="text-[7px] text-text-secondary font-bold mt-0.5 uppercase tracking-wider">solved</span>
             </div>
           </div>
-
+ 
           {/* Right: Color Legend rows */}
           <div className="flex-1 flex flex-col gap-1">
-            {DIFFICULTY_PIE_DATA.map((slice) => (
+            {pieData.map((slice) => (
               <div 
                 key={slice.name}
                 className="flex items-center justify-between text-[11px] font-semibold text-text-secondary tracking-[-0.01em]"
@@ -250,7 +275,7 @@ export default function AnalyticsSidebar() {
         <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">Top Topics</span>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
-          {TOP_TAGS_MOCK_DATA.map((tag) => (
+          {tagsList.map((tag) => (
             <div 
               key={tag.name}
               className="flex items-center justify-between text-[11px] font-semibold tracking-[-0.01em]"

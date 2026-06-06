@@ -10,12 +10,15 @@ import { SIDEBAR_MENU_ITEMS, STREAK_DAYS } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/store/DashboardContext";
 import { useNotificationStore } from "@/store/notificationStore";
+import { useAuthStore } from "@/store/authStore";
+import { AuthService } from "@/services/auth.service";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
   const { isSidebarCollapsed, setIsMobileSidebarOpen } = useDashboard();
+  const user = useAuthStore((state) => state.user);
 
   const [showMiniPanel, setShowMiniPanel] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -41,13 +44,12 @@ export default function Sidebar() {
     };
   }, [showMiniPanel]);
 
-  const handleSignOut = (e: React.MouseEvent) => {
+  const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     setShowMiniPanel(false);
-    showToast("Signed out successfully. Redirection initiated.", "success");
-    setTimeout(() => {
-      router.push("/login");
-    }, 500);
+    showToast("Signed out successfully.", "success");
+    await AuthService.logout();
+    router.push("/login");
   };
 
   return (
@@ -170,7 +172,7 @@ export default function Sidebar() {
               Current Streak
             </div>
             <div className="text-2xl font-bold text-brand-orange flex items-baseline gap-1.5 mb-1.5 tracking-[-0.02em]">
-              12 Days
+              {user?.streak || 0} Days
             </div>
             <p className="text-[11px] text-[#9ca3af]/90 font-normal leading-normal mb-4 tracking-[-0.01em]">
               Keep solving to maintain your coding streak.
@@ -228,11 +230,11 @@ export default function Sidebar() {
               {/* Profile Card Header details */}
               <div className="flex items-center gap-3 select-none leading-none mb-3.5">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
-                  K
+                  {user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
                 <div className="flex flex-col text-left leading-none min-w-0">
-                  <span className="text-[13.5px] font-extrabold text-white truncate leading-none">Khushi</span>
-                  <span className="text-[10px] text-[#9ca3af]/70 font-bold mt-1.5 select-text font-sans truncate leading-none">@khushi.dev</span>
+                  <span className="text-[13.5px] font-extrabold text-white truncate leading-none">{user?.name || "User"}</span>
+                  <span className="text-[10px] text-[#9ca3af]/70 font-bold mt-1.5 select-text font-sans truncate leading-none">@{user?.name?.toLowerCase() || "user"}</span>
                 </div>
               </div>
 
@@ -240,15 +242,15 @@ export default function Sidebar() {
               <div className="grid grid-cols-3 gap-1 border-y border-white/[0.04] py-3 my-3 text-center leading-none">
                 <div className="flex flex-col gap-1 items-center justify-center leading-none">
                   <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Streak</span>
-                  <span className="text-[13px] font-extrabold text-brand-orange leading-none mt-1.5 font-sans select-none">12d</span>
+                  <span className="text-[13px] font-extrabold text-brand-orange leading-none mt-1.5 font-sans select-none">{user?.streak || 0}d</span>
                 </div>
                 <div className="flex flex-col gap-1 items-center justify-center leading-none border-x border-white/[0.04]">
-                  <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Solved</span>
-                  <span className="text-[13px] font-extrabold text-[#10b981] leading-none mt-1.5 font-sans select-none">2,031</span>
+                  <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Level</span>
+                  <span className="text-[13px] font-extrabold text-[#10b981] leading-none mt-1.5 font-sans select-none">{user?.level || 1}</span>
                 </div>
                 <div className="flex flex-col gap-1 items-center justify-center leading-none">
-                  <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Rating</span>
-                  <span className="text-[13px] font-extrabold text-[#8b5cf6] leading-none mt-1.5 font-sans select-none">1,642</span>
+                  <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">XP</span>
+                  <span className="text-[13px] font-extrabold text-[#8b5cf6] leading-none mt-1.5 font-sans select-none">{user?.xp || 0}</span>
                 </div>
               </div>
 
@@ -292,7 +294,7 @@ export default function Sidebar() {
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-inner shrink-0 select-none font-mono">
-              K
+              {user?.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div 
               className={cn(
@@ -300,8 +302,8 @@ export default function Sidebar() {
                 isSidebarCollapsed ? "w-0 opacity-0 pointer-events-none absolute" : "w-auto opacity-100"
               )}
             >
-              <span className="text-[13px] font-semibold text-white leading-tight truncate">Khushi</span>
-              <span className="text-[10px] text-[#9ca3af] font-normal truncate">khushi.dev</span>
+              <span className="text-[13px] font-semibold text-white leading-tight truncate">{user?.name || "User"}</span>
+              <span className="text-[10px] text-[#9ca3af] font-normal truncate">@{user?.name?.toLowerCase() || "user"}</span>
             </div>
           </div>
           <ChevronRight 

@@ -10,6 +10,7 @@ import PasswordStrength from "@/components/auth/PasswordStrength";
 import SocialButtons from "@/components/auth/SocialButtons";
 import Button from "@/components/ui/Button";
 import { useNotificationStore } from "@/store/notificationStore";
+import { AuthService } from "@/services/auth.service";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -80,14 +81,17 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    // Simulate account registration
-    setTimeout(() => {
-      setLoading(false);
-      showToast("Account created successfully! Welcome to FullPrep.", "success");
+    try {
+      const response = await AuthService.signup(username, email, password);
+      showToast(response.message || "Account created successfully! Welcome to FullPrep.", "success");
       
-      // Redirect to login
-      router.push("/login");
-    }, 1500);
+      // Redirect to landing dashboard
+      router.push("/");
+    } catch (err: any) {
+      showToast(err.message || "Email is already taken or invalid details.", "info");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

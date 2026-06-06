@@ -13,7 +13,7 @@ import {
   RotateCcw,
   AlertTriangle
 } from "lucide-react";
-import { MOCK_PROBLEMS } from "@/constants/mockProblems";
+import { ProblemsService } from "@/services/problems.service";
 import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -36,8 +36,19 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const { theme } = useTheme();
   const router = useRouter();
 
-  // Find the problem dynamically from our mock problems module
-  const problem = MOCK_PROBLEMS.find((p) => p.slug === slug);
+  const [problem, setProblem] = useState<any>(null);
+  const [loadingProblem, setLoadingProblem] = useState(true);
+
+  useEffect(() => {
+    ProblemsService.getProblemBySlug(slug).then((data) => {
+      if (data) {
+        setProblem(data);
+        setUpvotes(data.upvotes);
+        setDownvotes(data.downvotes);
+      }
+      setLoadingProblem(false);
+    });
+  }, [slug]);
 
   // Zustand stores bindings
   const editorStore = useEditorStore();
@@ -51,8 +62,8 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   // Bookmarks & Star state
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
-  const [upvotes, setUpvotes] = useState(problem ? problem.upvotes : 0);
-  const [downvotes, setDownvotes] = useState(problem ? problem.downvotes : 0);
+  const [upvotes, setUpvotes] = useState(0);
+  const [downvotes, setDownvotes] = useState(0);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -262,6 +273,17 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
       editorStore.setActiveTab("result");
     }, 800);
   };
+
+  if (loadingProblem) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px] h-[calc(100vh-120px)] w-full select-none px-4">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-brand-orange/20 border-t-brand-orange animate-spin" />
+          <span className="text-[13px] font-semibold text-text-secondary">Loading Workspace...</span>
+        </div>
+      </div>
+    );
+  }
 
   // 1. Elegant Fallback Handling: "Problem Not Found" state
   if (isMounted && !problem) {

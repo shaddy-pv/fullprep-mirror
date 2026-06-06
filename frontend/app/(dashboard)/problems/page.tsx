@@ -9,7 +9,8 @@ import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import FilterBar from "@/components/problems/FilterBar";
 import ProblemsTable from "@/components/problems/ProblemsTable";
 import AnalyticsSidebar from "@/components/problems/AnalyticsSidebar";
-import { PROBLEMS_LIST_MOCK, ExtendedProblemItem } from "@/constants/navigation";
+import { ExtendedProblemItem } from "@/constants/navigation";
+import { ProblemsService } from "@/services/problems.service";
 
 // Difficulty mapping for sorting purposes
 const DIFFICULTY_ORDER: Record<string, number> = {
@@ -33,6 +34,16 @@ function ProblemsContent() {
 
   // Local state for immediate typing feedback in search input
   const [inputSearchVal, setInputSearchVal] = useState(searchParam);
+
+  const [problemsList, setProblemsList] = useState<ExtendedProblemItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    ProblemsService.getProblems().then((data) => {
+      setProblemsList(data);
+      setLoading(false);
+    });
+  }, []);
 
   // Sync search input with URL param changes (e.g. browser back/forward navigation)
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -76,7 +87,7 @@ function ProblemsContent() {
   };
 
   // 2. Perform in-memory Filtering, Sorting and Pagination
-  const filteredProblems = PROBLEMS_LIST_MOCK.filter((prob) => {
+  const filteredProblems = problemsList.filter((prob) => {
     // A. Match Search Query
     if (searchParam) {
       const matchTitle = prob.title.toLowerCase().includes(searchParam.toLowerCase());

@@ -11,6 +11,7 @@ interface TableRowProps {
   difficulty: "Easy" | "Medium" | "Hard";
   topic: string;
   time: string;
+  externalId?: string;
 }
 
 export default function TableRow({
@@ -19,9 +20,10 @@ export default function TableRow({
   difficulty,
   topic,
   time,
+  externalId,
 }: TableRowProps) {
   const router = useRouter();
-  const slug = title
+  const slug = externalId || title
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");

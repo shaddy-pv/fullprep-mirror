@@ -9,6 +9,7 @@ import AuthInput from "@/components/auth/AuthInput";
 import SocialButtons from "@/components/auth/SocialButtons";
 import Button from "@/components/ui/Button";
 import { useNotificationStore } from "@/store/notificationStore";
+import { AuthService } from "@/services/auth.service";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,14 +55,17 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    // Simulate authenticating server handshake delay
-    setTimeout(() => {
-      setLoading(false);
-      showToast("Welcome back! Signed in successfully.", "success");
+    try {
+      const response = await AuthService.login(email, password);
+      showToast(response.message || "Welcome back! Signed in successfully.", "success");
       
       // Redirect to landing dashboard
       router.push("/");
-    }, 1500);
+    } catch (err: any) {
+      showToast(err.message || "Invalid email or password", "info");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

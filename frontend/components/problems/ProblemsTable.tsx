@@ -54,11 +54,11 @@ export default function ProblemsTable({
   };
 
   const isIdeEnabled = (title: string) => {
-    return ENABLED_IDE_PROBLEMS.includes(title);
+    return true; // Enable IDE for all loaded problems
   };
 
-  const getSlug = (title: string) => {
-    return title.toLowerCase().replace(/ /g, "-");
+  const getSlug = (problem: any) => {
+    return problem.externalId || problem.title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
   };
 
   const visibleIds = problems.map((p) => p.id);
@@ -186,7 +186,7 @@ export default function ProblemsTable({
               problems.map((problem) => {
                 const isSelected = selectedRows.includes(problem.id);
                 const enabled = isIdeEnabled(problem.title);
-                const slug = getSlug(problem.title);
+                const slug = getSlug(problem);
                 const ideUrl = `/problems/${slug}`;
 
                 return (

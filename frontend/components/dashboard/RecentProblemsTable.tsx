@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
 import TableRow from "./TableRow";
-import { PROBLEMS_MOCK_DATA } from "@/constants/navigation";
+import { ProblemsService } from "@/services/problems.service";
+import { ExtendedProblemItem } from "@/mocks/problems.mock";
 
 export default function ProblemsTable() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("Recent Problems");
+  const [problems, setProblems] = useState<ExtendedProblemItem[]>([]);
+
+  useEffect(() => {
+    ProblemsService.getProblems().then((data) => {
+      setProblems(data.slice(0, 5));
+    });
+  }, []);
 
   const tabs = ["Recent Problems", "Upcoming Contests", "Recommended for You"];
 
@@ -45,7 +53,7 @@ export default function ProblemsTable() {
 
         {/* Problems Rows */}
         <div className="divide-y divide-border-card">
-          {PROBLEMS_MOCK_DATA.map((problem, idx) => (
+          {problems.map((problem, idx) => (
             <TableRow
               key={idx}
               title={problem.title}
@@ -53,6 +61,7 @@ export default function ProblemsTable() {
               difficulty={problem.difficulty}
               topic={problem.topic}
               time={problem.time}
+              externalId={(problem as any).externalId}
             />
           ))}
         </div>

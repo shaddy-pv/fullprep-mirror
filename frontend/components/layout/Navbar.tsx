@@ -20,6 +20,8 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useDashboard } from "@/store/DashboardContext";
 import { useNotificationStore } from "@/store/notificationStore";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
+import { AuthService } from "@/services/auth.service";
 
 function NavbarSearch() {
   const pathname = usePathname();
@@ -76,6 +78,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
+  const user = useAuthStore((state) => state.user);
   const { 
     isSidebarCollapsed, 
     setIsSidebarCollapsed, 
@@ -126,13 +129,12 @@ export default function Navbar() {
       .join(" ");
   };
 
-  const handleSignOut = (e: React.MouseEvent) => {
+  const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDropdownOpen(false);
-    showToast("Signed out successfully. Redirection initiated.", "success");
-    setTimeout(() => {
-      router.push("/login");
-    }, 500);
+    showToast("Signed out successfully.", "success");
+    await AuthService.logout();
+    router.push("/login");
   };
 
   const menuItems = [
@@ -195,7 +197,7 @@ export default function Navbar() {
             className="flex items-center justify-center gap-2.5 cursor-pointer group select-none py-1.5 px-2 rounded-xl border border-transparent hover:bg-white/[0.04] hover:border-white/[0.05] transition-all duration-300 shadow-sm"
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-md shadow-black/5 select-none font-mono">
-              K
+              {user?.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <ChevronDown className={cn("w-4 h-4 text-text-secondary group-hover:text-text-primary transition-all duration-300 shrink-0", isDropdownOpen && "rotate-180")} />
           </div>
@@ -264,11 +266,11 @@ export default function Navbar() {
                 <div className="h-px bg-slate-900/[0.06] dark:bg-white/[0.04] my-2 mx-1" />
                 <div className="px-3.5 py-2.5 flex items-center justify-between gap-3 select-none">
                   <div className="flex flex-col text-left leading-none min-w-0">
-                    <span className="text-[12px] font-bold text-text-primary truncate">khushi@fullprep.dev</span>
-                    <span className="text-[10px] text-text-secondary/70 font-bold mt-1 select-text font-sans">@khushi.dev</span>
+                    <span className="text-[12px] font-bold text-text-primary truncate">{user?.email || "user@example.com"}</span>
+                    <span className="text-[10px] text-text-secondary/70 font-bold mt-1 select-text font-sans">@{user?.name || "user"}</span>
                   </div>
                   <span className="px-2 py-0.5 rounded-md border border-brand-orange/30 bg-brand-orange/10 text-[9px] font-black text-brand-orange uppercase tracking-wider select-none leading-none shrink-0 font-sans shadow-[0_0_8px_rgba(255,106,0,0.15)]">
-                    Pro Coder
+                    {user?.role || "Coder"}
                   </span>
                 </div>
               </motion.div>

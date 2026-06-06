@@ -14,11 +14,14 @@ export async function fetcher<T>(
   const id = setTimeout(() => controller.abort(), timeout);
 
   try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("fp_token") : null;
+
     const response = await fetch(url, {
       ...customOptions,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(customOptions.headers || {}),
       },
     });

@@ -81,21 +81,17 @@ npm start
 
 ### API Integration
 Located in `services/` directory:
-- `auth.service.ts` - Authentication APIs
-- `problems.service.ts` - Problem data APIs
+- `auth.service.ts` - Authentication APIs (fully integrated)
+- `problems.service.ts` - Problem data APIs (fully integrated)
 - `submissions.service.ts` - Submission APIs
 - `contests.service.ts` - Contest APIs
 - `profile.service.ts` - User profile APIs
 
-**Note:** Currently using mock data. Update service files to connect to backend APIs.
+The frontend is fully connected to the backend API services for user session management, authentication, statistics, and problems.
 
 ## 🔗 Backend Integration
 
-Update the API base URL in `lib/api.ts`:
-
-```typescript
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-```
+The frontend uses `fetcher` and `api` utility helpers configured with a JSON/JWT Bearer auth header. By default, the frontend points to the base URL specified in `NEXT_PUBLIC_API_BASE_URL`.
 
 ## 📚 Documentation
 
@@ -125,8 +121,8 @@ npm run test  # Not yet implemented
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_APP_ENV=development
 ```
 
 ## 🚢 Deployment
