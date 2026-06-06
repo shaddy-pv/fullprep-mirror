@@ -1,0 +1,236 @@
+/**
+ * @file Problem.js
+ * @description Mongoose schema & model for FullPrep problems.
+ *
+ *  Problems are sourced from the Codnite Problem API (Codeforces dataset)
+ *  and cached in MongoDB. The `externalId` field maps back to the Codnite
+ *  problem id so we can efficiently sync updates.
+ *
+ *  Cache strategy:
+ *    - On first GET /api/problems/:id, fetch from Codnite → save to MongoDB.
+ *    - Re-fetch if lastSyncedAt is older than CACHE_TTL_MS (24 hours).
+ *    - Admin POST /api/problems/sync bulk-imports all problems.
+ */
+
+import mongoose from "mongoose";
+
+// ── Sub-schema: Test Case ──────────────────────────────────────────────────────
+
+const testCaseSchema = new mongoose.Schema(
+  {
+    input:  { type: String, default: "" },
+    output: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+// ── Sub-schema: Solution ──────────────────────────────────────────────────────
+
+const solutionSchema = new mongoose.Schema(
+  {
+    language: { type: String, default: "UNKNOWN" },
+    solution: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+// ── Sub-schema: Problem Stats ─────────────────────────────────────────────────
+
+const statsSchema = new mongoose.Schema(
+  {
+    totalPublicTests:     { type: Number, default: 0 },
+    totalPrivateTests:    { type: Number, default: 0 },
+    totalGeneratedTests:  { type: Number, default: 0 },
+    totalSolutions:       { type: Number, default: 0 },
+    totalIncorrectSolutions: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+// ── Main Problem Schema ───────────────────────────────────────────────────────
+
+const problemSchema = new mongoose.Schema(
+  {
+    // ── External Reference (Codnite API) ────────────────────────────
+    externalId: {
+      type: String,
+      required: [true, "External problem ID is required"],
+      unique: true,
+      trim: true,
+      index: true,
+    },
+
+    serialNo: {
+      type: Number,
+      default: 0,
+    },
+
+    // ── Core Problem Data ────────────────────────────────────────────
+    name: {
+      type: String,
+      required: [true, "Problem name is required"],
+      trim: true,
+      index: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    descriptionPreview: {
+      type: String,
+      default: "",
+      maxlength: [500, "Description preview cannot exceed 500 characters"],
+    },
+
+    source: {
+      type: String,
+      enum: {
+        values: ["CODEFORCES", "CODECHEF", "HACKEREARTH", "CODEJAM", "ATCODER", "UNKNOWN"],
+        message: "Invalid problem source",
+      },
+      default: "CODEFORCES",
+    },
+
+    // ── Difficulty & Rating ──────────────────────────────────────────
+    difficulty: {
+      type: String,
+      enum: {
+        values: ["EASY", "MEDIUM", "HARD", "HARDER", "HARDEST", "EXPERT", "VERY HARD", "UNKNOWN"],
+        message: "Invalid difficulty level",
+      },
+      default: "UNKNOWN",
+      index: true,
+    },
+
+    cfRating: {
+      type: Number,
+      default: 0,
+      min: [0, "CF rating cannot be negative"],
+      index: true,
+    },
+
+    cfTags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    // ── Constraints ──────────────────────────────────────────────────
+    timeLimitSeconds: {
+      type: Number,
+      default: 2,
+    },
+
+    memoryLimitMb: {
+      type: Number,
+      default: 256,
+    },
+
+    // ── Test Cases ───────────────────────────────────────────────────
+    // Public tests are visible to all users (shown as examples in problem statement)
+    publicTests: {
+      type: [testCaseSchema],
+      default: [],
+    },
+
+    // Private & generated tests — only accessible to admins / judge system
+    // NOT returned to regular users via API
+    privateTests: {
+      type: [testCaseSchema],
+      default: [],
+      select: false, // Never returned by default
+    },
+
+    generatedTests: {
+      type: [testCaseSchema],
+      default: [],
+      select: false, // Never returned by default
+    },
+
+    // ── Solutions ────────────────────────────────────────────────────
+    // Only admins can access solutions
+    solutions: {
+      type: [solutionSchema],
+      default: [],
+      select: false,
+    },
+
+    incorrectSolutions: {
+      type: [solutionSchema],
+      default: [],
+      select: false,
+    },
+
+    // ── Aggregated Stats ─────────────────────────────────────────────
+    stats: {
+      type: statsSchema,
+      default: () => ({}),
+    },
+
+    // ── FullPrep-specific Fields ─────────────────────────────────────
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
+    // Admin who imported / created this problem
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    // ── Cache Metadata ───────────────────────────────────────────────
+    // When was this problem last fetched from the Codnite API
+    lastSyncedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true, // createdAt, updatedAt
+    toJSON:   { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+// ── Compound Indexes ──────────────────────────────────────────────────────────
+
+problemSchema.index({ difficulty: 1, cfRating: 1 }); // filter + sort
+problemSchema.index({ cfTags: 1, difficulty: 1 });     // tag filter
+problemSchema.index({ name: "text", descriptionPreview: "text" }); // text search
+
+// ── Virtual: isCacheStale ─────────────────────────────────────────────────────
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+problemSchema.virtual("isCacheStale").get(function () {
+  if (!this.lastSyncedAt) return true;
+  return Date.now() - this.lastSyncedAt.getTime() > CACHE_TTL_MS;
+});
+
+// ── Instance Method: Safe Public JSON ─────────────────────────────────────────
+
+/**
+ * Returns a sanitised problem object safe to send in API responses.
+ * Strips private/generated tests, solutions — fields regular users shouldn't see.
+ * @returns {object}
+ */
+problemSchema.methods.toPublicJSON = function () {
+  const obj = this.toObject({ virtuals: true });
+  delete obj.privateTests;
+  delete obj.generatedTests;
+  delete obj.solutions;
+  delete obj.incorrectSolutions;
+  delete obj.__v;
+  delete obj.lastSyncedAt;
+  delete obj.isCacheStale;
+  return obj;
+};
+
+const Problem = mongoose.model("Problem", problemSchema);
+
+export default Problem;

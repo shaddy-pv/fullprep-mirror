@@ -118,7 +118,7 @@ export const login = async (req, res) => {
 
 // ── @desc    Log out — clear the auth cookie
 // ── @route   POST /api/auth/logout
-// ── @access  Private
+// ── @access  Public (no token needed — just clears the cookie)
 export const logout = async (req, res) => {
   res.cookie("token", "loggedout", {
     expires: new Date(Date.now() + 5 * 1000), // Expire in 5 seconds
@@ -148,10 +148,13 @@ export const getMe = async (req, res) => {
     });
   }
 
+  const publicUser = user.toPublicJSON();
+
   res.status(200).json({
     success: true,
     message: "Profile fetched successfully.",
-    user: user.toPublicJSON(),
+    data:    publicUser, // consistent with all other endpoints
+    user:    publicUser, // kept for backward compat
   });
 };
 
@@ -181,9 +184,12 @@ export const updateProfile = async (req, res) => {
     runValidators: true,  // Enforce schema validation on update
   });
 
+  const publicUser = user.toPublicJSON();
+
   res.status(200).json({
     success: true,
     message: "Profile updated successfully.",
-    user: user.toPublicJSON(),
+    data:    publicUser, // consistent with all other endpoints
+    user:    publicUser, // kept for backward compat
   });
 };

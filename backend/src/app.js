@@ -8,7 +8,6 @@
 
 import "express-async-errors"; // Patches async route handlers — must be first
 import * as Sentry from "@sentry/node";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -16,20 +15,11 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-import authRoutes from "./routes/authRoutes.js";
-import healthRoutes from "./routes/healthRoutes.js";
+import authRoutes    from "./routes/authRoutes.js";
+import healthRoutes  from "./routes/healthRoutes.js";
+import problemRoutes from "./routes/problemRoutes.js";
 
 const app = express();
-
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || "https://examplePublicKey@o0.ingest.sentry.io/0",
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
-});
 
 // Sentry request handler must be the first middleware
 Sentry.setupExpressErrorHandler(app);
@@ -112,8 +102,9 @@ app.get("/health", (_req, res) => {
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 
-app.use("/api", healthRoutes);
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api",          healthRoutes);
+app.use("/api/auth",     authLimiter, authRoutes);
+app.use("/api/problems", problemRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

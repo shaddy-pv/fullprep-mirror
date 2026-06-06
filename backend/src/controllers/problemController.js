@@ -1,0 +1,637 @@
+/**
+ * @file problemController.js
+ * @description Handles all problem-related API requests.
+ *
+ *  Strategy (Option A — MongoDB caching):
+ *    1. Check if problem exists in MongoDB and cache is fresh (< 24h).
+ *    2. If fresh → return from cache.
+ *    3. If stale / missing → fetch from Codnite API → upsert in MongoDB → return.
+ *
+ *  Admin endpoints:
+ *    - syncProblems   → bulk import all 282 problems from Codnite
+ *    - createProblem  → manually create a custom problem
+ *    - updateProblem  → update problem fields
+ *    - deleteProblem  → soft-delete (set isActive: false)
+ */
+
+import Problem from "../models/Problem.js";
+import * as codnite from "../utils/codniteService.js";
+
+// ── Cache TTL ─────────────────────────────────────────────────────────────────
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// ── Internal: Transform Codnite → Problem schema ──────────────────────────────
+
+/**
+ * Maps a raw Codnite API problem object to our Mongoose schema fields.
+ * @param {object} raw - Raw Codnite problem JSON
+ * @param {string|null} adminUserId - User ID of the importing admin (optional)
+ * @returns {object} Fields ready for Problem.findOneAndUpdate()
+ */
+const codniteToSchema = (raw, adminUserId = null) => ({
+  externalId:          raw.id,
+  serialNo:            raw.serial_no || 0,
+  name:                raw.name,
+  description:         raw.description || "",
+  descriptionPreview:  raw.description_preview || (raw.description || "").slice(0, 300),
+  source:              raw.source || "CODEFORCES",
+  difficulty:          raw.difficulty || "UNKNOWN",
+  cfRating:            raw.cf_rating || 0,
+  cfTags:              raw.cf_tags || [],
+  timeLimitSeconds:    raw.time_limit_seconds || 2,
+  memoryLimitMb:       raw.memory_limit_mb || 256,
+  publicTests:         raw.public_tests || [],
+  privateTests:        raw.private_tests || [],
+  generatedTests:      raw.generated_tests || [],
+  solutions:           raw.solutions || [],
+  incorrectSolutions:  raw.incorrect_solutions || [],
+  stats: {
+    totalPublicTests:        raw.stats?.total_public_tests       || (raw.public_tests?.length    || 0),
+    totalPrivateTests:       raw.stats?.total_private_tests      || (raw.private_tests?.length   || 0),
+    totalGeneratedTests:     raw.stats?.total_generated_tests    || (raw.generated_tests?.length || 0),
+    totalSolutions:          raw.stats?.total_solutions          || (raw.solutions?.length       || 0),
+    totalIncorrectSolutions: raw.stats?.total_incorrect_solutions|| (raw.incorrect_solutions?.length || 0),
+  },
+  lastSyncedAt: new Date(),
+  ...(adminUserId && { createdBy: adminUserId }),
+});
+
+// ── Internal: Check if cache is stale ────────────────────────────────────────
+
+const isCacheStale = (problem) => {
+  if (!problem?.lastSyncedAt) return true;
+  return Date.now() - problem.lastSyncedAt.getTime() > CACHE_TTL_MS;
+};
+
+// ── @desc    Get paginated, filtered list of problems
+// ── @route   GET /api/problems
+// ── @access  Public
+export const listProblems = async (req, res) => {
+  const {
+    page       = 1,
+    limit      = 20,
+    difficulty,
+    tag,
+    source,
+    minRating,
+    maxRating,
+    sortBy     = "serialNo",
+    sortOrder  = "asc",
+    search,
+  } = req.query;
+
+  const pageNum  = Math.max(1, parseInt(page, 10));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const skip     = (pageNum - 1) * limitNum;
+
+  // ── Build MongoDB filter ─────────────────────────────────
+  const filter = { isActive: true };
+
+  if (difficulty)          filter.difficulty = difficulty.toUpperCase();
+  if (source)              filter.source     = source.toUpperCase();
+  if (tag)                 filter.cfTags     = { $in: [tag.toLowerCase()] };
+  if (minRating !== undefined) filter.cfRating = { ...filter.cfRating, $gte: Number(minRating) };
+  if (maxRating !== undefined) filter.cfRating = { ...filter.cfRating, $lte: Number(maxRating) };
+  if (search)              filter.$text      = { $search: search };
+
+  // ── Sort ─────────────────────────────────────────────────
+  const sortField = sortBy === "rating" ? "cfRating" : sortBy === "name" ? "name" : "serialNo";
+  const sort = { [sortField]: sortOrder === "desc" ? -1 : 1 };
+
+  const [problems, total] = await Promise.all([
+    Problem.find(filter)
+      .select("-description -publicTests -privateTests -generatedTests -solutions -incorrectSolutions")
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Problem.countDocuments(filter),
+  ]);
+
+  // ── If MongoDB has no problems yet, fetch from Codnite ───
+  if (total === 0) {
+    const codniteData = await codnite.fetchProblems({
+      page: pageNum,
+      limit: limitNum,
+      difficulty,
+      tag,
+      source,
+      minRating: minRating ? Number(minRating) : undefined,
+      maxRating: maxRating ? Number(maxRating) : undefined,
+      sortBy:    sortBy === "rating" ? "cf_rating" : sortBy,
+      sortOrder,
+    });
+
+    return res.status(200).json({
+      success:    true,
+      message:    "Problems fetched from Codnite API (cache empty).",
+      source:     "codnite",
+      pagination: {
+        page:       codniteData.page,
+        limit:      codniteData.limit,
+        total:      codniteData.total,
+        totalPages: codniteData.total_pages,
+        hasNext:    codniteData.has_next,
+        hasPrev:    codniteData.has_prev,
+      },
+      data: codniteData.problems,
+    });
+  }
+
+  res.status(200).json({
+    success:    true,
+    message:    "Problems fetched successfully.",
+    source:     "cache",
+    pagination: {
+      page:       pageNum,
+      limit:      limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      hasNext:    pageNum < Math.ceil(total / limitNum),
+      hasPrev:    pageNum > 1,
+    },
+    data: problems,
+  });
+};
+
+// ── @desc    Get full problem detail by ID (with MongoDB caching)
+// ── @route   GET /api/problems/:id
+// ── @access  Public
+export const getProblem = async (req, res) => {
+  const { id } = req.params;
+
+  // ── 1. Check cache ───────────────────────────────────────
+  let problem = await Problem.findOne({ externalId: id, isActive: true }).select(
+    "+privateTests +generatedTests +solutions +incorrectSolutions"
+  );
+
+  // ── 2. Fetch from Codnite if stale or missing ────────────
+  if (!problem || isCacheStale(problem)) {
+    let rawProblem;
+    try {
+      rawProblem = await codnite.fetchProblemById(id);
+    } catch (err) {
+      // If Codnite is down but we have a stale cache, return it anyway
+      if (problem) {
+        return res.status(200).json({
+          success: true,
+          message: "Problem fetched from cache (Codnite API unavailable).",
+          source:  "stale-cache",
+          data:    problem.toPublicJSON(),
+        });
+      }
+      throw err; // Let global error handler deal with it
+    }
+
+    // ── 3. Upsert into MongoDB ───────────────────────────────
+    problem = await Problem.findOneAndUpdate(
+      { externalId: id },
+      { $set: codniteToSchema(rawProblem) },
+      { upsert: true, new: true, runValidators: true }
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Problem fetched successfully.",
+    source:  isCacheStale(problem) ? "codnite" : "cache",
+    data:    problem.toPublicJSON(),
+  });
+};
+
+// ── @desc    Get public test cases for a problem
+// ── @route   GET /api/problems/:id/tests
+// ── @access  Public
+export const getProblemTests = async (req, res) => {
+  const { id }        = req.params;
+  const { test_type } = req.query;
+
+  // ── 1. Try cache first ───────────────────────────────────
+  const problem = await Problem.findOne({ externalId: id, isActive: true });
+
+  if (problem && !isCacheStale(problem)) {
+    // Only return public tests to non-admin users
+    const isAdmin = req.user?.role === "admin";
+
+    const result = {
+      problemId:   id,
+      problemName: problem.name,
+      publicTests: problem.publicTests,
+    };
+
+    if (isAdmin && test_type !== "public") {
+      const fullProblem = await Problem.findOne({ externalId: id })
+        .select("+privateTests +generatedTests");
+      result.privateTests   = fullProblem?.privateTests   || [];
+      result.generatedTests = fullProblem?.generatedTests || [];
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Tests fetched successfully.",
+      source:  "cache",
+      data:    result,
+    });
+  }
+
+  // ── 2. Fetch from Codnite ────────────────────────────────
+  const isAdmin    = req.user?.role === "admin";
+  const testType   = isAdmin ? (test_type || "all") : "public";
+  const codniteData = await codnite.fetchProblemTests(id, testType);
+
+  // Return only public tests to regular users
+  const data = isAdmin ? codniteData : {
+    problemId:   codniteData.problem_id,
+    problemName: codniteData.problem_name,
+    publicTests: codniteData.tests || codniteData.public_tests || [],
+  };
+
+  res.status(200).json({
+    success: true,
+    message: "Tests fetched successfully.",
+    source:  "codnite",
+    data,
+  });
+};
+
+// ── @desc    Search problems by name / description / tags
+// ── @route   GET /api/problems/search?q=...
+// ── @access  Public
+export const searchProblems = async (req, res) => {
+  const { q, limit = 20 } = req.query;
+
+  if (!q || String(q).trim() === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Search query 'q' is required.",
+    });
+  }
+
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10)));
+
+  // ── 1. Try MongoDB text search first (if cache populated) ────
+  const mongoCount = await Problem.countDocuments({ isActive: true });
+  if (mongoCount > 0) {
+    const results = await Problem.find(
+      { $text: { $search: q }, isActive: true },
+      { score: { $meta: "textScore" } }
+    )
+      .select("-description -publicTests")
+      .sort({ score: { $meta: "textScore" } })
+      .limit(limitNum)
+      .lean();
+
+    if (results.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: `Found ${results.length} problems matching "${q}".`,
+        source:  "cache",
+        data: {
+          query:        q,
+          totalResults: results.length,
+          results,
+        },
+      });
+    }
+  }
+
+  // ── 2. Fall back to Codnite search ──────────────────────────
+  const codniteData = await codnite.fetchSearch(q, limitNum);
+
+  res.status(200).json({
+    success: true,
+    message: `Found ${codniteData.total_results} problems matching "${q}".`,
+    source:  "codnite",
+    data: {
+      query:        codniteData.query,
+      totalResults: codniteData.total_results,
+      results:      codniteData.results,
+    },
+  });
+};
+
+// ── @desc    Get a random problem (optionally filtered)
+// ── @route   GET /api/problems/random
+// ── @access  Public
+export const getRandomProblem = async (req, res) => {
+  const { difficulty, tag, source } = req.query;
+
+  // ── 1. Try MongoDB if cache is populated ─────────────────
+  const filter = { isActive: true };
+  if (difficulty) filter.difficulty = difficulty.toUpperCase();
+  if (source)     filter.source     = source.toUpperCase();
+  if (tag)        filter.cfTags     = { $in: [tag.toLowerCase()] };
+
+  const mongoCount = await Problem.countDocuments(filter);
+
+  if (mongoCount > 0) {
+    const skip   = Math.floor(Math.random() * mongoCount);
+    const problem = await Problem.findOne(filter).skip(skip).lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Random problem fetched successfully.",
+      source:  "cache",
+      data:    problem,
+    });
+  }
+
+  // ── 2. Fall back to Codnite ──────────────────────────────
+  const raw = await codnite.fetchRandomProblem({ difficulty, tag, source });
+
+  res.status(200).json({
+    success: true,
+    message: "Random problem fetched successfully.",
+    source:  "codnite",
+    data:    raw,
+  });
+};
+
+// ── @desc    Get all available tags with problem counts
+// ── @route   GET /api/problems/tags
+// ── @access  Public
+export const getTags = async (req, res) => {
+  // ── 1. Aggregate from MongoDB if populated ───────────────
+  const mongoCount = await Problem.countDocuments({ isActive: true });
+
+  if (mongoCount > 0) {
+    const tags = await Problem.aggregate([
+      { $match: { isActive: true } },
+      { $unwind: "$cfTags" },
+      { $group:  { _id: "$cfTags", count: { $sum: 1 } } },
+      { $sort:   { count: -1 } },
+      { $project: { _id: 0, name: "$_id", count: 1 } },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Tags fetched successfully.",
+      source:  "cache",
+      data: {
+        totalTags: tags.length,
+        tags,
+      },
+    });
+  }
+
+  // ── 2. Fall back to Codnite ──────────────────────────────
+  const codniteData = await codnite.fetchTags();
+
+  res.status(200).json({
+    success: true,
+    message: "Tags fetched successfully.",
+    source:  "codnite",
+    data: {
+      totalTags: codniteData.total_tags,
+      tags:      codniteData.tags,
+    },
+  });
+};
+
+// ── @desc    Get problem database statistics
+// ── @route   GET /api/problems/stats
+// ── @access  Public
+export const getStats = async (req, res) => {
+  // ── 1. Compute from MongoDB if populated ─────────────────
+  const mongoCount = await Problem.countDocuments({ isActive: true });
+
+  if (mongoCount > 0) {
+    const [byDifficulty, bySource, topTags] = await Promise.all([
+      Problem.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: "$difficulty", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      Problem.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: "$source", count: { $sum: 1 } } },
+      ]),
+      Problem.aggregate([
+        { $match: { isActive: true } },
+        { $unwind: "$cfTags" },
+        { $group: { _id: "$cfTags", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ]),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Stats fetched successfully.",
+      source:  "cache",
+      data: {
+        totalProblems: mongoCount,
+        byDifficulty:  Object.fromEntries(byDifficulty.map((d) => [d._id, d.count])),
+        bySource:      Object.fromEntries(bySource.map((s) => [s._id, s.count])),
+        topTags:       Object.fromEntries(topTags.map((t) => [t._id, t.count])),
+        lastSynced:    new Date().toISOString(),
+      },
+    });
+  }
+
+  // ── 2. Fall back to Codnite ──────────────────────────────
+  const codniteData = await codnite.fetchStats();
+
+  res.status(200).json({
+    success: true,
+    message: "Stats fetched from Codnite API.",
+    source:  "codnite",
+    data:    codniteData,
+  });
+};
+
+// ── @desc    Bulk sync all problems from Codnite into MongoDB (Admin only)
+// ── @route   POST /api/problems/sync
+// ── @access  Private / Admin
+export const syncProblems = async (req, res) => {
+  const { forceAll = false } = req.body;
+  const adminId = req.user?._id || null;
+  const adminEmail = req.user?.email || "System/Anonymous";
+
+  console.log(`[Sync] Triggered problem sync by ${adminEmail} (forceAll=${forceAll})`);
+
+  // ── 1. Fetch full problem list from Codnite ──────────────
+  // We paginate through everything (max 282 problems in total)
+  const PAGE_SIZE = 100;
+  let allProblems = [];
+  let page = 1;
+  let hasNext = true;
+
+  while (hasNext) {
+    const data = await codnite.fetchProblems({ page, limit: PAGE_SIZE });
+    allProblems = allProblems.concat(data.problems || []);
+    hasNext = data.has_next;
+    page++;
+  }
+
+  console.log(`[Sync] Found ${allProblems.length} problems in Codnite index`);
+
+  // ── 2. For each problem, fetch full details and upsert ───
+  let synced = 0;
+  let skipped = 0;
+  let failed = 0;
+  const errors = [];
+
+  for (const indexEntry of allProblems) {
+    try {
+      // Skip if cache is fresh and not forcing re-sync
+      if (!forceAll) {
+        const existing = await Problem.findOne({ externalId: indexEntry.id });
+        if (existing && !isCacheStale(existing)) {
+          skipped++;
+          continue;
+        }
+      }
+
+      // Fetch full problem details
+      const raw = await codnite.fetchProblemById(indexEntry.id);
+
+      await Problem.findOneAndUpdate(
+        { externalId: indexEntry.id },
+        {
+          $set: {
+            ...codniteToSchema(raw, adminId),
+            isActive: true,
+          },
+        },
+        { upsert: true, new: true, runValidators: true }
+      );
+
+      synced++;
+    } catch (err) {
+      failed++;
+      errors.push({ id: indexEntry.id, error: err.message });
+      console.error(`[Sync] Failed to sync problem ${indexEntry.id}:`, err.message);
+    }
+  }
+
+  console.log(`[Sync] Completed: ${synced} synced, ${skipped} skipped, ${failed} failed`);
+
+  res.status(200).json({
+    success: true,
+    message: `Sync completed. ${synced} synced, ${skipped} skipped (cache fresh), ${failed} failed.`,
+    data: {
+      total:   allProblems.length,
+      synced,
+      skipped,
+      failed,
+      errors:  errors.slice(0, 10), // Return max 10 errors
+    },
+  });
+};
+
+// ── @desc    Manually create a custom problem (Admin only)
+// ── @route   POST /api/problems
+// ── @access  Private / Admin
+export const createProblem = async (req, res) => {
+  const {
+    name, description, difficulty, cfRating, cfTags,
+    timeLimitSeconds, memoryLimitMb, publicTests, source,
+  } = req.body;
+
+  if (!name || !description) {
+    return res.status(400).json({
+      success: false,
+      message: "Name and description are required.",
+    });
+  }
+
+  // Generate a unique externalId for custom problems
+  const externalId = `custom_${Date.now()}_${name.toLowerCase().replace(/\s+/g, "_").slice(0, 30)}`;
+
+  const problem = await Problem.create({
+    externalId,
+    name:              name.trim(),
+    description:       description.trim(),
+    difficulty:        difficulty?.toUpperCase()  || "UNKNOWN",
+    source:            source?.toUpperCase()       || "CODEFORCES",
+    cfRating:          Number(cfRating)            || 0,
+    cfTags:            Array.isArray(cfTags) ? cfTags : [],
+    timeLimitSeconds:  Number(timeLimitSeconds)    || 2,
+    memoryLimitMb:     Number(memoryLimitMb)       || 256,
+    publicTests:       Array.isArray(publicTests) ? publicTests : [],
+    createdBy:         req.user._id,
+    lastSyncedAt:      new Date(),
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Problem created successfully.",
+    data:    problem.toPublicJSON(),
+  });
+};
+
+// ── @desc    Update a problem (Admin only)
+// ── @route   PATCH /api/problems/:id
+// ── @access  Private / Admin
+export const updateProblem = async (req, res) => {
+  const { id } = req.params;
+
+  // Whitelist updatable fields
+  const allowedFields = [
+    "name", "description", "difficulty", "cfRating", "cfTags",
+    "timeLimitSeconds", "memoryLimitMb", "publicTests", "isActive",
+    "source",
+  ];
+
+  const updates = {};
+  allowedFields.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+    }
+  });
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "No valid fields provided for update.",
+    });
+  }
+
+  // Try to find by MongoDB _id or externalId
+  const problem = await Problem.findOneAndUpdate(
+    { $or: [{ externalId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }] },
+    { $set: updates },
+    { new: true, runValidators: true }
+  );
+
+  if (!problem) {
+    return res.status(404).json({
+      success: false,
+      message: `Problem "${id}" not found.`,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Problem updated successfully.",
+    data:    problem.toPublicJSON(),
+  });
+};
+
+// ── @desc    Soft-delete a problem (Admin only)
+// ── @route   DELETE /api/problems/:id
+// ── @access  Private / Admin
+export const deleteProblem = async (req, res) => {
+  const { id } = req.params;
+
+  const problem = await Problem.findOneAndUpdate(
+    { $or: [{ externalId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }] },
+    { $set: { isActive: false } },
+    { new: true }
+  );
+
+  if (!problem) {
+    return res.status(404).json({
+      success: false,
+      message: `Problem "${id}" not found.`,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Problem "${problem.name}" has been deactivated.`,
+    data:    { id: problem.externalId, isActive: false },
+  });
+};
