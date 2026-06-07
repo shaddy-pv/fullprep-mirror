@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -37,7 +38,6 @@ router.get('/health', (req, res) => {
  */
 router.get('/ready', (req, res) => {
   // Check if database is connected
-  const mongoose = require('mongoose');
   const isDBConnected = mongoose.connection.readyState === 1;
   
   if (isDBConnected) {
