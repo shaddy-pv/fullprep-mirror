@@ -66,10 +66,9 @@ Follow these steps to get the frontend and backend connected and running locally
    npm install
    ```
 
-2. Create a `.env.local` configuration file:
-   ```env
-   NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
-   NEXT_PUBLIC_APP_ENV=development
+2. Copy the example environment variables and configure your settings:
+   ```bash
+   cp .env.local.example .env.local
    ```
 
 3. Launch the Next.js development server:
