@@ -465,7 +465,7 @@ export default function SubmissionsPage() {
               {/* Left Donut container */}
               <div className="w-[84px] h-[84px] shrink-0 relative flex items-center justify-center">
                 {isMounted ? (
-                  <ResponsiveContainer width="99%" height="100%">
+                  <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
                     <PieChart>
                       <Pie
                         data={donutData}
@@ -529,7 +529,7 @@ export default function SubmissionsPage() {
             {/* Smooth Recharts Green Glow Area */}
             <div className="h-[120px] w-full mt-2 relative">
               {isMounted ? (
-                <ResponsiveContainer width="99%" height="100%">
+                <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart
                     data={areaChartData}
                     margin={{ top: 5, right: 5, left: -28, bottom: -5 }}

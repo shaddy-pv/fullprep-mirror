@@ -57,7 +57,7 @@ export default function ChartCard() {
       {/* Chart area */}
       <div className="h-[155px] w-full mt-2 relative">
         {isMounted ? (
-          <ResponsiveContainer width="99%" height="100%">
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart
               data={CHART_MOCK_DATA}
               margin={{ top: 5, right: 5, left: -24, bottom: -5 }}

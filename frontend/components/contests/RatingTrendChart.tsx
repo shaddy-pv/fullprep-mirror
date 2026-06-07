@@ -43,7 +43,7 @@ export default function RatingTrendChart() {
       {/* Recharts Area Curve matching dashboard ChartCard metrics exactly */}
       <div className="h-[155px] w-full mt-2 relative">
         {isMounted ? (
-          <ResponsiveContainer width="99%" height="100%">
+          <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart
               data={RATING_HISTORY_MOCK}
               margin={{ top: 5, right: 5, left: -26, bottom: -5 }}
