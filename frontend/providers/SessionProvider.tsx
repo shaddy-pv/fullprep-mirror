@@ -11,6 +11,21 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Suppress benign Recharts layout transition warnings in the console
+    if (typeof window !== "undefined") {
+      const originalWarn = console.warn;
+      console.warn = (...args: any[]) => {
+        if (
+          args[0] &&
+          typeof args[0] === "string" &&
+          args[0].includes("The width(-1) and height(-1) of chart should be greater than 0")
+        ) {
+          return;
+        }
+        originalWarn(...args);
+      };
+    }
+
     // Revalidate session on boot
     AuthService.getCurrentUser().finally(() => {
       setLoading(false);
