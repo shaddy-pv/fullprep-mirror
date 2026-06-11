@@ -15,9 +15,10 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-import authRoutes    from "./routes/authRoutes.js";
-import healthRoutes  from "./routes/healthRoutes.js";
-import problemRoutes from "./routes/problemRoutes.js";
+import authRoutes       from "./routes/authRoutes.js";
+import healthRoutes    from "./routes/healthRoutes.js";
+import problemRoutes   from "./routes/problemRoutes.js";
+import submissionRoutes from "./routes/submissionRoutes.js";
 
 const app = express();
 
@@ -105,6 +106,7 @@ app.get("/health", (_req, res) => {
 app.use("/api",          healthRoutes);
 app.use("/api/auth",     authLimiter, authRoutes);
 app.use("/api/problems", problemRoutes);
+app.use("/api/submissions", submissionRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

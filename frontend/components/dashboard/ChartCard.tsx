@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
+import { AuthService } from "@/services/auth.service";
 import {
   AreaChart,
   Area,
@@ -22,10 +23,21 @@ export default function ChartCard() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [chartData, setChartData] = useState<any[]>(CHART_MOCK_DATA);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
+    async function loadData() {
+      const stats = await AuthService.getStats();
+      if (stats && stats.dailyActivity) {
+        const mappedData = stats.dailyActivity.map((d: any) => ({
+          day: d.label,
+          value: d.accepted,
+        }));
+        setChartData(mappedData);
+      }
+    }
+    loadData();
   }, []);
 
   const isDark = isMounted ? theme === "dark" : false;
@@ -59,7 +71,7 @@ export default function ChartCard() {
         {isMounted ? (
           <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart
-              data={CHART_MOCK_DATA}
+              data={chartData}
               margin={{ top: 5, right: 5, left: -24, bottom: -5 }}
             >
               <defs>

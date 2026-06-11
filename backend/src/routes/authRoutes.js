@@ -23,6 +23,7 @@ import {
   syncVerification,
   oauthSignIn,
 } from "../controllers/authController.js";
+import { getUserStats } from "../controllers/submissionController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -40,6 +41,7 @@ router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
 router.use(protect);
 
 router.get("/me", getMe);
+router.get("/stats", getUserStats);
 router.patch("/update-profile", updateProfile);
 
 router.post("/resend-verification", resendVerification);

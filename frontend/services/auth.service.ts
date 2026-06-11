@@ -21,6 +21,19 @@ export const AuthService = {
     }
   },
 
+  async getStats() {
+    try {
+      const response = await api.get<{ success: boolean; data: any }>(`${BASE_URL}/auth/stats`);
+      if (response && response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.warn("Failed to fetch user stats:", error);
+      return null;
+    }
+  },
+
   async login(email: string, password: string) {
     const response = await api.post<{ success: boolean; token: string; user: any; message?: string }>(
       `${BASE_URL}/auth/login`,

@@ -1,17 +1,47 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, TrendingUp, Flame, Award } from "lucide-react";
+import { CheckCircle2, TrendingUp, Flame, Award, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StatCard from "./StatCard";
+import { AuthService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/authStore";
 
 export default function StatsGrid() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const [statsData, setStatsData] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function loadStats() {
+      const data = await AuthService.getStats();
+      if (data) {
+        setStatsData(data);
+      }
+      setLoading(false);
+    }
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-4 gap-5 w-full shrink-0 h-[100px] bg-bg-card rounded-xl border border-border-card flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-text-secondary" />
+      </div>
+    );
+  }
+
+  const solved = statsData?.problemsSolved || 0;
+  const accRate = statsData?.acceptanceRate || 0;
+  const streak = user?.streak || 0;
+  const rank = statsData?.globalRank || "-";
+
   const stats = [
     {
       title: "Problems Solved",
-      value: "342",
-      subtext: "+12 this week",
+      value: solved.toString(),
+      subtext: "Total accepted",
       subtextColor: "text-[#10b981]",
       icon: CheckCircle2,
       iconColor: "text-brand-orange",
@@ -20,8 +50,8 @@ export default function StatsGrid() {
     },
     {
       title: "Acceptance Rate",
-      value: "78.4%",
-      subtext: "+2.5% this week",
+      value: `${accRate}%`,
+      subtext: "Overall accuracy",
       subtextColor: "text-[#10b981]",
       icon: TrendingUp,
       iconColor: "text-[#10b981]",
@@ -30,8 +60,8 @@ export default function StatsGrid() {
     },
     {
       title: "Longest Streak",
-      value: "12 Days",
-      subtext: "Keep it up!",
+      value: `${streak} Days`,
+      subtext: streak > 0 ? "Keep it up!" : "Start solving!",
       subtextColor: "text-brand-orange",
       icon: Flame,
       iconColor: "text-[#8b5cf6]",
@@ -40,8 +70,8 @@ export default function StatsGrid() {
     },
     {
       title: "Global Rank",
-      value: "24,531",
-      subtext: "Top 12.3%",
+      value: rank.toLocaleString(),
+      subtext: "On the leaderboard",
       subtextColor: "text-[#3b82f6]",
       icon: Award,
       iconColor: "text-[#3b82f6]",

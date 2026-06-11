@@ -4,10 +4,13 @@ import React from "react";
 import { ChevronRight, Trophy, Code2, RotateCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 import Button from "@/components/ui/Button";
 
 export default function Hero() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const firstName = user?.name ? user.name.split(" ")[0] : "Coder";
 
   return (
     <div className="w-full bg-gradient-to-r from-[#fffbf8] via-[#fffefc] to-white dark:from-[#111827] dark:via-[#161f30] dark:to-[#111827] border border-border-card rounded-[24px] p-8 flex items-center justify-between shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] relative overflow-hidden h-[240px] shrink-0 transition-colors duration-300">
@@ -17,7 +20,7 @@ export default function Hero() {
       {/* Left: Texts & Actions */}
       <div className="flex flex-col justify-center max-w-[500px] z-10">
         <h1 className="text-[28px] font-semibold text-text-primary leading-tight flex items-center gap-2 tracking-[-0.02em]">
-          Welcome back, Khushi! <span className="animate-bounce">👋</span>
+          Welcome back, {firstName}! <span className="animate-bounce">👋</span>
         </h1>
         <p className="text-[14px] text-text-secondary mt-2 font-medium leading-relaxed tracking-[-0.01em]">
           Let&apos;s continue your coding journey and build something amazing today.
