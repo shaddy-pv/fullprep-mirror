@@ -9,6 +9,7 @@ interface UserProfile {
   streak?: number;
   level?: number;
   xp?: number;
+  isEmailVerified?: boolean;
 }
 
 interface AuthState {

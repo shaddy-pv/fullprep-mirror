@@ -4,6 +4,7 @@ import React from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useDashboard } from "@/store/DashboardContext";
+import EmailVerificationOverlay from "../auth/EmailVerificationOverlay";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex w-full h-screen bg-[#0b0f17] text-white overflow-hidden relative">
+      <EmailVerificationOverlay />
+      
       {/* Mobile Drawer Overlay Backdrop */}
       {isMobileSidebarOpen && (
         <div 

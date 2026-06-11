@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { signOut as nextAuthSignOut } from "next-auth/react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
@@ -62,6 +63,8 @@ export const AuthService = {
         localStorage.removeItem("fp_token");
       }
       useAuthStore.getState().logout();
+      // Important: clear the NextAuth session so it doesn't auto-restore across tabs
+      await nextAuthSignOut({ redirect: false });
     }
   },
 };
