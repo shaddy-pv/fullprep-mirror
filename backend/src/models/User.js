@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
+      // Not required — OAuth users have no password
       minlength: [8, "Password must be at least 8 characters"],
       select: false, // Never return password in query results by default
     },
@@ -116,6 +116,14 @@ const userSchema = new mongoose.Schema(
 
     lastLoginAt: {
       type: Date,
+    },
+
+    // ── OAuth Provider Links ─────────────────────────────────
+    // Stores provider-specific user IDs for Google / GitHub sign-in
+    oauth: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+      select: false, // Internal — not exposed in API responses
     },
   },
   {
