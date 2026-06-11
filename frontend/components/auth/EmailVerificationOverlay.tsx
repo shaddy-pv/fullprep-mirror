@@ -73,7 +73,7 @@ export default function EmailVerificationOverlay() {
         </h2>
         
         <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-          We've sent a verification link to <strong className="text-text-primary">{user.email}</strong>. 
+          We&apos;ve sent a verification link to <strong className="text-text-primary">{user.email}</strong>. 
           Please verify your email address to unlock your FullPrep dashboard.
         </p>
 
@@ -83,7 +83,7 @@ export default function EmailVerificationOverlay() {
             disabled={syncing}
             className="w-full py-3.5 justify-center flex items-center gap-2"
           >
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : "I've clicked the link"}
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : "I\'ve clicked the link"}
             {!syncing && <ArrowRight className="w-4 h-4" />}
           </Button>
 
