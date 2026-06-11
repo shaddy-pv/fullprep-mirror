@@ -8,7 +8,7 @@ export async function fetcher<T>(
   url: string,
   options: FetcherOptions = {}
 ): Promise<T> {
-  const { timeout = 10000, ...customOptions } = options;
+  const { timeout = 45000, ...customOptions } = options;
 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);

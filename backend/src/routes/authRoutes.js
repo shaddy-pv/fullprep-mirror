@@ -21,6 +21,7 @@ import {
   updateProfile,
   resendVerification,
   syncVerification,
+  oauthSignIn,
 } from "../controllers/authController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
@@ -31,6 +32,7 @@ const router = Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
 
 // ── Private Routes ────────────────────────────────────────────────────────────
 

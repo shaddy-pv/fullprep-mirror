@@ -301,3 +301,51 @@ export const syncVerification = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to check verification status." });
   }
 };
+
+// ── @desc    Upsert OAuth user (Google / GitHub via NextAuth)
+// ── @route   POST /api/auth/oauth
+// ── @access  Public (called server-to-server from NextAuth callback)
+export const oauthSignIn = async (req, res) => {
+  const { provider, providerId, email, name, avatar } = req.body;
+
+  if (!email || !provider || !providerId) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required OAuth fields: provider, providerId, email.",
+    });
+  }
+
+  // Find by OAuth provider ID first, then fall back to email
+  let user = await User.findOne({
+    $or: [
+      { [`oauth.${provider}.id`]: providerId },
+      { email: email.toLowerCase() },
+    ],
+  });
+
+  if (user) {
+    // Update OAuth link and avatar if not already set
+    if (!user.oauth?.[provider]?.id) {
+      user.oauth = {
+        ...user.oauth,
+        [provider]: { id: providerId },
+      };
+    }
+    if (avatar && !user.avatar) user.avatar = avatar;
+    user.isEmailVerified = true; // OAuth emails are pre-verified
+    user.lastLoginAt = new Date();
+    await user.save({ validateBeforeSave: false });
+  } else {
+    // First time — create account (no password for OAuth users)
+    user = await User.create({
+      name: name?.trim() || email.split("@")[0],
+      email: email.toLowerCase().trim(),
+      avatar: avatar || "",
+      isEmailVerified: true, // OAuth emails are pre-verified by Google/GitHub
+      oauth: { [provider]: { id: providerId } },
+    });
+  }
+
+  sendTokenResponse(user, 200, res, `Signed in with ${provider} successfully! 🎉`);
+};
+
