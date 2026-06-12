@@ -80,4 +80,43 @@ export const AuthService = {
       await nextAuthSignOut({ redirect: false });
     }
   },
+
+  async updateProfile(data: { name?: string; bio?: string; avatar?: string; socialLinks?: any }) {
+    const response = await api.patch<{ success: boolean; user: any }>(
+      `${BASE_URL}/auth/update-profile`,
+      data
+    );
+    if (response && response.success && response.user) {
+      useAuthStore.getState().setUser(response.user);
+      return response.user;
+    }
+    throw new Error("Failed to update profile.");
+  },
+
+  async forgotPassword(email: string) {
+    return api.post<{ success: boolean; message: string }>(
+      `${BASE_URL}/auth/forgot-password`,
+      { email }
+    );
+  },
+
+  async resetPassword(data: { email: string; token: string; password?: string }) {
+    return api.post<{ success: boolean; message: string }>(
+      `${BASE_URL}/auth/reset-password`,
+      data
+    );
+  },
+
+  async getLeaderboard() {
+    try {
+      const response = await api.get<{ success: boolean; data: any[] }>(`${BASE_URL}/auth/leaderboard`);
+      if (response && response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.warn("Failed to fetch leaderboard:", error);
+      return [];
+    }
+  },
 };

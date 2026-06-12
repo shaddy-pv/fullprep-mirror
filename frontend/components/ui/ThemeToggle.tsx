@@ -29,28 +29,28 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
     <div 
       onClick={toggleTheme}
       className={cn(
-        "flex items-center bg-white/[0.02] border border-white/[0.06] rounded-full p-1 cursor-pointer relative w-[72px] h-[40px] transition-colors duration-300 select-none",
+        "flex items-center bg-gray-100 dark:bg-[#151821] border border-gray-200 dark:border-white/[0.08] rounded-full p-[3px] cursor-pointer relative w-[64px] h-[34px] transition-colors duration-300 select-none shadow-inner",
         className
       )}
     >
       {/* Sun icon on left */}
-      <Sun className={cn("w-4.5 h-4.5 absolute left-2.5 transition-opacity duration-350", isDark ? "text-[#9ca3af] opacity-100" : "text-white opacity-0")} />
+      <Sun className={cn("w-4 h-4 absolute left-2 transition-opacity duration-350", isDark ? "text-text-secondary opacity-100" : "text-brand-orange opacity-0")} />
       {/* Moon icon on right */}
-      <Moon className={cn("w-4.5 h-4.5 absolute right-2.5 transition-opacity duration-350", isDark ? "text-white opacity-0" : "text-[#9ca3af] opacity-100")} />
+      <Moon className={cn("w-4 h-4 absolute right-2 transition-opacity duration-350", isDark ? "text-brand-orange opacity-0" : "text-text-secondary opacity-100")} />
       
       {/* Active slider thumb */}
       <div 
         className={cn(
-          "w-[30px] h-[30px] rounded-full shadow-md border transition-all duration-300 ease-out flex items-center justify-center",
+          "w-[26px] h-[26px] rounded-full shadow-md border transition-all duration-300 ease-out flex items-center justify-center",
           isDark 
-            ? "transform translate-x-[34px] bg-[#0b0f17] border-white/10" 
-            : "transform translate-x-0 bg-white border-[#d1d5db]"
+            ? "transform translate-x-[30px] bg-[#0b0f17] border-white/10" 
+            : "transform translate-x-0 bg-white border-[#e5e7eb]"
         )}
       >
         {isDark ? (
-          <Moon className="w-4 h-4 text-brand-orange fill-brand-orange" />
+          <Moon className="w-3.5 h-3.5 text-brand-orange fill-brand-orange" />
         ) : (
-          <Sun className="w-4 h-4 text-brand-orange fill-brand-orange" />
+          <Sun className="w-3.5 h-3.5 text-brand-orange fill-brand-orange" />
         )}
       </div>
     </div>

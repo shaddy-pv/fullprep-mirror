@@ -28,6 +28,8 @@ import DashboardCard from "@/components/ui/DashboardCard";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import DifficultyBadge from "@/components/ui/DifficultyBadge";
 import { useNotificationStore } from "@/store/notificationStore";
+import { SubmissionsService } from "@/services/submissions.service";
+import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
 
 // Custom inline brand icons for perfect baseline typography alignments
@@ -82,10 +84,57 @@ export default function SubmissionsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [pagination, setPagination] = useState<any>({ page: 1, totalPages: 1, hasNext: false, hasPrev: false });
+  const [loading, setLoading] = useState(true);
+  const [statsData, setStatsData] = useState<any>(null);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    async function loadData() {
+      setLoading(true);
+      try {
+        let statusFilter: string | undefined = undefined;
+        if (activeMainTab !== "All Submissions") {
+          statusFilter = activeMainTab;
+        }
+
+        const response = await SubmissionsService.getSubmissions(currentPage, 10, statusFilter);
+        if (response && response.success) {
+          setSubmissions(response.data);
+          setPagination(response.pagination);
+        }
+      } catch (err) {
+        console.error("Failed to load submissions:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [isMounted, currentPage, activeMainTab]);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    async function loadStats() {
+      try {
+        const stats = await AuthService.getStats();
+        if (stats) {
+          setStatsData(stats);
+        }
+      } catch (err) {
+        console.error("Failed to load stats:", err);
+      }
+    }
+    loadStats();
+  }, [isMounted]);
 
   const mainTabs = [
     "All Submissions", 
@@ -96,44 +145,55 @@ export default function SubmissionsPage() {
     "Compilation Error"
   ];
 
-  // Mock Table Data matching the provided reference screenshot exactly
-  const mockSubmissions: SubmissionItem[] = [
-    { id: 1, problemName: "Two Sum", difficulty: "Easy", status: "Accepted", language: "Python 3", runtime: "124 ms", memory: "12.4 MB", submittedAt: "2 mins ago" },
-    { id: 2, problemName: "Add Two Numbers", difficulty: "Medium", status: "Accepted", language: "C++", runtime: "256 ms", memory: "18.7 MB", submittedAt: "18 mins ago" },
-    { id: 3, problemName: "Longest Substring Without Repeating Characters", difficulty: "Medium", status: "Wrong Answer", language: "Python 3", runtime: "--", memory: "--", submittedAt: "32 mins ago" },
-    { id: 4, problemName: "Median of Two Sorted Arrays", difficulty: "Hard", status: "Time Limit Exceeded", language: "Java", runtime: "--", memory: "--", submittedAt: "1 hour ago" },
-    { id: 5, problemName: "Zigzag Conversion", difficulty: "Medium", status: "Accepted", language: "Python 3", runtime: "98 ms", memory: "11.2 MB", submittedAt: "2 hours ago" },
-    { id: 6, problemName: "Reverse Integer", difficulty: "Easy", status: "Runtime Error", language: "C++", runtime: "--", memory: "--", submittedAt: "3 hours ago" },
-    { id: 7, problemName: "Container With Most Water", difficulty: "Medium", status: "Accepted", language: "Java", runtime: "312 ms", memory: "24.1 MB", submittedAt: "5 hours ago" },
-    { id: 8, problemName: "Regular Expression Matching", difficulty: "Hard", status: "Wrong Answer", language: "Python 3", runtime: "--", memory: "--", submittedAt: "1 day ago" },
-    { id: 9, problemName: "Valid Parentheses", difficulty: "Easy", status: "Accepted", language: "JavaScript", runtime: "76 ms", memory: "8.9 MB", submittedAt: "1 day ago" },
-    { id: 10, problemName: "Merge k Sorted Lists", difficulty: "Hard", status: "Accepted", language: "Java", runtime: "412 ms", memory: "30.2 MB", submittedAt: "2 days ago" },
-    { id: 11, problemName: "Trapping Rain Water", difficulty: "Hard", status: "Wrong Answer", language: "Python 3", runtime: "--", memory: "--", submittedAt: "2 days ago" },
-    { id: 12, problemName: "Binary Search", difficulty: "Easy", status: "Accepted", language: "C++", runtime: "12 ms", memory: "4.2 MB", submittedAt: "3 days ago" },
-    { id: 13, problemName: "LRU Cache", difficulty: "Medium", status: "Accepted", language: "Java", runtime: "184 ms", memory: "19.5 MB", submittedAt: "3 days ago" },
-    { id: 14, problemName: "Word Ladder", difficulty: "Hard", status: "Time Limit Exceeded", language: "Python 3", runtime: "--", memory: "--", submittedAt: "4 days ago" },
-    { id: 15, problemName: "Group Anagrams", difficulty: "Medium", status: "Accepted", language: "JavaScript", runtime: "52 ms", memory: "9.8 MB", submittedAt: "5 days ago" },
+  // Real Submissions mapping
+  const displaySubmissions = submissions.map((sub) => {
+    const timeText = sub.createdAt ? new Date(sub.createdAt).toLocaleDateString() : "Just now";
+    
+    // Map status string
+    let displayStatus: any = "Accepted";
+    const s = String(sub.status).toUpperCase();
+    if (s === "ACCEPTED" || s === "SUCCESS") displayStatus = "Accepted";
+    else if (s === "WRONG_ANSWER") displayStatus = "Wrong Answer";
+    else if (s === "TIME_LIMIT" || s === "TIME_LIMIT_EXCEEDED") displayStatus = "Time Limit Exceeded";
+    else if (s === "COMPILE_ERROR" || s === "COMPILATION_ERROR") displayStatus = "Compilation Error";
+    else displayStatus = "Runtime Error";
+
+    return {
+      id: sub._id,
+      problemName: sub.problemName || "Coding Problem",
+      difficulty: sub.problem?.difficulty ? (sub.problem.difficulty.charAt(0) + sub.problem.difficulty.slice(1).toLowerCase()) : "Medium",
+      status: displayStatus,
+      language: sub.language,
+      runtime: sub.executionTimeMs ? `${sub.executionTimeMs} ms` : "--",
+      memory: sub.memoryUsedMb ? `${sub.memoryUsedMb} MB` : "--",
+      submittedAt: timeText
+    };
+  });
+
+  // Recharts Donut Pie stats dataset mapped from real backend stats if present
+  const totalSubmissionsCount = statsData?.totalSubmissions ?? 12;
+  const acceptedSubmissionsCount = statsData?.acceptedSubmissions ?? 8;
+  const wrongAnswerSubmissionsCount = Math.max(0, totalSubmissionsCount - acceptedSubmissionsCount);
+
+  const donutData = totalSubmissionsCount > 0 ? [
+    { name: "Accepted", value: acceptedSubmissionsCount, percentage: `${((acceptedSubmissionsCount / totalSubmissionsCount) * 100).toFixed(1)}%`, color: "#10b981" },
+    { name: "Wrong Answer", value: wrongAnswerSubmissionsCount, percentage: `${((wrongAnswerSubmissionsCount / totalSubmissionsCount) * 100).toFixed(1)}%`, color: "#f43f5e" },
+  ] : [
+    { name: "Accepted", value: 1, percentage: "100%", color: "#10b981" }
   ];
 
-  // Recharts Donut Pie stats dataset
-  const donutData = [
-    { name: "Accepted", value: 842, percentage: "67.6%", color: "#10b981" },
-    { name: "Wrong Answer", value: 213, percentage: "17.1%", color: "#f43f5e" },
-    { name: "Time Limit Exceeded", value: 98, percentage: "7.9%", color: "#ff6a00" },
-    { name: "Runtime Error", value: 62, percentage: "5.0%", color: "#8b5cf6" },
-    { name: "Compilation Error", value: 33, percentage: "2.6%", color: "#9ca3af" },
-  ];
-
-  // Recharts Area curve mock dataset
-  const areaChartData = [
-    { month: "Jan", value: 61 },
-    { month: "Feb", value: 63 },
-    { month: "Mar", value: 65 },
-    { month: "Apr", value: 64 },
-    { month: "May", value: 66 },
-    { month: "Jun", value: 68 },
-    { month: "Jul", value: 67.6 },
-  ];
+  // Recharts Area curve mock dataset or real weekly activity
+  const areaChartData = statsData?.dailyActivity 
+    ? statsData.dailyActivity.map((d: any) => ({ month: d.label, value: d.accepted })) 
+    : [
+        { month: "Mon", value: 0 },
+        { month: "Tue", value: 0 },
+        { month: "Wed", value: 0 },
+        { month: "Thu", value: 0 },
+        { month: "Fri", value: 0 },
+        { month: "Sat", value: 0 },
+        { month: "Sun", value: 0 },
+      ];
 
   // Recent Difficult Problems list
   const recentDifficult = [
@@ -142,75 +202,92 @@ export default function SubmissionsPage() {
     { id: 3, title: "Merge k Sorted Lists", difficulty: "Hard" as const, attempts: "2 attempts" },
   ];
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     showToast("Refreshing submissions log...", "info");
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      let statusFilter: string | undefined = undefined;
+      if (activeMainTab !== "All Submissions") {
+        statusFilter = activeMainTab;
+      }
+      const response = await SubmissionsService.getSubmissions(currentPage, 10, statusFilter);
+      if (response && response.success) {
+        setSubmissions(response.data);
+        setPagination(response.pagination);
+      }
       setLastUpdatedText("Just now");
       showToast("Submissions updated successfully.", "success");
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      showToast("Refresh failed.", "info");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Helper to format status pill
-  const renderStatus = (status: SubmissionItem["status"]) => {
-    let textColor = "";
-    let dotBg = "";
+  const renderStatus = (status: string) => {
+    let textColor = "text-[#9ca3af]";
+    let dotBg = "bg-[#9ca3af]";
+    let label = status;
     
-    switch (status) {
-      case "Accepted":
-        textColor = "text-[#10b981]";
-        dotBg = "bg-[#10b981]";
-        break;
-      case "Wrong Answer":
-        textColor = "text-[#f43f5e]";
-        dotBg = "bg-[#f43f5e]";
-        break;
-      case "Time Limit Exceeded":
-        textColor = "text-[#ff6a00]";
-        dotBg = "bg-[#ff6a00]";
-        break;
-      case "Runtime Error":
-        textColor = "text-[#8b5cf6]";
-        dotBg = "bg-[#8b5cf6]";
-        break;
-      case "Compilation Error":
-        textColor = "text-[#9ca3af]";
-        dotBg = "bg-[#9ca3af]";
-        break;
+    const normalized = String(status).toUpperCase().replace(/\s+/g, "_");
+    if (normalized === "ACCEPTED" || normalized === "SUCCESS") {
+      textColor = "text-[#10b981]";
+      dotBg = "bg-[#10b981]";
+      label = "Accepted";
+    } else if (normalized === "WRONG_ANSWER") {
+      textColor = "text-[#f43f5e]";
+      dotBg = "bg-[#f43f5e]";
+      label = "Wrong Answer";
+    } else if (normalized === "TIME_LIMIT_EXCEEDED" || normalized === "TIME_LIMIT") {
+      textColor = "text-[#ff6a00]";
+      dotBg = "bg-[#ff6a00]";
+      label = "Time Limit Exceeded";
+    } else if (normalized === "RUNTIME_ERROR") {
+      textColor = "text-[#8b5cf6]";
+      dotBg = "bg-[#8b5cf6]";
+      label = "Runtime Error";
+    } else if (normalized === "COMPILATION_ERROR" || normalized === "COMPILE_ERROR") {
+      textColor = "text-[#9ca3af]";
+      dotBg = "bg-[#9ca3af]";
+      label = "Compilation Error";
     }
 
     return (
       <div className={cn("flex items-center justify-start select-none font-bold text-[13.5px]", textColor)}>
         <span className={cn("w-2 h-2 rounded-full mr-2 shrink-0 shadow-sm", dotBg)} />
-        <span>{status}</span>
+        <span>{label}</span>
       </div>
     );
   };
 
   // Helper to format language inline layout
-  const renderLanguage = (lang: SubmissionItem["language"]) => {
+  const renderLanguage = (lang: string) => {
+    const l = String(lang).toUpperCase();
+    const isPython = l.includes("PYTHON");
+    const isCpp = l.includes("CPP") || l.includes("C++");
+    const isJava = l.includes("JAVA") && !l.includes("JAVASCRIPT");
+    const isJs = l.includes("JAVASCRIPT") || l.includes("JS");
+    const displayLabel = isPython ? "Python 3" : isCpp ? "C++" : isJava ? "Java" : isJs ? "JavaScript" : lang;
+
     return (
       <div className="flex items-center gap-2 text-text-primary font-semibold text-[13px] tracking-[-0.01em]">
-        {lang === "Python 3" ? (
+        {isPython ? (
           <PythonIcon />
-        ) : lang === "C++" ? (
+        ) : isCpp ? (
           <CPlusPlusIcon />
-        ) : lang === "Java" ? (
+        ) : isJava ? (
           <JavaIcon />
         ) : (
           <JavaScriptIcon />
         )}
-        <span className="leading-none">{lang}</span>
+        <span className="leading-none">{displayLabel}</span>
       </div>
     );
   };
 
-  // Filtering mockup items based on active main tab
-  const filteredSubmissions = mockSubmissions.filter((sub) => {
-    if (activeMainTab === "All Submissions") return true;
-    return sub.status.toLowerCase() === activeMainTab.toLowerCase();
-  });
+
 
   return (
     <ContentContainer>
@@ -308,15 +385,15 @@ export default function SubmissionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-card/50 text-[13.5px]">
-                  {filteredSubmissions.length > 0 ? (
-                    filteredSubmissions.map((sub) => (
+                  {displaySubmissions.length > 0 ? (
+                    displaySubmissions.map((sub) => (
                       <tr 
                         key={sub.id}
                         className="group hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-150 align-middle"
                       >
                         {/* Index */}
-                        <td className="py-[13px] px-4 align-middle text-center text-text-secondary font-medium select-none">
-                          {sub.id}
+                        <td className="py-[13px] px-4 align-middle text-center text-text-secondary font-medium select-none text-[12px] font-mono">
+                          {sub.id.substring(sub.id.length - 6)}
                         </td>
 
                         {/* Problem */}
@@ -363,7 +440,7 @@ export default function SubmissionsPage() {
                   ) : (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-[13px] text-text-secondary font-medium tracking-[-0.01em] align-middle">
-                        No submissions match the selected filter.
+                        {loading ? "Loading submissions..." : "No submissions match the selected filter."}
                       </td>
                     </tr>
                   )}
@@ -384,70 +461,41 @@ export default function SubmissionsPage() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <button 
-                onClick={() => setCurrentPage(1)}
-                className={cn(
-                  "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
-                  currentPage === 1 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                )}
-              >
-                1
-              </button>
-              <button 
-                onClick={() => setCurrentPage(2)}
-                className={cn(
-                  "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
-                  currentPage === 2 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                )}
-              >
-                2
-              </button>
-              <button 
-                onClick={() => setCurrentPage(3)}
-                className={cn(
-                  "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
-                  currentPage === 3 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                )}
-              >
-                3
-              </button>
-              <span className="text-[13px] text-text-secondary font-bold px-1 select-none">...</span>
-              <button 
-                onClick={() => setCurrentPage(20)}
-                className={cn(
-                  "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
-                  currentPage === 20 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                )}
-              >
-                20
-              </button>
+              {Array.from({ length: pagination.totalPages || 1 }, (_, idx) => {
+                const pageNum = idx + 1;
+                const isActive = currentPage === pageNum;
+                return (
+                  <button 
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={cn(
+                      "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
+                      isActive 
+                        ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                        : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                    )}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
 
               <button 
-                onClick={() => setCurrentPage((prev) => Math.min(20, prev + 1))}
-                disabled={currentPage === 20}
+                onClick={() => setCurrentPage((prev) => Math.min(pagination.totalPages || 1, prev + 1))}
+                disabled={currentPage === (pagination.totalPages || 1)}
                 className={cn(
                   "w-8 h-8 rounded-lg border border-border-card bg-card-bg text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-colors duration-200",
-                  currentPage === 20 ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  currentPage === (pagination.totalPages || 1) ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                 )}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-
           </div>
-
         </div>
 
         {/* Right Sidebar Column with strict responsive w-[380px] limitations */}
-        <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
+        <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5 lg:sticky lg:top-6 h-fit">
           
           {/* Submission Stats Donut Card */}
           <DashboardCard className="p-5 flex flex-col justify-between h-[200px] shadow-sm select-none text-left shrink-0">

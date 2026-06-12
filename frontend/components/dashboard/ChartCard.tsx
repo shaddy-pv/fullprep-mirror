@@ -96,8 +96,7 @@ export default function ChartCard() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: tickColor, fontSize: 10, fontWeight: 500 }}
-                domain={[0, 400]}
-                ticks={[0, 100, 200, 300, 400]}
+                allowDecimals={false}
               />
               <Tooltip
                 contentStyle={{

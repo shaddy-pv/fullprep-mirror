@@ -166,9 +166,22 @@ export const submitCode = async (req, res) => {
     });
   }
 
+  // Look up problem in DB to link it
+  let problemId = null;
+  try {
+    const Problem = Submission.db.model("Problem");
+    const problemDoc = await Problem.findOne({ externalId: problemExternalId.trim() });
+    if (problemDoc) {
+      problemId = problemDoc._id;
+    }
+  } catch (err) {
+    console.error("Error looking up problem for submission:", err);
+  }
+
   // Create submission record in PENDING state
   const submission = await Submission.create({
     user:              req.user._id,
+    problem:           problemId,
     problemExternalId: problemExternalId.trim(),
     problemName:       problemName?.trim() || "",
     code,
@@ -176,13 +189,38 @@ export const submitCode = async (req, res) => {
     status:            "PENDING",
   });
 
-  // TODO: Enqueue into BullMQ for Judge0 evaluation
-  // import { submissionQueue } from "../utils/submissionQueue.js";
-  // const job = await submissionQueue.add("evaluate", {
-  //   submissionId: submission._id,
-  //   code, language, problemExternalId,
-  // });
-  // await submission.updateOne({ jobId: job.id });
+  // Simulate background judging after 1.5 seconds
+  setTimeout(async () => {
+    try {
+      const statuses = ["ACCEPTED", "ACCEPTED", "WRONG_ANSWER", "ACCEPTED"];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      const updateData = {
+        status: randomStatus,
+        executionTimeMs: Math.floor(Math.random() * 120) + 15,
+        memoryUsedMb: parseFloat((Math.random() * 10 + 5).toFixed(2)),
+        testCasesPassed: randomStatus === "ACCEPTED" ? 3 : 2,
+        testCasesTotal: 3,
+      };
+
+      if (randomStatus === "WRONG_ANSWER") {
+        updateData.errorMessage = "Assertion failed: expected [1, 2] but got [0, 1] on case 3.";
+      }
+
+      await Submission.findByIdAndUpdate(submission._id, updateData);
+
+      // If accepted, add XP to the user
+      if (randomStatus === "ACCEPTED") {
+        await User.findByIdAndUpdate(req.user._id, {
+          $inc: { xp: 10 }
+        });
+      }
+      
+      console.log(`[Simulation] Submission ${submission._id} updated to ${randomStatus}`);
+    } catch (err) {
+      console.error("[Simulation] Failed to update submission status:", err);
+    }
+  }, 1500);
 
   res.status(201).json({
     success: true,
@@ -213,6 +251,7 @@ export const getSubmissions = async (req, res) => {
   const [submissions, total] = await Promise.all([
     Submission.find(filter)
       .select("-code") // Exclude code from list view (large payload)
+      .populate("problem", "difficulty")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)

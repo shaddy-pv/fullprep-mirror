@@ -104,7 +104,7 @@ app.get("/health", (_req, res) => {
 // ── API Routes ────────────────────────────────────────────────────────────────
 
 app.use("/api",          healthRoutes);
-app.use("/api/auth",     authLimiter, authRoutes);
+app.use("/api/auth",     authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
 

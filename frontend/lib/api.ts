@@ -18,6 +18,13 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  patch: <T>(url: string, body: unknown, options?: RequestInit) =>
+    fetcher<T>(url, {
+      ...options,
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
   delete: <T>(url: string, options?: RequestInit) =>
     fetcher<T>(url, { ...options, method: "DELETE" }),
 };

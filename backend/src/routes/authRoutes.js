@@ -22,6 +22,9 @@ import {
   resendVerification,
   syncVerification,
   oauthSignIn,
+  forgotPassword,
+  resetPassword,
+  getLeaderboard,
 } from "../controllers/authController.js";
 import { getUserStats } from "../controllers/submissionController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
@@ -34,6 +37,8 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // ── Private Routes ────────────────────────────────────────────────────────────
 
@@ -42,6 +47,7 @@ router.use(protect);
 
 router.get("/me", getMe);
 router.get("/stats", getUserStats);
+router.get("/leaderboard", getLeaderboard);
 router.patch("/update-profile", updateProfile);
 
 router.post("/resend-verification", resendVerification);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Trophy, TrendingUp, Zap, Award, Info, ChevronDown, ChevronRight, Flame, Search, ChevronLeft, Calendar, Clock, Globe, Code } from "lucide-react";
+import { Trophy, TrendingUp, Zap, Award, Info, ChevronDown, ChevronRight, Flame, Search, ChevronLeft, Calendar, Clock, Globe, Code, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ContentContainer from "@/components/layout/ContentContainer";
 import PageHeader from "@/components/layout/PageHeader";
@@ -11,21 +11,25 @@ import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { useNotificationStore } from "@/store/notificationStore";
+import { AuthService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/authStore";
 
 interface LeaderboardUser {
   rank: number;
   username: string;
-  rating: number;
-  solved: string;
-  problems: string;
+  rating: number; // maps to xp
+  solved: string; // maps to solvedCount
+  level: number;  // maps to level
   streak: number;
   isCurrentUser?: boolean;
   avatarChar: string;
   avatarBg: string;
+  avatarUrl?: string;
 }
 
 export default function LeaderboardPage() {
   const showToast = useNotificationStore((state) => state.showToast);
+  const { user } = useAuthStore();
 
   // States
   const [activeMainTab, setActiveMainTab] = useState("Global");
@@ -33,6 +37,10 @@ export default function LeaderboardPage() {
   const [searchVal, setSearchVal] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [countdownSeconds, setCountdownSeconds] = useState(37475); // 10:24:35 in seconds
+
+  const [users, setUsers] = useState<any[]>([]);
+  const [userStats, setUserStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const mainTabs = ["Global", "Country", "Friends"];
   const filterTabs = ["Overall", "Monthly", "Weekly", "All Time"];
@@ -52,37 +60,123 @@ export default function LeaderboardPage() {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  // Mock Table Data
-  const leaderboardUsers: LeaderboardUser[] = [
-    { rank: 4, username: "khushi.dev", rating: 1876, solved: "2,031", problems: "1,245", streak: 12, isCurrentUser: true, avatarChar: "K", avatarBg: "from-brand-orange to-[#8b5cf6]" },
-    { rank: 5, username: "sahil_ace", rating: 1764, solved: "1,883", problems: "1,102", streak: 8, avatarChar: "S", avatarBg: "from-[#ec4899] to-[#f43f5e]" },
-    { rank: 6, username: "devansh_01", rating: 1650, solved: "1,671", problems: "973", streak: 6, avatarChar: "D", avatarBg: "from-[#10b981] to-[#059669]" },
-    { rank: 7, username: "nitin.verma", rating: 1543, solved: "1,482", problems: "862", streak: 5, avatarChar: "N", avatarBg: "from-[#eab308] to-[#ca8a04]" },
-    { rank: 8, username: "manoj_codes", rating: 1498, solved: "1,390", problems: "815", streak: 4, avatarChar: "M", avatarBg: "from-[#a855f7] to-[#7e22ce]" },
-    { rank: 9, username: "tanmay001", rating: 1392, solved: "1,281", problems: "742", streak: 3, avatarChar: "T", avatarBg: "from-[#14b8a6] to-[#0d9488]" },
-    { rank: 10, username: "vivek_247", rating: 1287, solved: "1,102", problems: "648", streak: 2, avatarChar: "V", avatarBg: "from-[#3b82f6] to-[#1d4ed8]" },
-    { rank: 11, username: "rahul_nk", rating: 1245, solved: "1,050", problems: "610", streak: 2, avatarChar: "R", avatarBg: "from-[#10b981] to-[#059669]" },
-    { rank: 12, username: "sneha_patel", rating: 1190, solved: "980", problems: "580", streak: 1, avatarChar: "S", avatarBg: "from-[#ec4899] to-[#f43f5e]" },
-    { rank: 13, username: "alok_kumar", rating: 1150, solved: "920", problems: "540", streak: 1, avatarChar: "A", avatarBg: "from-[#eab308] to-[#ca8a04]" },
-    { rank: 14, username: "priya_sharma", rating: 1120, solved: "890", problems: "510", streak: 0, avatarChar: "P", avatarBg: "from-[#a855f7] to-[#7e22ce]" },
-    { rank: 15, username: "amit_singh", rating: 1080, solved: "820", problems: "480", streak: 0, avatarChar: "A", avatarBg: "from-[#14b8a6] to-[#0d9488]" },
-  ];
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [leaderboardData, statsData] = await Promise.all([
+          AuthService.getLeaderboard(),
+          AuthService.getStats()
+        ]);
+        if (leaderboardData) {
+          setUsers(leaderboardData);
+        }
+        if (statsData) {
+          setUserStats(statsData);
+        }
+      } catch (err) {
+        console.error("Failed to load leaderboard data:", err);
+        showToast("Failed to fetch leaderboard data.", "info");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [showToast]);
 
-  // Mock Podium Data
-  const podiumData = {
-    first: { username: "rohit_ku", rating: 2287, solved: "2,890 solved", avatarChar: "R", avatarBg: "from-[#f59e0b] to-[#d97706]" },
-    second: { username: "aryan.codes", rating: 2045, solved: "2,412 solved", avatarChar: "A", avatarBg: "from-[#a855f7] to-[#7e22ce]" },
-    third: { username: "pranav.dev", rating: 1987, solved: "2,210 solved", avatarChar: "P", avatarBg: "from-[#10b981] to-[#059669]" },
+  const getAvatarBg = (index: number) => {
+    const bgs = [
+      "from-[#f59e0b] to-[#d97706]", // Golden for 1st
+      "from-[#a855f7] to-[#7e22ce]", // Purple for 2nd
+      "from-[#10b981] to-[#059669]", // Green for 3rd
+      "from-[#ec4899] to-[#f43f5e]", // Pink
+      "from-[#eab308] to-[#ca8a04]", // Yellow
+      "from-[#14b8a6] to-[#0d9488]", // Teal
+      "from-[#3b82f6] to-[#1d4ed8]", // Blue
+    ];
+    return bgs[index % bgs.length];
   };
 
-  // Top gainers
-  const topGainers = [
-    { rank: 1, username: "aryan.codes", diff: "+156", avatarChar: "A", avatarBg: "bg-[#a855f7]/15 text-[#a855f7]" },
-    { rank: 2, username: "rohit_ku", diff: "+128", avatarChar: "R", avatarBg: "bg-[#eab308]/15 text-[#eab308]" },
-    { rank: 3, username: "pranav.dev", diff: "+98", avatarChar: "P", avatarBg: "bg-[#10b981]/15 text-[#10b981]" },
-    { rank: 4, username: "sahil_ace", diff: "+87", avatarChar: "S", avatarBg: "bg-[#ec4899]/15 text-[#ec4899]" },
-    { rank: 5, username: "vivek_247", diff: "+76", avatarChar: "V", avatarBg: "bg-[#3b82f6]/15 text-[#3b82f6]" },
-  ];
+  // Filter Table Data dynamically based on searchVal
+  const filteredUsers = users.filter((u) =>
+    u.username.toLowerCase().includes(searchVal.toLowerCase())
+  );
+
+  // Dynamic Podium Data
+  const firstUser = filteredUsers[0];
+  const secondUser = filteredUsers[1];
+  const thirdUser = filteredUsers[2];
+
+  const podiumData = {
+    first: firstUser ? {
+      username: firstUser.username,
+      rating: firstUser.xp,
+      solved: `${firstUser.solvedCount} solved`,
+      avatarChar: firstUser.username.charAt(0).toUpperCase(),
+      avatarBg: getAvatarBg(0),
+      avatarUrl: firstUser.avatarUrl,
+      isCurrentUser: firstUser._id === user?._id
+    } : { username: "Waiting...", rating: 0, solved: "0 solved", avatarChar: "-", avatarBg: "from-gray-300 to-gray-400", avatarUrl: "", isCurrentUser: false },
+    second: secondUser ? {
+      username: secondUser.username,
+      rating: secondUser.xp,
+      solved: `${secondUser.solvedCount} solved`,
+      avatarChar: secondUser.username.charAt(0).toUpperCase(),
+      avatarBg: getAvatarBg(1),
+      avatarUrl: secondUser.avatarUrl,
+      isCurrentUser: secondUser._id === user?._id
+    } : { username: "Waiting...", rating: 0, solved: "0 solved", avatarChar: "-", avatarBg: "from-gray-300 to-gray-400", avatarUrl: "", isCurrentUser: false },
+    third: thirdUser ? {
+      username: thirdUser.username,
+      rating: thirdUser.xp,
+      solved: `${thirdUser.solvedCount} solved`,
+      avatarChar: thirdUser.username.charAt(0).toUpperCase(),
+      avatarBg: getAvatarBg(2),
+      avatarUrl: thirdUser.avatarUrl,
+      isCurrentUser: thirdUser._id === user?._id
+    } : { username: "Waiting...", rating: 0, solved: "0 solved", avatarChar: "-", avatarBg: "from-gray-300 to-gray-400", avatarUrl: "", isCurrentUser: false },
+  };
+
+  // Remaining users mapped to table rows
+  const leaderboardUsers: LeaderboardUser[] = filteredUsers.slice(3).map((u, idx) => ({
+    rank: u.rank || idx + 4,
+    username: u.username,
+    rating: u.xp,
+    solved: `${u.solvedCount} solved`,
+    level: u.level || 1,
+    streak: u.streak || 0,
+    isCurrentUser: u._id === user?._id,
+    avatarChar: u.username.charAt(0).toUpperCase(),
+    avatarBg: getAvatarBg(idx + 3),
+    avatarUrl: u.avatarUrl
+  }));
+
+  // Top gainers (this week): sort by streak descending
+  const topGainers = [...users]
+    .sort((a, b) => (b.streak || 0) - (a.streak || 0))
+    .slice(0, 5)
+    .map((u, idx) => ({
+      rank: idx + 1,
+      username: u.username,
+      diff: `+${u.streak || 0}`,
+      avatarChar: u.username.charAt(0).toUpperCase(),
+      avatarBg: `bg-brand-orange/15 text-brand-orange`,
+      avatarUrl: u.avatarUrl
+    }));
+
+  if (loading) {
+    return (
+      <ContentContainer>
+        <PageHeader
+          title="Leaderboard"
+          description="See how you rank among the best coders in the community."
+          className="mb-5 select-none"
+        />
+        <div className="w-full h-[400px] flex items-center justify-center bg-white dark:bg-[#11131c] border border-border-card rounded-[24px]">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-orange" />
+        </div>
+      </ContentContainer>
+    );
+  }
 
   return (
     <ContentContainer>
@@ -164,10 +258,14 @@ export default function LeaderboardPage() {
                   <div className="w-6 h-6 rounded-full bg-slate-400 border border-white dark:border-[#111827] text-white flex items-center justify-center font-extrabold text-[11px] absolute -top-3 shadow-md">
                     2
                   </div>
-                  {/* Avatar char circular */}
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.second.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md`}>
-                    {podiumData.second.avatarChar}
-                  </div>
+                  {/* Avatar char/image circular */}
+                  {podiumData.second.avatarUrl ? (
+                    <img src={podiumData.second.avatarUrl} alt={podiumData.second.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                  ) : (
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.second.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md shrink-0`}>
+                      {podiumData.second.avatarChar}
+                    </div>
+                  )}
                   <div className="flex flex-col items-center text-center mt-3.5 gap-0.5 w-full min-w-0">
                     <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em] truncate w-full leading-tight">
                       {podiumData.second.username}
@@ -190,9 +288,13 @@ export default function LeaderboardPage() {
                     1
                   </div>
                   {/* Avatar circular */}
-                  <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${podiumData.first.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-lg text-white shadow-md`}>
-                    {podiumData.first.avatarChar}
-                  </div>
+                  {podiumData.first.avatarUrl ? (
+                    <img src={podiumData.first.avatarUrl} alt={podiumData.first.username} className="w-14 h-14 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                  ) : (
+                    <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${podiumData.first.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-lg text-white shadow-md shrink-0`}>
+                      {podiumData.first.avatarChar}
+                    </div>
+                  )}
                   <div className="flex flex-col items-center text-center mt-4 gap-0.5 w-full min-w-0">
                     <span className="text-[14px] font-extrabold text-text-primary tracking-[-0.01em] truncate w-full leading-tight">
                       {podiumData.first.username}
@@ -215,9 +317,13 @@ export default function LeaderboardPage() {
                     3
                   </div>
                   {/* Avatar circular */}
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.third.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md`}>
-                    {podiumData.third.avatarChar}
-                  </div>
+                  {podiumData.third.avatarUrl ? (
+                    <img src={podiumData.third.avatarUrl} alt={podiumData.third.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                  ) : (
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.third.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md shrink-0`}>
+                      {podiumData.third.avatarChar}
+                    </div>
+                  )}
                   <div className="flex flex-col items-center text-center mt-3.5 gap-0.5 w-full min-w-0">
                     <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em] truncate w-full leading-tight">
                       {podiumData.third.username}
@@ -241,9 +347,9 @@ export default function LeaderboardPage() {
                   <tr className="border-b border-border-card text-[12px] font-bold text-text-secondary uppercase tracking-wider select-none bg-transparent">
                     <th className="py-3 px-4 w-[60px] align-middle text-center">#</th>
                     <th className="py-3 px-4 align-middle text-left">User</th>
-                    <th className="py-3 px-4 w-[110px] align-middle text-center">Rating</th>
+                    <th className="py-3 px-4 w-[110px] align-middle text-center">XP Rating</th>
                     <th className="py-3 px-4 w-[110px] align-middle text-center">Solved</th>
-                    <th className="py-3 px-4 w-[110px] align-middle text-center">Problems</th>
+                    <th className="py-3 px-4 w-[110px] align-middle text-center">Level</th>
                     <th className="py-3 px-4 w-[110px] align-middle text-center">Streak</th>
                   </tr>
                 </thead>
@@ -267,11 +373,15 @@ export default function LeaderboardPage() {
                       {/* Username details */}
                       <td className="py-2 px-4 align-middle text-left">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${
-                            user.isCurrentUser ? "from-brand-orange to-[#8b5cf6]" : user.avatarBg
-                          } flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0`}>
-                            {user.avatarChar}
-                          </div>
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${
+                              user.isCurrentUser ? "from-brand-orange to-[#8b5cf6]" : user.avatarBg
+                            } flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0`}>
+                              {user.avatarChar}
+                            </div>
+                          )}
                           <span className={`text-[14px] font-semibold leading-none tracking-[-0.01em] flex items-center ${
                             user.isCurrentUser ? "text-[#10b981]" : "text-text-primary"
                           }`}>
@@ -295,9 +405,9 @@ export default function LeaderboardPage() {
                         {user.solved}
                       </td>
 
-                      {/* Problems */}
+                      {/* Level */}
                       <td className="py-2 px-4 align-middle text-center text-text-secondary font-medium select-all">
-                        {user.problems}
+                        Lvl {user.level}
                       </td>
 
                       {/* Streak ticker */}
@@ -386,22 +496,26 @@ export default function LeaderboardPage() {
         <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
           
           {/* Your Rank Card */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[200px] shadow-sm select-none text-left shrink-0">
+          <DashboardCard className="flex flex-col justify-between h-[200px] shadow-sm select-none text-left shrink-0">
             <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
               Your Rank
             </span>
             
             <div className="flex items-center gap-4 mt-1">
               {/* Profile Avatar circular */}
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-lg text-white border border-white/20 shadow-md shadow-black/5 shrink-0">
-                K
-              </div>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user?.name || "User"} className="w-12 h-12 rounded-full object-cover shadow-md shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-lg text-white border border-white/20 shadow-md shadow-black/5 shrink-0">
+                  {user?.name?.charAt(0).toUpperCase() || "U"}
+                </div>
+              )}
               <div className="flex flex-col text-left">
                 <span className="text-[24px] font-bold text-brand-orange tracking-tight leading-none">
-                  #4,215
+                  {userStats?.globalRank ? `#${userStats.globalRank.toLocaleString()}` : "Not Ranked"}
                 </span>
                 <span className="text-[11.5px] text-text-secondary font-medium mt-1.5 leading-none">
-                  of 52,841 users
+                  of {users.length.toLocaleString()} users
                 </span>
               </div>
             </div>
@@ -409,17 +523,17 @@ export default function LeaderboardPage() {
             {/* Bottom Row Metrics Row (Rating Solved Streak) */}
             <div className="grid grid-cols-3 gap-3 border-t border-border-card/50 pt-4 mt-1">
               <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Rating</span>
-                <span className="text-[15px] font-extrabold text-brand-orange mt-1 leading-none">1,876</span>
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Rating (XP)</span>
+                <span className="text-[15px] font-extrabold text-brand-orange mt-1 leading-none">{user?.xp || 0}</span>
               </div>
               <div className="flex flex-col items-center border-x border-border-card/40">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Solved</span>
-                <span className="text-[15px] font-extrabold text-[#10b981] mt-1 leading-none">2,031</span>
+                <span className="text-[15px] font-extrabold text-[#10b981] mt-1 leading-none">{userStats?.problemsSolved || 0}</span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Streak</span>
                 <div className="flex items-center gap-0.5 text-brand-orange font-extrabold mt-1 leading-none">
-                  <span>12</span>
+                  <span>{user?.streak || 0}</span>
                   <Flame className="w-3.5 h-3.5 fill-brand-orange text-brand-orange" />
                 </div>
               </div>
@@ -427,10 +541,10 @@ export default function LeaderboardPage() {
           </DashboardCard>
 
           {/* Top Gainers card */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[300px] shadow-sm select-none text-left shrink-0">
+          <DashboardCard className="flex flex-col justify-between h-[300px] shadow-sm select-none text-left shrink-0">
             <div className="flex items-baseline justify-between mb-3">
               <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
-                Top Gainers (This Week)
+                Consistency Leaders (Streak)
               </span>
               <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer">
                 View all
@@ -442,17 +556,21 @@ export default function LeaderboardPage() {
                 <div key={gainer.rank} className="flex items-center justify-between border-b border-border-card/45 pb-2.5 last:border-0 last:pb-0">
                   <div className="flex items-center gap-3">
                     <span className="text-[12.5px] font-bold text-[#10b981]">
-                      +{gainer.rank}
+                      #{gainer.rank}
                     </span>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-inner shrink-0 ${gainer.avatarBg}`}>
-                      {gainer.avatarChar}
-                    </div>
+                    {gainer.avatarUrl ? (
+                      <img src={gainer.avatarUrl} alt={gainer.username} className="w-7 h-7 rounded-full object-cover shadow-sm shrink-0" />
+                    ) : (
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-inner shrink-0 ${gainer.avatarBg}`}>
+                        {gainer.avatarChar}
+                      </div>
+                    )}
                     <span className="text-[12.5px] font-semibold text-text-primary truncate max-w-[140px] tracking-[-0.01em]">
                       {gainer.username}
                     </span>
                   </div>
-                  <span className="text-[11.5px] font-extrabold text-[#10b981]">
-                    {gainer.diff}
+                  <span className="text-[11.5px] font-extrabold text-brand-orange flex items-center gap-0.5">
+                    {gainer.diff} <Flame className="w-3 h-3 fill-brand-orange text-brand-orange" />
                   </span>
                 </div>
               ))}
@@ -460,7 +578,7 @@ export default function LeaderboardPage() {
           </DashboardCard>
 
           {/* Filters Card */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[320px] shadow-sm select-none text-left shrink-0">
+          <DashboardCard className="flex flex-col justify-between h-[320px] shadow-sm select-none text-left shrink-0">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
                 Filters
@@ -513,7 +631,7 @@ export default function LeaderboardPage() {
           </DashboardCard>
 
           {/* Info Card bottom */}
-          <DashboardCard className="p-5 flex items-start gap-3.5 select-none shrink-0 text-left">
+          <DashboardCard className="flex items-start gap-3.5 select-none shrink-0 text-left">
             <Info className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
             <div className="flex flex-col">
               <span className="text-[12px] font-bold text-text-primary leading-none">Leaderboard updates</span>

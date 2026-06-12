@@ -8,6 +8,8 @@ import User from "../models/User.js";
 import { sendTokenResponse } from "../utils/generateToken.js";
 import firebaseAdmin from "../config/firebase.js";
 import { sendEmail } from "../utils/emailService.js";
+import crypto from "crypto";
+import Submission from "../models/Submission.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -146,8 +148,7 @@ export const login = async (req, res) => {
   }
 
   // ── 5. Update last login timestamp ──────────────────────────
-  user.lastLoginAt = new Date();
-  await user.save({ validateBeforeSave: false });
+  await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
 
   // ── 6. Respond with token ───────────────────────────────────
   sendTokenResponse(user, 200, res, "Login successful. Welcome back! 👋");
@@ -242,6 +243,13 @@ export const resendVerification = async (req, res) => {
   }
 
   if (!firebaseAdmin) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[Dev Mode] Mock resend verification requested for: ${user.email}`);
+      return res.status(200).json({
+        success: true,
+        message: "[Dev Mode] Verification email resend simulated successfully!",
+      });
+    }
     return res.status(500).json({ success: false, message: "Email verification is not configured on the server." });
   }
 
@@ -283,6 +291,15 @@ export const syncVerification = async (req, res) => {
   }
 
   if (!firebaseAdmin) {
+    if (process.env.NODE_ENV === "development") {
+      user.isEmailVerified = true;
+      await user.save({ validateBeforeSave: false });
+      return res.status(200).json({
+        success: true,
+        message: "[Dev Mode] Email successfully verified automatically!",
+        isVerified: true,
+      });
+    }
     return res.status(500).json({ success: false, message: "Firebase not configured." });
   }
 
@@ -347,5 +364,162 @@ export const oauthSignIn = async (req, res) => {
   }
 
   sendTokenResponse(user, 200, res, `Signed in with ${provider} successfully! 🎉`);
+};
+
+// ── @desc    Generate a password reset token and send email / log it
+// ── @route   POST /api/auth/forgot-password
+// ── @access  Public
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide an email address.",
+    });
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  if (!user) {
+    return res.status(200).json({
+      success: true,
+      message: "If an account with that email exists, a password reset link has been sent.",
+    });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  user.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  user.passwordResetExpires = Date.now() + 60 * 60 * 1000;
+
+  await user.save({ validateBeforeSave: false });
+
+  const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+
+  console.log("");
+  console.log("╔════════════════════════════════════════════════════════════════╗");
+  console.log("║               🔑  PASSWORD RESET LINK REQUEST                  ║");
+  console.log("╠════════════════════════════════════════════════════════════════╣");
+  console.log(`║ Email : ${user.email}`);
+  console.log(`║ Link  : ${resetUrl}`);
+  console.log("╚════════════════════════════════════════════════════════════════╝");
+  console.log("");
+
+  const emailHtml = `
+    <h2>FullPrep Password Reset Request</h2>
+    <p>You requested a password reset. Please click the link below to set a new password:</p>
+    <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#ff6a00;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Reset Password</a>
+    <p>This link is valid for 1 hour. If you did not request this, please ignore this email.</p>
+  `;
+
+  await sendEmail({
+    to: user.email,
+    subject: "Reset your FullPrep Password",
+    html: emailHtml,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "If an account with that email exists, a password reset link has been sent.",
+  });
+};
+
+// ── @desc    Reset password using token
+// ── @route   POST /api/auth/reset-password
+// ── @access  Public
+export const resetPassword = async (req, res) => {
+  const { token, email, password } = req.body;
+
+  if (!token || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required fields: token, email, password.",
+    });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 8 characters long.",
+    });
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    email: email.toLowerCase().trim(),
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  }).select("+password");
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Password reset link is invalid or has expired.",
+    });
+  }
+
+  user.password = password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password reset successful! You can now log in.",
+  });
+};
+
+// ── @desc    Get top users sorted by XP for the leaderboard
+// ── @route   GET /api/auth/leaderboard
+// ── @access  Private
+export const getLeaderboard = async (req, res) => {
+  try {
+    const users = await User.find({ isActive: true })
+      .sort({ xp: -1 })
+      .limit(50);
+
+    const userIds = users.map((u) => u._id);
+    const solvedCounts = await Submission.aggregate([
+      { $match: { user: { $in: userIds }, status: "ACCEPTED" } },
+      { $group: { _id: { user: "$user", prob: "$problemExternalId" } } },
+      { $group: { _id: "$_id.user", count: { $sum: 1 } } },
+    ]);
+
+    const solvedMap = {};
+    solvedCounts.forEach((s) => {
+      solvedMap[s._id.toString()] = s.count;
+    });
+
+    const leaderboard = users.map((u, index) => {
+      const solved = solvedMap[u._id.toString()] || 0;
+      return {
+        rank: index + 1,
+        username: u.name,
+        xp: u.xp || 0,
+        streak: u.streak || 0,
+        solvedCount: solved,
+        level: u.level || 1,
+        avatarUrl: u.avatarUrl,
+        _id: u._id,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Leaderboard fetched successfully.",
+      data: leaderboard,
+    });
+  } catch (err) {
+    console.error("Leaderboard fetch error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to fetch leaderboard." });
+  }
 };
 

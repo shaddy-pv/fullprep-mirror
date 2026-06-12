@@ -10,6 +10,13 @@ interface UserProfile {
   level?: number;
   xp?: number;
   isEmailVerified?: boolean;
+  bio?: string;
+  socialLinks?: {
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    website?: string;
+  };
 }
 
 interface AuthState {

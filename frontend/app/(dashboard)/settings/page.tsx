@@ -33,6 +33,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
+import { useAuthStore } from "@/store/authStore";
+import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
 import { DESIGN_SYSTEM_TOKENS } from "@/constants/design-system";
 
@@ -63,16 +65,33 @@ const TwitterIcon = ({ className = "w-4 h-4 shrink-0" }: { className?: string })
 
 export default function SettingsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
+  const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const isScrollingRef = useRef(false);
 
   // Profile Form States
-  const [displayName, setDisplayName] = useState("Khushi");
-  const [username, setUsername] = useState("khushi.dev");
-  const [bio, setBio] = useState("Passionate about solving problems and building cool things.");
+  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   const [location, setLocation] = useState("India");
-  const [website, setWebsite] = useState("https://khushi.dev");
+  const [website, setWebsite] = useState("");
+
+  const [github, setGithub] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [twitter, setTwitter] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.name || "");
+      setUsername(user.email ? user.email.split("@")[0] : "coder");
+      setBio(user.bio || "");
+      setWebsite(user.socialLinks?.website || "");
+      setGithub(user.socialLinks?.github || "");
+      setLinkedin(user.socialLinks?.linkedin || "");
+      setTwitter(user.socialLinks?.twitter || "");
+    }
+  }, [user]);
 
   // Appearance & Theme Configuration
   const [selectedTheme, setSelectedTheme] = useState("dark");
@@ -158,8 +177,24 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveChanges = () => {
-    showToast("Changes saved successfully to your FullPrep profile!", "success");
+  const handleSaveChanges = async () => {
+    showToast("Saving changes...", "info");
+    try {
+      await AuthService.updateProfile({
+        name: displayName,
+        bio,
+        socialLinks: {
+          github,
+          linkedin,
+          twitter,
+          website
+        }
+      });
+      showToast("Changes saved successfully to your FullPrep profile!", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Failed to save profile changes.", "info");
+    }
   };
 
   const tabsList = [
@@ -435,10 +470,10 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 {[
-                  { name: "GitHub", label: "github.com/", val: "khushi-dev", icon: GithubIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/15 hover:shadow-[0_4px_12px_rgba(255,255,255,0.02)]" },
-                  { name: "LinkedIn", label: "linkedin.com/in/", val: "khushi-dev", icon: LinkedinIcon, borderClass: "hover:border-[#0a66c2]/10 dark:hover:border-[#0a66c2]/15 hover:shadow-[0_4px_12px_rgba(10,102,194,0.02)]" },
-                  { name: "Twitter/X", label: "twitter.com/", val: "khushi_dev", icon: TwitterIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/10 hover:shadow-[0_4px_12px_rgba(255,255,255,0.01)]" },
-                  { name: "LeetCode", label: "leetcode.com/", val: "khushi_dev", icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(255,106,0,0.02)]" },
+                  { name: "GitHub", label: "github.com/", val: github, setVal: setGithub, icon: GithubIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/15 hover:shadow-[0_4px_12px_rgba(255,255,255,0.02)]" },
+                  { name: "LinkedIn", label: "linkedin.com/in/", val: linkedin, setVal: setLinkedin, icon: LinkedinIcon, borderClass: "hover:border-[#0a66c2]/10 dark:hover:border-[#0a66c2]/15 hover:shadow-[0_4px_12px_rgba(10,102,194,0.02)]" },
+                  { name: "Twitter/X", label: "twitter.com/", val: twitter, setVal: setTwitter, icon: TwitterIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/10 hover:shadow-[0_4px_12px_rgba(255,255,255,0.01)]" },
+                  { name: "LeetCode", label: "leetcode.com/", val: "khushi_dev", setVal: () => {}, icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(255,106,0,0.02)]" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -451,7 +486,12 @@ export default function SettingsPage() {
                       </div>
                       <div className="flex items-center border border-slate-900/[0.08] dark:border-white/[0.06] rounded-[8px] overflow-hidden bg-white dark:bg-[#07080e]/40 px-2.5 py-1.5 h-8">
                         <span className="text-[9.5px] text-slate-400 dark:text-text-secondary/40 font-bold shrink-0">{item.label}</span>
-                        <input type="text" defaultValue={item.val} className="w-full bg-transparent text-[11px] font-medium text-[#111827] dark:text-white border-none focus:outline-none focus:ring-0 p-0 ml-1 leading-none" />
+                        <input 
+                          type="text" 
+                          value={item.val} 
+                          onChange={(e) => item.setVal(e.target.value)}
+                          className="w-full bg-transparent text-[11px] font-medium text-[#111827] dark:text-white border-none focus:outline-none focus:ring-0 p-0 ml-1 leading-none" 
+                        />
                       </div>
                     </div>
                   );

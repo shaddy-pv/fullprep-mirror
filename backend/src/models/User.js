@@ -118,6 +118,16 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
 
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
+
     // ── OAuth Provider Links ─────────────────────────────────
     // Stores provider-specific user IDs for Google / GitHub sign-in
     oauth: {

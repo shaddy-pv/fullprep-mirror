@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useDashboard } from "@/store/DashboardContext";
+import { useAuthStore } from "@/store/authStore";
 import EmailVerificationOverlay from "../auth/EmailVerificationOverlay";
 
 interface DashboardLayoutProps {
@@ -11,12 +13,24 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
   const { 
     isSidebarCollapsed, 
     setIsSidebarCollapsed, 
     isMobileSidebarOpen, 
     setIsMobileSidebarOpen 
   } = useDashboard();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex w-full h-screen bg-[#0b0f17] text-white overflow-hidden relative">

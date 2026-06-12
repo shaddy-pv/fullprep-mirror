@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import AuthCard from "@/components/auth/AuthCard";
 import AuthInput from "@/components/auth/AuthInput";
 import PasswordStrength from "@/components/auth/PasswordStrength";
 import Button from "@/components/ui/Button";
 import { useNotificationStore } from "@/store/notificationStore";
+import { AuthService } from "@/services/auth.service";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const showToast = useNotificationStore((state) => state.showToast);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || "";
+  const email = searchParams.get("email") || "";
 
   // Form State
   const [password, setPassword] = useState("");
@@ -30,8 +36,8 @@ export default function ResetPasswordPage() {
 
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     }
 
     if (!confirmPassword) {
@@ -44,21 +50,34 @@ export default function ResetPasswordPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast("Please fix the validation errors", "info");
       return;
     }
 
+    if (!token || !email) {
+      showToast("Invalid password reset token or email address.", "info");
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate password update
-    setTimeout(() => {
+    try {
+      const response = await AuthService.resetPassword({ email, token, password });
+      if (response && response.success) {
+        setSuccess(true);
+        showToast(response.message || "Password updated successfully!", "success");
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to update password. Link may be expired.", "info");
+    } finally {
       setLoading(false);
-      setSuccess(true);
-      showToast("Password updated successfully!", "success");
-    }, 1500);
+    }
   };
 
   return (
@@ -158,7 +177,7 @@ export default function ResetPasswordPage() {
               Password updated successfully!
             </span>
             <p className="text-[12.5px] text-text-secondary font-medium leading-relaxed">
-              You can now sign in with your new password. Go back to the sign in page below.
+              You will be redirected to the sign in page shortly.
             </p>
           </div>
         </div>
@@ -175,5 +194,17 @@ export default function ResetPasswordPage() {
         </Link>
       </div>
     </AuthCard>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-orange" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

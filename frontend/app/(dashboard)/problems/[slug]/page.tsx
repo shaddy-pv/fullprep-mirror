@@ -14,6 +14,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { ProblemsService } from "@/services/problems.service";
+import { SubmissionsService } from "@/services/submissions.service";
 import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -78,7 +79,8 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   
   // Console select case state
   const [selectedTestCase, setSelectedTestCase] = useState(1);
-  const [testResultState, setTestResultState] = useState<"none" | "running" | "accepted">("accepted");
+  const [testResultState, setTestResultState] = useState<"none" | "running" | "accepted" | "wrong_answer" | "compile_error" | "runtime_error">("none");
+  const [submissionDetails, setSubmissionDetails] = useState<any>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -268,10 +270,81 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
 
   const handleRunCode = () => {
     setTestResultState("running");
+    setSubmissionDetails(null);
     setTimeout(() => {
       setTestResultState("accepted");
       editorStore.setActiveTab("result");
     }, 800);
+  };
+
+  const handleSubmitCode = async () => {
+    if (!problem) return;
+    setTestResultState("running");
+    setSubmissionDetails(null);
+    editorStore.setActiveTab("result");
+
+    try {
+      // Map user language selection to backend expected values
+      // Backend: ["PYTHON3", "CPP17", "CPP20", "JAVA", "JAVASCRIPT", "C", "RUST", "GO"]
+      let mappedLang = "JAVASCRIPT";
+      const currentLang = editorStore.language;
+      if (currentLang === "python") mappedLang = "PYTHON3";
+      else if (currentLang === "cpp") mappedLang = "CPP17";
+      else if (currentLang === "java") mappedLang = "JAVA";
+      else if (currentLang === "javascript") mappedLang = "JAVASCRIPT";
+
+      // The slug serves as externalId
+      const response = await SubmissionsService.submitCode(
+        slug,
+        problem.title || "Problem",
+        code,
+        mappedLang
+      );
+
+      if (response && response.success && response.data?.submissionId) {
+        const subId = response.data.submissionId;
+
+        // Poll every 1 second
+        const intervalId = setInterval(async () => {
+          try {
+            const subRes = await SubmissionsService.getSubmissionById(subId);
+            if (subRes && subRes.success && subRes.data) {
+              const status = subRes.data.status;
+              if (status !== "PENDING" && status !== "RUNNING") {
+                clearInterval(intervalId);
+                setSubmissionDetails(subRes.data);
+                
+                // Map status
+                if (status === "ACCEPTED") {
+                  setTestResultState("accepted");
+                  showToast("Solution Accepted! 🎉 +10 XP", "success");
+                } else if (status === "WRONG_ANSWER") {
+                  setTestResultState("wrong_answer");
+                  showToast("Wrong Answer on testcase.", "info");
+                } else if (status === "COMPILE_ERROR") {
+                  setTestResultState("compile_error");
+                  showToast("Compile Error.", "info");
+                } else {
+                  setTestResultState("runtime_error");
+                  showToast("Execution failed.", "info");
+                }
+              }
+            }
+          } catch (pollErr) {
+            clearInterval(intervalId);
+            console.error("Polling submission failed:", pollErr);
+            setTestResultState("none");
+            showToast("Failed to fetch submission results.", "info");
+          }
+        }, 1000);
+      } else {
+        throw new Error("Invalid submission response.");
+      }
+    } catch (err: any) {
+      console.error("Submission failed:", err);
+      setTestResultState("none");
+      showToast(err.message || "Failed to submit code.", "info");
+    }
   };
 
   if (loadingProblem) {
@@ -419,7 +492,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                     <span>Run</span>
                   </button>
                   <button 
-                    onClick={handleRunCode}
+                    onClick={handleSubmitCode}
                     className="flex items-center gap-1.5 h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-[#ff6a00]/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30 focus:outline-none"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 stroke-[3.5]" />
@@ -463,6 +536,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
             selectedTestCase={selectedTestCase}
             setSelectedTestCase={setSelectedTestCase}
             testResultState={testResultState}
+            submissionDetails={submissionDetails}
           />
         </div>
       </div>

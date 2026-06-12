@@ -240,6 +240,7 @@ export default function AIHintsPage() {
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               }
             ]);
+
             setDryRunOutput(null);
             setVisualizeActive(false);
             showToast("New chat conversation started.", "info");

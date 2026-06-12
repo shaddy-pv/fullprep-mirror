@@ -7,6 +7,7 @@ import AuthCard from "@/components/auth/AuthCard";
 import AuthInput from "@/components/auth/AuthInput";
 import Button from "@/components/ui/Button";
 import { useNotificationStore } from "@/store/notificationStore";
+import { AuthService } from "@/services/auth.service";
 
 export default function ForgotPasswordPage() {
   const showToast = useNotificationStore((state) => state.showToast);
@@ -30,7 +31,7 @@ export default function ForgotPasswordPage() {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       showToast("Please enter a valid email", "info");
@@ -39,12 +40,17 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
 
-    // Simulate reset link delivery
-    setTimeout(() => {
+    try {
+      const response = await AuthService.forgotPassword(email);
+      if (response && response.success) {
+        setSuccess(true);
+        showToast(response.message || "Reset link sent! Please check your inbox.", "success");
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to send reset link. Please try again.", "info");
+    } finally {
       setLoading(false);
-      setSuccess(true);
-      showToast("Reset link sent! Please check your inbox.", "success");
-    }, 1500);
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   MapPin,
   Calendar,
@@ -16,6 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
+import { useAuthStore } from "@/store/authStore";
+import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────
@@ -157,11 +160,18 @@ const HexagonBadge: React.FC<HexBadgeProps> = ({ color, title, subtitle, icon: I
    ───────────────────────────────────────────── */
 
 export default function ProfilePage() {
+  const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [mounted, setMounted] = useState(false);
+  const [statsData, setStatsData] = useState<any>(null);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Settings Tab states
+  const [editName, setEditName] = useState("");
+  const [editLocation, setEditLocation] = useState("India");
+  const [editBio, setEditBio] = useState("");
+
   useEffect(() => {
     const t = setTimeout(() => {
       setMounted(true);
@@ -176,6 +186,26 @@ export default function ProfilePage() {
     }, 0);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    async function loadStats() {
+      try {
+        const stats = await AuthService.getStats();
+        if (stats) setStatsData(stats);
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    }
+    loadStats();
+  }, [mounted]);
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || "");
+      setEditBio(user.bio || "");
+    }
+  }, [user]);
 
   if (!mounted) {
     return <div className="min-h-screen bg-bg-page" />;
@@ -192,20 +222,42 @@ export default function ProfilePage() {
     { id: "settings", name: "Settings" },
   ];
 
+  const solved = statsData?.problemsSolved ?? 0;
+  const rank = statsData?.globalRank ?? "-";
+  const xp = user?.xp ?? 0;
+  const level = user?.level ?? 1;
+  const streak = user?.streak ?? 0;
+
   const statMetrics = [
-    { label: "RANKING", value: "#4,215", sub: "of 52,841 users", color: "text-white", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
-    { label: "RATING", value: "1,876", sub: "Top 8.34%", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
-    { label: "PROBLEMS SOLVED", value: "2,031", sub: "Total Problems", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
-    { label: "CONTEST RATING", value: "1,642", sub: "Top 12.12%", color: "text-[#8b5cf6]", glow: "hover:shadow-[0_0_15px_rgba(139,92,246,0.08)]" },
-    { label: "GLOBAL RANK", value: "#3,879", sub: "of 52,841 users", color: "text-[#06b6d4]", glow: "hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]" },
+    { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-white", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
+    { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
+    { label: "PROBLEMS SOLVED", value: solved.toString(), sub: "Verified solutions", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
+    { label: "GLOBAL RANK", value: rank !== "-" ? `#${rank}` : "-", sub: "On the leaderboard", color: "text-[#06b6d4]", glow: "hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]" },
   ];
 
-  const topLanguages = [
-    { name: "Python", progress: 60, icon: PythonLogo },
-    { name: "C++", progress: 25, icon: CppLogo },
-    { name: "Java", progress: 10, icon: JavaLogo },
-    { name: "JavaScript", progress: 5, icon: JavaScriptLogo },
-  ];
+  const topLanguages = statsData?.languageBreakdown && statsData.languageBreakdown.length > 0
+    ? statsData.languageBreakdown.map((l: any) => {
+        const lang = l.language;
+        const count = l.count;
+        const total = statsData.totalSubmissions || 1;
+        const progress = Math.round((count / total) * 100);
+        let icon = JavaScriptLogo;
+        if (lang.includes("PYTHON")) icon = PythonLogo;
+        else if (lang.includes("CPP") || lang.includes("C++")) icon = CppLogo;
+        else if (lang.includes("JAVA")) icon = JavaLogo;
+        
+        return {
+          name: lang.charAt(0) + lang.slice(1).toLowerCase(),
+          progress,
+          icon
+        };
+      })
+    : [
+        { name: "Python", progress: 60, icon: PythonLogo },
+        { name: "C++", progress: 25, icon: CppLogo },
+        { name: "Java", progress: 10, icon: JavaLogo },
+        { name: "JavaScript", progress: 5, icon: JavaScriptLogo },
+      ];
 
   const chartData = [
     { month: "Jan", rating: 1540 },
@@ -265,7 +317,7 @@ export default function ProfilePage() {
   const cardBase = "bg-card-bg border border-border-card rounded-[24px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.1] hover:-translate-y-[1px] transition-all duration-300 p-6 flex flex-col h-full justify-between text-text-primary";
 
   const handleEditProfile = () => {
-    showToast("Opening edit profile dashboard...", "info");
+    router.push("/settings");
   };
 
   /* ── Render ── */
@@ -280,16 +332,20 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6 min-w-0">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[28px] text-white border border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 font-sans">
-              K
-            </div>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user?.name || "User"} className="w-20 h-20 rounded-full object-cover shadow-lg shrink-0" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[28px] text-white border border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 font-sans">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
             <span className="w-4 h-4 rounded-full bg-[#10b981] border-2 border-[#0c0d16] absolute bottom-0.5 right-0.5 shadow-md shadow-[#10b981]/30" />
           </div>
 
           <div className="flex flex-col gap-2 min-w-0 justify-center text-left">
             {/* Name + Badge */}
             <div className="flex items-center gap-3">
-              <span className="text-[22px] font-bold text-text-primary tracking-[-0.02em] font-sans">Khushi</span>
+              <span className="text-[22px] font-bold text-text-primary tracking-[-0.02em] font-sans">{user?.name || "User"}</span>
               <span className="px-2.5 py-[3px] rounded-md border border-brand-orange/25 bg-brand-orange/10 text-[9px] font-bold text-brand-orange uppercase tracking-wider leading-none shadow-[0_0_8px_rgba(255,106,0,0.12)]">
                 Pro Coder
               </span>
@@ -297,7 +353,7 @@ export default function ProfilePage() {
 
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-3 text-[12px] text-text-secondary font-medium">
-              <span className="text-text-secondary font-semibold">@khushi.dev</span>
+              <span className="text-text-secondary font-semibold">@{user?.email ? user.email.split("@")[0] : "user"}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-white/[0.1] shrink-0" />
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-text-muted" />
@@ -312,7 +368,7 @@ export default function ProfilePage() {
 
             {/* Bio */}
             <p className="text-[12.5px] text-text-secondary font-normal tracking-tight leading-relaxed max-w-[500px]">
-              Passionate about solving problems and building cool things.
+              {user?.bio || "Passionate about solving problems and building cool things."}
             </p>
 
             {/* Social icons */}
@@ -507,7 +563,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                   <div className="flex flex-col gap-5 flex-1 justify-center">
-                    {topLanguages.map((lang) => {
+                    {topLanguages.map((lang: any) => {
                       const LangIcon = lang.icon;
                       return (
                         <div key={lang.name} className="flex items-center gap-3 py-1 w-full">
@@ -736,19 +792,46 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5 text-left">
                       <label className="text-[10px] text-text-secondary/60 font-medium uppercase tracking-wider leading-none mb-1">Display Name</label>
-                      <input type="text" defaultValue="Khushi" className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full transition-colors" />
+                      <input 
+                        type="text" 
+                        value={editName} 
+                        onChange={(e) => setEditName(e.target.value)} 
+                        className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full transition-colors" 
+                      />
                     </div>
                     <div className="flex flex-col gap-1.5 text-left">
                       <label className="text-[10px] text-text-secondary/60 font-medium uppercase tracking-wider leading-none mb-1">Geolocation</label>
-                      <input type="text" defaultValue="India" className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full transition-colors" />
+                      <input 
+                        type="text" 
+                        value={editLocation} 
+                        onChange={(e) => setEditLocation(e.target.value)} 
+                        className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full transition-colors" 
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5 text-left mt-1">
                     <label className="text-[10px] text-text-secondary/60 font-medium uppercase tracking-wider leading-none mb-1">Short Biography</label>
-                    <textarea defaultValue="Passionate about solving problems and building cool things." rows={2} className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full resize-none leading-relaxed transition-colors" />
+                    <textarea 
+                      value={editBio} 
+                      onChange={(e) => setEditBio(e.target.value)} 
+                      rows={2} 
+                      className="border border-white/[0.06] rounded-xl bg-[#111217]/50 px-4 py-2.5 text-[12px] font-medium text-text-primary focus:outline-none focus:border-brand-orange/30 w-full resize-none leading-relaxed transition-colors" 
+                    />
                   </div>
                   <button
-                    onClick={() => showToast("Profile settings saved successfully!", "success")}
+                    onClick={async () => {
+                      showToast("Saving settings...", "info");
+                      try {
+                        await AuthService.updateProfile({
+                          name: editName,
+                          bio: editBio
+                        });
+                        showToast("Profile settings saved successfully!", "success");
+                      } catch (err: any) {
+                        console.error(err);
+                        showToast(err.message || "Failed to save settings.", "info");
+                      }
+                    }}
                     className="bg-brand-orange hover:bg-[#e05d00] text-white rounded-xl px-5 py-2.5 text-[12px] font-semibold shadow-md shadow-[#ff6a00]/15 mt-2 self-end cursor-pointer transition-all duration-200 leading-none"
                   >
                     Save Changes

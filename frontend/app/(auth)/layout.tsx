@@ -116,7 +116,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
         {/* Top-Right Controls */}
         <div className="flex items-center gap-6 pointer-events-auto">
-          <ThemeToggle className="scale-90" />
+          <ThemeToggle />
           <Link 
             href="/" 
             className="flex items-center gap-2 text-[14px] font-semibold text-text-secondary hover:text-text-primary dark:text-[#9ca3af] dark:hover:text-white transition-colors group cursor-pointer"
@@ -276,7 +276,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         </div>
 
         {/* Right Side: Auth Card Container */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 relative z-10">
+        <div className="w-full lg:w-1/2 flex items-center justify-center pt-24 pb-12 px-6 md:px-12 relative z-10">
           
           {/* Subtle Radial Glows for Light/Dark Contexts on the right side */}
           <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] bg-gradient-to-br from-[#ffece0]/10 to-transparent dark:from-[#ff6a00]/4 dark:to-transparent rounded-full blur-[80px] pointer-events-none" />
