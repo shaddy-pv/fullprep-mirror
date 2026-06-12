@@ -23,7 +23,7 @@ export default function ChartCard() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [chartData, setChartData] = useState<any[]>(CHART_MOCK_DATA);
+  const [chartData, setChartData] = useState<any[]>([...CHART_MOCK_DATA]);
 
   useEffect(() => {
     setIsMounted(true);
