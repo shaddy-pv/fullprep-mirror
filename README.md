@@ -79,6 +79,18 @@ Follow these steps to get the frontend and backend connected and running locally
 
 ---
 
+## 📸 Screenshots
+
+| Dashboard & Profile |
+|:---:|
+| ![Dashboard](photos/Screenshot%202026-06-16%20000247.png) |
+| ![Profile](photos/Screenshot%202026-06-16%20000643.png) |
+| ![Coding Workspace](photos/Screenshot%202026-06-16%20000704.png) |
+| ![Leaderboard](photos/Screenshot%202026-06-16%20000715.png) |
+| ![Submissions](photos/Screenshot%202026-06-16%20000737.png) |
+
+---
+
 ## 📦 Deployment & Docker
 
 Refer to the [devops/](file:///C:/Users/khush/.gemini/antigravity/scratch/fullprep/devops) directory and `docker-compose.yml` configuration at the root of the project to orchestrate the services in containerized environments.
