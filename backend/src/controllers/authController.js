@@ -65,37 +65,38 @@ export const register = async (req, res) => {
 
   // ── 4. Firebase Email Verification (Hybrid) ─────────────────
   if (firebaseAdmin) {
-    try {
-      // Create user in Firebase Auth
-      await firebaseAdmin.auth().createUser({
-        uid: user._id.toString(),
-        email: user.email,
-        password: password,
-        displayName: user.name,
-      });
+    // Run in background to prevent slow Render networking from timing out the API
+    (async () => {
+      try {
+        // Create user in Firebase Auth
+        await firebaseAdmin.auth().createUser({
+          uid: user._id.toString(),
+          email: user.email,
+          password: password,
+          displayName: user.name,
+        });
 
-      // Generate verification link
-      // Redirects user back to frontend after Firebase verifies the email
-      const actionCodeSettings = {
-        url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
-      };
-      const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
+        // Generate verification link
+        const actionCodeSettings = {
+          url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
+        };
+        const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
 
-      // Send via Nodemailer
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your email for FullPrep",
-        html: `
-          <h2>Welcome to FullPrep, ${user.name}!</h2>
-          <p>Please verify your email by clicking the link below:</p>
-          <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
-          <p>Or paste this link into your browser: <br/> ${link}</p>
-        `,
-      });
-    } catch (err) {
-      console.error("Firebase Auth creation/email error:", err.message);
-      // We don't fail the registration if this fails, but they might need to request a new link later
-    }
+        // Send via Nodemailer
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your email for FullPrep",
+          html: `
+            <h2>Welcome to FullPrep, ${user.name}!</h2>
+            <p>Please verify your email by clicking the link below:</p>
+            <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
+            <p>Or paste this link into your browser: <br/> ${link}</p>
+          `,
+        });
+      } catch (err) {
+        console.error("Firebase Auth creation/email error (background):", err.message);
+      }
+    })();
   }
 
   // ── 5. Respond with token ───────────────────────────────────
