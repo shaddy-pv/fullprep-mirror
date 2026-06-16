@@ -57,10 +57,15 @@ export const register = async (req, res) => {
 
   // ── 3. Create user ──────────────────────────────────────────
   // Password is hashed by the pre-save hook in User.js
+  const verifyToken = crypto.randomBytes(32).toString("hex");
+  const hashedVerifyToken = crypto.createHash("sha256").update(verifyToken).digest("hex");
+
   const user = await User.create({
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password,
+    emailVerificationToken: hashedVerifyToken,
+    emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
   });
 
   // ── 4. Firebase Email Verification (Hybrid) ─────────────────
@@ -237,51 +242,73 @@ export const updateProfile = async (req, res) => {
 // ── @route   POST /api/auth/resend-verification
 // ── @access  Private
 export const resendVerification = async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id).select("+emailVerificationToken +emailVerificationExpires");
 
   if (user.isEmailVerified) {
     return res.status(400).json({ success: false, message: "Email is already verified." });
   }
 
-  if (!firebaseAdmin) {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[Dev Mode] Mock resend verification requested for: ${user.email}`);
-      return res.status(200).json({
-        success: true,
-        message: "[Dev Mode] Verification email resend simulated successfully!",
-      });
-    }
-    return res.status(500).json({ success: false, message: "Email verification is not configured on the server." });
-  }
-
   try {
-    const actionCodeSettings = {
-      url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
-    };
-    const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
-    
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+    user.emailVerificationToken = crypto.createHash("sha256").update(verifyToken).digest("hex");
+    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+    await user.save({ validateBeforeSave: false });
+
+    const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}&email=${encodeURIComponent(user.email)}`;
+
     const sent = await sendEmail({
       to: user.email,
-      subject: "Verify your email for FullPrep",
+      subject: "Verify your FullPrep email address",
       html: `
-        <h2>Hello ${user.name},</h2>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
+        <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;background:#0f0f1a;color:#e2e8f0;border-radius:12px;">
+          <h2 style="color:#6366f1;">Hello ${user.name},</h2>
+          <p>Click the button below to verify your email address:</p>
+          <a href="${verifyUrl}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Verify Email</a>
+          <p style="font-size:12px;color:#94a3b8;">This link expires in 24 hours.</p>
+        </div>
       `,
     });
 
-    if (!sent) {
-      throw new Error("Failed to send email");
-    }
+    if (!sent) throw new Error("SMTP send failed");
 
-    res.status(200).json({ success: true, message: "Verification email sent!" });
+    res.status(200).json({ success: true, message: "Verification email sent! Check your inbox." });
   } catch (err) {
     console.error("Resend verification error:", err.message);
-    res.status(500).json({ success: false, message: "Could not send verification email." });
+    res.status(500).json({ success: false, message: "Could not send verification email. Check SMTP settings." });
   }
 };
 
-// ── @desc    Sync verification status from Firebase
+// ── @desc    Verify email using token from link
+// ── @route   GET /api/auth/verify-email?token=...&email=...
+// ── @access  Public
+export const verifyEmail = async (req, res) => {
+  const { token, email } = req.query;
+
+  if (!token || !email) {
+    return res.status(400).json({ success: false, message: "Missing token or email." });
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    email: email.toLowerCase().trim(),
+    emailVerificationToken: hashedToken,
+    emailVerificationExpires: { $gt: Date.now() },
+  }).select("+emailVerificationToken +emailVerificationExpires");
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Verification link is invalid or has expired." });
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({ success: true, message: "Email verified successfully! You can now log in." });
+};
+
+// ── @desc    Sync verification status (token-based, no Firebase)
 // ── @route   POST /api/auth/sync-verification
 // ── @access  Private
 export const syncVerification = async (req, res) => {
@@ -291,33 +318,21 @@ export const syncVerification = async (req, res) => {
     return res.status(200).json({ success: true, message: "Already verified.", isVerified: true });
   }
 
-  if (!firebaseAdmin) {
-    if (process.env.NODE_ENV === "development") {
-      user.isEmailVerified = true;
-      await user.save({ validateBeforeSave: false });
-      return res.status(200).json({
-        success: true,
-        message: "[Dev Mode] Email successfully verified automatically!",
-        isVerified: true,
-      });
+  // Check Firebase if hybrid verification is enabled
+  if (firebaseAdmin) {
+    try {
+      const firebaseUser = await firebaseAdmin.auth().getUser(user._id.toString());
+      if (firebaseUser.emailVerified) {
+        user.isEmailVerified = true;
+        await user.save({ validateBeforeSave: false });
+        return res.status(200).json({ success: true, message: "Successfully synced verification from Firebase.", isVerified: true });
+      }
+    } catch (err) {
+      console.error("Firebase sync error:", err.message);
     }
-    return res.status(500).json({ success: false, message: "Firebase not configured." });
   }
 
-  try {
-    const fbUser = await firebaseAdmin.auth().getUserByEmail(user.email);
-    
-    if (fbUser.emailVerified) {
-      user.isEmailVerified = true;
-      await user.save({ validateBeforeSave: false });
-      return res.status(200).json({ success: true, message: "Email successfully verified!", isVerified: true });
-    }
-
-    res.status(200).json({ success: true, message: "Email not verified yet.", isVerified: false });
-  } catch (err) {
-    console.error("Sync verification error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to check verification status." });
-  }
+  res.status(200).json({ success: true, message: "Email not verified yet.", isVerified: false });
 };
 
 // ── @desc    Upsert OAuth user (Google / GitHub via NextAuth)

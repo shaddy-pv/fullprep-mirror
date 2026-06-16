@@ -51,7 +51,7 @@ export const sendTokenResponse = (user, statusCode, res, message) => {
   const cookieOptions = {
     expires: new Date(Date.now() + cookieExpiresInDays * 24 * 60 * 60 * 1000),
     httpOnly: true, // Prevents XSS access via document.cookie
-    sameSite: "strict", // CSRF protection
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Cross-domain in prod
     secure: process.env.NODE_ENV === "production", // HTTPS only in prod
   };
 

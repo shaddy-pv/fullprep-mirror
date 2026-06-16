@@ -7,6 +7,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/
 export const AuthService = {
   async getCurrentUser() {
     try {
+      if (typeof window !== "undefined" && !localStorage.getItem("fp_token")) {
+        useAuthStore.getState().setUser(null);
+        return null;
+      }
       const response = await api.get<{ success: boolean; user: any }>(`${BASE_URL}/auth/me`);
       if (response && response.success && response.user) {
         useAuthStore.getState().setUser(response.user);

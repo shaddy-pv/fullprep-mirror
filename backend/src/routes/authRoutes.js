@@ -21,6 +21,7 @@ import {
   updateProfile,
   resendVerification,
   syncVerification,
+  verifyEmail,
   oauthSignIn,
   forgotPassword,
   resetPassword,
@@ -39,6 +40,7 @@ router.post("/logout", logout);
 router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.get("/verify-email", verifyEmail);  // Email verification link handler
 
 // ── Private Routes ────────────────────────────────────────────────────────────
 

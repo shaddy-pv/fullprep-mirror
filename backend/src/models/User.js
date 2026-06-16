@@ -128,6 +128,16 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    emailVerificationToken: {
+      type: String,
+      select: false,
+    },
+
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+    },
+
     // ── OAuth Provider Links ─────────────────────────────────
     // Stores provider-specific user IDs for Google / GitHub sign-in
     oauth: {
@@ -151,8 +161,8 @@ userSchema.index({ xp: -1 }); // Leaderboard queries
 // ── Pre-save Hook: Hash Password ──────────────────────────────────────────────
 
 userSchema.pre("save", async function (next) {
-  // Only hash when password field is new or modified
-  if (!this.isModified("password")) return next();
+  // Only hash when password field is new or modified, AND actually exists (OAuth users have no password)
+  if (!this.isModified("password") || !this.password) return next();
 
   const salt = await bcrypt.genSalt(12); // Cost factor 12 — good security/perf balance
   this.password = await bcrypt.hash(this.password, salt);

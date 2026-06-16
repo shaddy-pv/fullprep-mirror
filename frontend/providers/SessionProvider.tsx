@@ -64,7 +64,12 @@ function SessionSync({ children }: { children: React.ReactNode }) {
 
         // ── Case 2: Regular email/password session ────────────────────────
         // Token is already in localStorage — validate it against the backend
-        await AuthService.getCurrentUser();
+        const token = typeof window !== "undefined" ? localStorage.getItem("fp_token") : null;
+        if (token) {
+          await AuthService.getCurrentUser();
+        } else {
+          setUser(null);
+        }
       } catch {
         // Session is invalid or expired — clear state
         setUser(null);
