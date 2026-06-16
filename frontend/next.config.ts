@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
   env: {
-    // Guarantee the production API URL is always set correctly.
-    // Vercel env var takes priority; falls back to the Render URL.
-    NEXT_PUBLIC_API_BASE_URL:
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://fullprep-backend.onrender.com/api",
+    // In production, always use the Render backend.
+    // In development, use localhost.
+    NEXT_PUBLIC_API_BASE_URL: isProd
+      ? "https://fullprep-backend.onrender.com/api"
+      : "http://localhost:5000/api",
   },
 };
 
