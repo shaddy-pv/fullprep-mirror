@@ -68,59 +68,46 @@ export const register = async (req, res) => {
     emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
   });
 
-  // ── 4. Firebase Email Verification (Hybrid) ─────────────────
-  if (firebaseAdmin) {
-    // Run in background to prevent slow Render networking from timing out the API
-    (async () => {
-      try {
-        // Create user in Firebase Auth
-        await firebaseAdmin.auth().createUser({
-          uid: user._id.toString(),
-          email: user.email,
-          password: password,
-          displayName: user.name,
-        });
+  // ── 4. Send Verification Email ───────────────────────────────
+  // Strategy: Try Nodemailer token-based verification (reliable).
+  // Also attempt to create Firebase Auth user in background for future hybrid use.
+  {
+    const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}&email=${encodeURIComponent(user.email)}`;
+    const verificationHtml = `
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;background:#0f0f1a;color:#e2e8f0;border-radius:12px;">
+        <h2 style="color:#6366f1;">Welcome to FullPrep, ${user.name}!</h2>
+        <p>Thank you for signing up. Please verify your email address to unlock your dashboard.</p>
+        <a href="${verifyUrl}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Verify Email</a>
+        <p style="font-size:12px;color:#94a3b8;">This link expires in 24 hours. If you did not sign up, ignore this email.</p>
+      </div>
+    `;
 
-        // Generate verification link
-        const actionCodeSettings = {
-          url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/login?verified=true`,
-        };
-        const link = await firebaseAdmin.auth().generateEmailVerificationLink(user.email, actionCodeSettings);
-
-        // Send via Nodemailer
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your email for FullPrep",
-          html: `
-            <h2>Welcome to FullPrep, ${user.name}!</h2>
-            <p>Please verify your email by clicking the link below:</p>
-            <a href="${link}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:5px;">Verify Email</a>
-            <p>Or paste this link into your browser: <br/> ${link}</p>
-          `,
-        });
-      } catch (err) {
-        console.error("Firebase Auth creation/email error (background):", err.message);
-      }
-    })();
-  } else {
-    // Fallback: Send standard Nodemailer verification link
     try {
-      const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}&email=${encodeURIComponent(user.email)}`;
-      await sendEmail({
+      const sent = await sendEmail({
         to: user.email,
         subject: "Verify your FullPrep email address",
-        html: `
-          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;background:#0f0f1a;color:#e2e8f0;border-radius:12px;">
-            <h2 style="color:#6366f1;">Welcome to FullPrep, ${user.name}!</h2>
-            <p>Thank you for signing up. Please verify your email address to unlock your dashboard.</p>
-            <a href="${verifyUrl}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Verify Email</a>
-            <p style="font-size:12px;color:#94a3b8;">This link expires in 24 hours. If you did not sign up, ignore this email.</p>
-          </div>
-        `,
+        html: verificationHtml,
       });
-      console.log(`✉️  Fallback verification email sent to ${user.email}`);
+      if (sent) {
+        console.log(`✉️  Verification email sent to ${user.email}`);
+      } else {
+        console.error(`❌  sendEmail returned false for ${user.email} — check SMTP_USER/SMTP_PASS`);
+      }
     } catch (err) {
-      console.error("Fallback verification email error:", err.message);
+      console.error("Verification email error:", err.message);
+    }
+
+    // Create Firebase Auth user in background (non-blocking, for hybrid sync)
+    if (firebaseAdmin) {
+      firebaseAdmin.auth().createUser({
+        uid: user._id.toString(),
+        email: user.email,
+        password: password,
+        displayName: user.name,
+      }).catch((err) => {
+        // Silently handle — Firebase user creation is optional
+        console.warn("Firebase Auth user creation (background):", err.message);
+      });
     }
   }
 
