@@ -102,6 +102,26 @@ export const register = async (req, res) => {
         console.error("Firebase Auth creation/email error (background):", err.message);
       }
     })();
+  } else {
+    // Fallback: Send standard Nodemailer verification link
+    try {
+      const verifyUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/verify-email?token=${verifyToken}&email=${encodeURIComponent(user.email)}`;
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your FullPrep email address",
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:32px;background:#0f0f1a;color:#e2e8f0;border-radius:12px;">
+            <h2 style="color:#6366f1;">Welcome to FullPrep, ${user.name}!</h2>
+            <p>Thank you for signing up. Please verify your email address to unlock your dashboard.</p>
+            <a href="${verifyUrl}" style="display:inline-block;margin:24px 0;padding:12px 28px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Verify Email</a>
+            <p style="font-size:12px;color:#94a3b8;">This link expires in 24 hours. If you did not sign up, ignore this email.</p>
+          </div>
+        `,
+      });
+      console.log(`✉️  Fallback verification email sent to ${user.email}`);
+    } catch (err) {
+      console.error("Fallback verification email error:", err.message);
+    }
   }
 
   // ── 5. Respond with token ───────────────────────────────────
