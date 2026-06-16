@@ -7,10 +7,16 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/
 export const AuthService = {
   async getCurrentUser() {
     try {
-      if (typeof window !== "undefined" && !localStorage.getItem("fp_token")) {
-        useAuthStore.getState().setUser(null);
-        return null;
+      if (typeof window !== "undefined") {
+        const storedToken = localStorage.getItem("fp_token");
+        // Robust check to avoid sending "null", "undefined", or empty/whitespace tokens
+        if (!storedToken || storedToken === "null" || storedToken === "undefined" || storedToken.trim() === "") {
+          localStorage.removeItem("fp_token");
+          useAuthStore.getState().setUser(null);
+          return null;
+        }
       }
+
       const response = await api.get<{ success: boolean; user: any }>(`${BASE_URL}/auth/me`);
       if (response && response.success && response.user) {
         useAuthStore.getState().setUser(response.user);
@@ -18,8 +24,16 @@ export const AuthService = {
       }
       useAuthStore.getState().setUser(null);
       return null;
-    } catch (error) {
-      console.warn("Failed to fetch current user profile:", error);
+    } catch (error: any) {
+      // 401 Unauthorized is expected if the token is expired or invalid.
+      // We suppress the console warning for 401s to keep the browser console clean.
+      if (error?.status !== 401) {
+        console.warn("Failed to fetch current user profile:", error);
+      }
+      
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("fp_token");
+      }
       useAuthStore.getState().setUser(null);
       return null;
     }
