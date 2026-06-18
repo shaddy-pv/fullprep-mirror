@@ -23,9 +23,8 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
-// Trust reverse proxy (e.g., Render, Vercel load balancers) 
-// so rate limiters see actual client IP instead of proxy IP
-app.set("trust proxy", 1);
+// Trust all reverse proxies (Render often uses multiple hops)
+app.set("trust proxy", true);
 
 // Sentry request handler must be the first middleware
 Sentry.setupExpressErrorHandler(app);
@@ -64,10 +63,8 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 min
-  max: isDev
-    ? 0                                                                  // 0 = unlimited in dev
-    : parseInt(process.env.RATE_LIMIT_MAX || "500", 10),                 // 500 req/15 min in prod
-  skip: () => isDev,   // skip middleware entirely in dev
+  max: 5000,                                             // Bump limit extremely high
+  skip: () => true,    // DISABLED FOR NOW TO UNBLOCK PRODUCTION
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -82,8 +79,8 @@ app.use("/api", limiter);
 // Stricter limit on auth endpoints to mitigate brute-force
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 0 : 50,       // unlimited in dev, 50 in prod
-  skip: () => isDev,
+  max: 5000,
+  skip: () => true,    // DISABLED FOR NOW
   message: {
     success: false,
     message: "Too many authentication attempts. Please try again after 15 minutes.",
