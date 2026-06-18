@@ -15,6 +15,7 @@
  */
 
 import Problem from "../models/Problem.js";
+import User from "../models/User.js";
 import * as codnite from "../utils/codniteService.js";
 
 // ── Cache TTL ─────────────────────────────────────────────────────────────────
@@ -633,5 +634,73 @@ export const deleteProblem = async (req, res) => {
     success: true,
     message: `Problem "${problem.name}" has been deactivated.`,
     data:    { id: problem.externalId, isActive: false },
+  });
+};
+
+// ── @desc    Toggle problem bookmark for current user
+// ── @route   POST /api/problems/:id/bookmark
+// ── @access  Private
+export const toggleBookmark = async (req, res) => {
+  const { id } = req.params;
+
+  const problem = await Problem.findOne({ externalId: id, isActive: true });
+  if (!problem) {
+    return res.status(404).json({
+      success: false,
+      message: `Problem "${id}" not found.`,
+    });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found.",
+    });
+  }
+
+  if (!user.bookmarks) {
+    user.bookmarks = [];
+  }
+
+  const isBookmarked = user.bookmarks.includes(problem.externalId);
+  if (isBookmarked) {
+    user.bookmarks = user.bookmarks.filter((b) => b !== problem.externalId);
+  } else {
+    user.bookmarks.push(problem.externalId);
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: isBookmarked ? "Bookmark removed." : "Problem bookmarked.",
+    isBookmarked: !isBookmarked,
+    bookmarks: user.bookmarks,
+  });
+};
+
+// ── @desc    Get user's bookmarked problems
+// ── @route   GET /api/problems/bookmarks
+// ── @access  Private
+export const getBookmarkedProblems = async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found.",
+    });
+  }
+
+  const bookmarkIds = user.bookmarks || [];
+  const problems = await Problem.find({
+    externalId: { $in: bookmarkIds },
+    isActive: true,
+  }).select("-description -publicTests -privateTests -generatedTests -solutions -incorrectSolutions");
+
+  res.status(200).json({
+    success: true,
+    message: "Bookmarked problems fetched successfully.",
+    data: problems,
   });
 };

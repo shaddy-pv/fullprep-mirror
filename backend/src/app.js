@@ -19,6 +19,7 @@ import authRoutes       from "./routes/authRoutes.js";
 import healthRoutes    from "./routes/healthRoutes.js";
 import problemRoutes   from "./routes/problemRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
@@ -52,10 +53,17 @@ app.use(
 );
 
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
+// Skip rate limiting in development — hot reloads burn through limits fast.
+// Only enforce in production where real abuse is possible.
+
+const isDev = process.env.NODE_ENV !== "production";
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 min
-  max: parseInt(process.env.RATE_LIMIT_MAX || "100", 10),
+  max: isDev
+    ? 0                                                                  // 0 = unlimited in dev
+    : parseInt(process.env.RATE_LIMIT_MAX || "500", 10),                 // 500 req/15 min in prod
+  skip: () => isDev,   // skip middleware entirely in dev
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -70,7 +78,8 @@ app.use("/api", limiter);
 // Stricter limit on auth endpoints to mitigate brute-force
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  max: isDev ? 0 : 50,       // unlimited in dev, 50 in prod
+  skip: () => isDev,
   message: {
     success: false,
     message: "Too many authentication attempts. Please try again after 15 minutes.",
@@ -107,6 +116,7 @@ app.use("/api",          healthRoutes);
 app.use("/api/auth",     authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

@@ -63,6 +63,31 @@ const TwitterIcon = ({ className = "w-4 h-4 shrink-0" }: { className?: string })
   </svg>
 );
 
+const parseUserAgent = (ua: string) => {
+  if (!ua || ua.includes("Unknown")) return "Unknown Device";
+  if (ua.toLowerCase().includes("node") || ua.toLowerCase().includes("postman")) return "System/API Client";
+  
+  let browser = "Unknown Browser";
+  if (ua.includes("Firefox") || ua.includes("FxiOS")) browser = "Mozilla Firefox";
+  else if (ua.includes("SamsungBrowser")) browser = "Samsung Internet";
+  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+  else if (ua.includes("Trident") || ua.includes("MSIE")) browser = "Internet Explorer";
+  else if (ua.includes("Edge") || ua.includes("Edg/")) browser = "Microsoft Edge";
+  else if (ua.includes("Chrome") || ua.includes("CriOS")) browser = "Google Chrome";
+  else if (ua.includes("Safari")) browser = "Apple Safari";
+
+  let os = "Unknown OS";
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac OS X") && !ua.includes("iPhone") && !ua.includes("iPad")) os = "macOS";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("Linux")) os = "Linux";
+  else if (ua.includes("iPhone")) os = "iPhone";
+  else if (ua.includes("iPad")) os = "iPad";
+
+  if (browser === "Unknown Browser" && os === "Unknown OS") return ua;
+  return `${browser} on ${os}`;
+};
+
 export default function SettingsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
   const { user } = useAuthStore();
@@ -74,31 +99,25 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [location, setLocation] = useState("India");
+  const [location, setLocation] = useState("");
   const [website, setWebsite] = useState("");
 
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [twitter, setTwitter] = useState("");
+  const [leetcode, setLeetcode] = useState("");
+  const [backupEmail, setBackupEmail] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      setDisplayName(user.name || "");
-      setUsername(user.email ? user.email.split("@")[0] : "coder");
-      setBio(user.bio || "");
-      setWebsite(user.socialLinks?.website || "");
-      setGithub(user.socialLinks?.github || "");
-      setLinkedin(user.socialLinks?.linkedin || "");
-      setTwitter(user.socialLinks?.twitter || "");
-    }
-  }, [user]);
+  // Change Password States
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Appearance & Theme Configuration
-  const [selectedTheme, setSelectedTheme] = useState("dark");
-  const [selectedAccent, setSelectedAccent] = useState("orange");
-  const [compactMode, setCompactMode] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [uiAnimations, setUiAnimations] = useState(true);
+  // Preferences States
+  const [defaultLanguage, setDefaultLanguage] = useState("Python");
+  const [editorThemeSetting, setEditorThemeSetting] = useState("Monaco Dark Space");
+  const [tabSpacingSetting, setTabSpacingSetting] = useState("2 Spaces");
+  const [diagnosticsSetting, setDiagnosticsSetting] = useState("Enabled (Full Diagnostic)");
 
   // Profile Toggles
   const [visibility, setVisibility] = useState({
@@ -121,6 +140,83 @@ export default function SettingsPage() {
 
   // Security Toggles
   const [twoFactor, setTwoFactor] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.name || "");
+      setUsername(user.email ? user.email.split("@")[0] : "coder");
+      setBio(user.bio || "");
+      setLocation(user.location || "");
+      setWebsite(user.socialLinks?.website || "");
+      setGithub(user.socialLinks?.github || "");
+      setLinkedin(user.socialLinks?.linkedin || "");
+      setTwitter(user.socialLinks?.twitter || "");
+      setLeetcode(user.socialLinks?.leetcode || "");
+      setBackupEmail(user.backupEmail || "");
+
+      if (user.visibility) {
+        setVisibility((v) => ({ ...v, ...user.visibility }));
+      }
+      if (user.notifs) {
+        setNotifs((n) => ({ ...n, ...user.notifs }));
+      }
+      if (user.twoFactor !== undefined) {
+        setTwoFactor(user.twoFactor);
+      }
+    }
+  }, [user]);
+
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("fullprep_default_language");
+      if (savedLang) {
+        const langMap: Record<string, string> = { "python": "Python", "cpp": "C++", "java": "Java", "javascript": "TypeScript", "go": "Go" };
+        setDefaultLanguage(langMap[savedLang] || "Python");
+      }
+      
+      const rawSettings = localStorage.getItem("fullprep_editor_settings");
+      if (rawSettings) {
+        try {
+          const parsed = JSON.parse(rawSettings);
+          if (parsed.tabSize === 2) setTabSpacingSetting("2 Spaces");
+          else if (parsed.tabSize === 4) setTabSpacingSetting("4 Spaces");
+          
+          if (parsed.editorTheme === "vs-dark") setEditorThemeSetting("Monaco Dark Space");
+          else if (parsed.editorTheme === "hc-black") setEditorThemeSetting("Monaco Midnight Velvet");
+          
+          if (parsed.diagnostics === false) setDiagnosticsSetting("Disabled");
+          else setDiagnosticsSetting("Enabled (Full Diagnostic)");
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Appearance & Theme Configuration
+  const [selectedTheme, setSelectedTheme] = useState("dark");
+  const [selectedAccent, setSelectedAccent] = useState("orange");
+  const [compactMode, setCompactMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [uiAnimations, setUiAnimations] = useState(true);
+
+  // Connected Sessions
+  const [sessions, setSessions] = useState<any[]>([]);
+
+  const fetchSessions = async () => {
+    try {
+      const data = await AuthService.getSessions();
+      setSessions(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (mounted) {
+      fetchSessions();
+    }
+  }, [mounted]);
+
   const [expandedSection, setExpandedSection] = useState<string>("profile");
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -150,7 +246,7 @@ export default function SettingsPage() {
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
-    const sections = ["profile", "account", "preferences", "notifications", "privacy", "connected", "appearance", "billing", "data", "danger"];
+    const sections = ["profile", "account", "preferences", "privacy", "connected", "appearance", "billing", "data", "danger"];
     
     sections.forEach((id) => {
       const el = document.getElementById(id);
@@ -170,7 +266,11 @@ export default function SettingsPage() {
     isScrollingRef.current = true;
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Use manual offset instead of scrollIntoView to keep the navbar visible.
+      // Navbar is 76px tall; add 20px breathing room = 96px total offset.
+      const NAVBAR_OFFSET = 96;
+      const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_OFFSET;
+      window.scrollTo({ top, behavior: "smooth" });
       setTimeout(() => {
         isScrollingRef.current = false;
       }, 700);
@@ -187,9 +287,29 @@ export default function SettingsPage() {
           github,
           linkedin,
           twitter,
-          website
-        }
+          website,
+          leetcode
+        },
+        location,
+        backupEmail,
+        notifs,
+        visibility,
+        twoFactor
       });
+
+      // Save preferences to localStorage
+      if (typeof window !== "undefined") {
+        const langMap: Record<string, string> = { "Python": "python", "C++": "cpp", "Java": "java", "TypeScript": "javascript", "Go": "go" };
+        localStorage.setItem("fullprep_default_language", langMap[defaultLanguage] || "python");
+
+        const settingsToSave = {
+          tabSize: tabSpacingSetting === "2 Spaces" ? 2 : 4,
+          editorTheme: editorThemeSetting === "Monaco Midnight Velvet" ? "hc-black" : "vs-dark",
+          diagnostics: diagnosticsSetting === "Enabled (Full Diagnostic)"
+        };
+        localStorage.setItem("fullprep_editor_settings", JSON.stringify(settingsToSave));
+      }
+
       showToast("Changes saved successfully to your FullPrep profile!", "success");
     } catch (err: any) {
       console.error(err);
@@ -197,11 +317,36 @@ export default function SettingsPage() {
     }
   };
 
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showToast("Please fill in all password fields.", "info");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast("New passwords do not match.", "info");
+      return;
+    }
+    if (newPassword.length < 8) {
+      showToast("New password must be at least 8 characters long.", "info");
+      return;
+    }
+    showToast("Updating password...", "info");
+    try {
+      await AuthService.changePassword(currentPassword, newPassword);
+      showToast("Password updated successfully!", "success");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Failed to update password.", "info");
+    }
+  };
+
   const tabsList = [
     { id: "profile", name: "Profile Settings", icon: User },
     { id: "account", name: "Account Settings", icon: Settings },
     { id: "preferences", name: "Preferences", icon: Sliders },
-    { id: "notifications", name: "Notifications", icon: Bell },
     { id: "privacy", name: "Privacy & Security", icon: Shield },
     { id: "connected", name: "Connected Accounts", icon: Link2 },
     { id: "appearance", name: "Appearance", icon: Palette },
@@ -333,28 +478,8 @@ export default function SettingsPage() {
           {/* ──────────────────────────────────────────
               PROFILE SETTINGS SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "profile" && (
           <section id="profile" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("profile")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <User className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Profile Settings</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "profile" ? "Manage your name, biography, locations, and social portfolios." : `Khushi (${username}) • ${location}`}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "profile" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "profile" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -373,7 +498,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col items-center gap-3.5 shrink-0 mx-auto md:mx-0">
                   <div className="relative group">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
-                      <span className="group-hover:scale-95 transition-transform duration-300">K</span>
+                      <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>
                     </div>
                     <span className="w-4 h-4 rounded-full bg-[#10b981] border-2 border-white dark:border-[#0d0e19] absolute bottom-1 right-1 shadow-md shadow-[#10b981]/30 animate-pulse" />
                   </div>
@@ -396,7 +521,7 @@ export default function SettingsPage() {
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         className={inputStyle}
-                        placeholder="Khushi"
+                        placeholder="Your name"
                       />
                     </div>
                     <div className="flex flex-col text-left">
@@ -406,7 +531,7 @@ export default function SettingsPage() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className={inputStyle}
-                        placeholder="@khushi.dev"
+                        placeholder="your_username"
                       />
                     </div>
                   </div>
@@ -447,7 +572,7 @@ export default function SettingsPage() {
                           value={website}
                           onChange={(e) => setWebsite(e.target.value)}
                           className={cn(inputStyle, "pl-9")}
-                          placeholder="e.g., https://khushi.dev"
+                          placeholder="e.g., https://yourwebsite.dev"
                         />
                       </div>
                     </div>
@@ -473,7 +598,7 @@ export default function SettingsPage() {
                   { name: "GitHub", label: "github.com/", val: github, setVal: setGithub, icon: GithubIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/15 hover:shadow-[0_4px_12px_rgba(255,255,255,0.02)]" },
                   { name: "LinkedIn", label: "linkedin.com/in/", val: linkedin, setVal: setLinkedin, icon: LinkedinIcon, borderClass: "hover:border-[#0a66c2]/10 dark:hover:border-[#0a66c2]/15 hover:shadow-[0_4px_12px_rgba(10,102,194,0.02)]" },
                   { name: "Twitter/X", label: "twitter.com/", val: twitter, setVal: setTwitter, icon: TwitterIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/10 hover:shadow-[0_4px_12px_rgba(255,255,255,0.01)]" },
-                  { name: "LeetCode", label: "leetcode.com/", val: "khushi_dev", setVal: () => {}, icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(255,106,0,0.02)]" },
+                  { name: "LeetCode", label: "leetcode.com/", val: leetcode, setVal: setLeetcode, icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(255,106,0,0.02)]" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -499,35 +624,14 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               ACCOUNT SETTINGS SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "account" && (
           <section id="account" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("account")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Settings className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Account Settings</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "account" ? "Configure your primary contacts, security emails, and secure passwords." : "Primary: khushi@fullprep.dev • Password: Set"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "account" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "account" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -544,11 +648,17 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                   <div className="flex flex-col text-left">
                     <label className={labelStyle}>Primary Contact Email</label>
-                    <input type="email" defaultValue="khushi@fullprep.dev" className={cn(inputStyle, "opacity-65 select-none")} disabled />
+                    <input type="email" value={user?.email || ""} className={cn(inputStyle, "opacity-65 select-none")} disabled />
                   </div>
                   <div className="flex flex-col text-left">
                     <label className={labelStyle}>Backup Recovery Email</label>
-                    <input type="email" placeholder="backup-recovery@email.com" className={inputStyle} />
+                    <input 
+                      type="email" 
+                      placeholder="backup-recovery@email.com" 
+                      value={backupEmail}
+                      onChange={(e) => setBackupEmail(e.target.value)}
+                      className={inputStyle} 
+                    />
                   </div>
                 </div>
 
@@ -560,19 +670,37 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-1.5">
                     <div className="flex flex-col text-left">
                       <label className={labelStyle}>Current Password</label>
-                      <input type="password" placeholder="••••••••" className={inputStyle} />
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
                     </div>
                     <div className="flex flex-col text-left">
                       <label className={labelStyle}>New Secure Password</label>
-                      <input type="password" placeholder="••••••••" className={inputStyle} />
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
                     </div>
                     <div className="flex flex-col text-left">
                       <label className={labelStyle}>Confirm New Password</label>
-                      <input type="password" placeholder="••••••••" className={inputStyle} />
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
                     </div>
                   </div>
                   <button
-                    onClick={() => showToast("Password updated successfully!", "success")}
+                    onClick={handleUpdatePassword}
                     className="bg-brand-orange/10 hover:bg-brand-orange/15 dark:bg-brand-orange/15 dark:hover:bg-brand-orange/20 border border-brand-orange/20 dark:border-brand-orange/30 text-brand-orange text-[11px] font-bold rounded-lg px-4 py-2 self-end transition-all duration-200 cursor-pointer h-[32px] leading-none"
                   >
                     Change Password
@@ -581,35 +709,96 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
+
+          {/* ──────────────────────────────────────────
+          <section id="account" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden flex flex-col gap-4 w-full"
+                >
+                  <div className={cardBase}>
+              <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                <Settings className="w-4 h-4 text-brand-orange" />
+                <span>Account Credentials</span>
+              </h3>
+              <div className="flex flex-col gap-6 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  <div className="flex flex-col text-left">
+                    <label className={labelStyle}>Primary Contact Email</label>
+                    <input type="email" value={user?.email || ""} className={cn(inputStyle, "opacity-65 select-none")} disabled />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <label className={labelStyle}>Backup Recovery Email</label>
+                    <input 
+                      type="email" 
+                      placeholder="backup-recovery@email.com" 
+                      value={backupEmail}
+                      onChange={(e) => setBackupEmail(e.target.value)}
+                      className={inputStyle} 
+                    />
+                  </div>
+                </div>
+
+                <div className="border border-white/[0.04] rounded-xl p-4 bg-slate-900/[0.02] dark:bg-[#111217]/15 flex flex-col gap-4">
+                  <h4 className="text-[12.5px] font-bold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-brand-orange" />
+                    <span>Change Secure Password</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-1.5">
+                    <div className="flex flex-col text-left">
+                      <label className={labelStyle}>Current Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <label className={labelStyle}>New Secure Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <label className={labelStyle}>Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={inputStyle} 
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUpdatePassword}
+                    className="bg-brand-orange/10 hover:bg-brand-orange/15 dark:bg-brand-orange/15 dark:hover:bg-brand-orange/20 border border-brand-orange/20 dark:border-brand-orange/30 text-brand-orange text-[11px] font-bold rounded-lg px-4 py-2 self-end transition-all duration-200 cursor-pointer h-[32px] leading-none"
+                  >
+                    Change Password
+                  </button>
+                </div>
+              </div>
+            </div>
+                </motion.div>
+          </section>
+          )}
 
           {/* ──────────────────────────────────────────
               PREFERENCES SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "preferences" && (
           <section id="preferences" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("preferences")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Sliders className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Preferences</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "preferences" ? "Adjust default Monaco editor languages, themes, diagnostics, and indent spacings." : "Default Language: Python • Indent: 2 Spaces"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "preferences" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "preferences" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -624,147 +813,45 @@ export default function SettingsPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                 {[
-                  { label: "Default Programming Language", opt: ["Python", "C++", "Java", "TypeScript", "Go"] },
-                  { label: "Practice Workspace Theme", opt: ["Monaco Dark Space", "Monaco Midnight Velvet", "Monaco Cyberpunk"] },
-                  { label: "Editor Tab Indent Spacing", opt: ["2 Spaces", "4 Spaces", "Tabs (Standard)"] },
-                  { label: "Diagnostics & Autocomplete", opt: ["Enabled (Full Diagnostic)", "Disabled"] },
+                  { label: "Default Programming Language", opt: ["Python", "C++", "Java", "TypeScript", "Go"], val: defaultLanguage, setVal: setDefaultLanguage },
+                  { label: "Practice Workspace Theme", opt: ["Coming Soon"], val: "Coming Soon", setVal: () => {}, disabled: true },
+                  { label: "Editor Tab Indent Spacing", opt: ["2 Spaces", "4 Spaces"], val: tabSpacingSetting, setVal: setTabSpacingSetting },
+                  { label: "Diagnostics & Autocomplete", opt: ["Coming Soon"], val: "Coming Soon", setVal: () => {}, disabled: true },
                 ].map((item, idx) => (
                   <div key={idx} className="flex flex-col text-left">
                     <label className={labelStyle}>{item.label}</label>
                     <div className="relative mt-2">
-                      <select className={cn(
-                        "w-full border border-slate-900/[0.08] dark:border-white/[0.05] rounded-xl bg-white dark:bg-[#0a0b12]/60 px-3.5 text-sm font-medium text-[#111827] dark:text-white focus:outline-none appearance-none h-10 leading-none cursor-pointer",
-                        activeAccent.focusGlow
-                      )}>
+                      <select 
+                        value={item.val}
+                        onChange={(e) => item.setVal(e.target.value)}
+                        disabled={item.disabled}
+                        className={cn(
+                          "w-full border border-slate-900/[0.08] dark:border-white/[0.05] rounded-xl bg-white dark:bg-[#0a0b12]/60 px-3.5 text-sm font-medium text-[#111827] dark:text-white focus:outline-none appearance-none h-10 leading-none cursor-pointer",
+                          activeAccent.focusGlow,
+                          item.disabled && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
                         {item.opt.map((o) => (
                           <option key={o} value={o} className="bg-white text-[#111827] dark:bg-[#111217] dark:text-white">{o}</option>
                         ))}
                       </select>
-                      <ChevronDown className="w-4 h-4 absolute right-4 top-[12px] text-slate-400 dark:text-text-secondary/50 pointer-events-none" />
+                      <ChevronDown className={cn("w-4 h-4 absolute right-4 top-[12px] pointer-events-none", item.disabled ? "text-slate-400/50" : "text-slate-400 dark:text-text-secondary/50")} />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
-          {/* ──────────────────────────────────────────
-              NOTIFICATIONS SECTION
-              ────────────────────────────────────────── */}
-          <section id="notifications" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("notifications")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Bell className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Notifications</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "notifications" ? "Configure triggers for contests, coding streaks, badge achievements, and syncing reports." : "Contest Alerts: On • Streak Reminders: On"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "notifications" && "rotate-180")} />
-            </div>
 
-            <AnimatePresence initial={false}>
-              {expandedSection === "notifications" && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full"
-                >
-                  <div className={cardBase}>
-              <div>
-                <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-brand-orange" />
-                  <span>Notification Preferences</span>
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-white/60 font-medium">
-                  Configure delivery channels for practice triggers, streak alerts and milestones.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3.5 w-full mt-5">
-                {[
-                  { id: "reminders", label: "Contest Reminders", desc: "Receive alert notifications before enrolled coding contests begin.", icon: Trophy },
-                  { id: "alerts", label: "Daily Streak Alerts", desc: "Help maintain daily coding streaks with friendly alert ping notifications.", icon: Zap },
-                  { id: "requests", label: "Friend Requests", desc: "Notify when other developers request to sync connections with you.", icon: User },
-                  { id: "reports", label: "Weekly Performance Reports", desc: "Receive summary reports showing solved difficulty ratings ratios.", icon: Activity },
-                  { id: "unlocks", label: "Milestone Badge Unlocks", desc: "Get notifications upon unlocking glowing hexagon showcase badges.", icon: Award },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isChecked = notifs[item.id as keyof typeof notifs];
-                  return (
-                    <div key={item.id} className="border border-slate-900/[0.06] dark:border-white/[0.04] bg-slate-900/[0.02] dark:bg-[#111217]/15 rounded-xl p-4 flex items-center justify-between gap-4 transition-all duration-300 hover:border-slate-900/10 dark:hover:border-white/[0.08]">
-                      <div className="flex items-center gap-3.5 text-left">
-                        <div className="w-9 h-9 rounded-lg bg-slate-900/5 dark:bg-white/[0.02] border border-slate-900/[0.06] dark:border-white/[0.06] flex items-center justify-center shrink-0">
-                          <Icon className="w-4.5 h-4.5 text-slate-400 dark:text-[#9ca3af]" />
-                        </div>
-                        <div className="flex flex-col leading-none text-left">
-                          <span className="text-[13px] font-bold text-[#111827] dark:text-white tracking-tight leading-none">{item.label}</span>
-                          <span className="text-[11px] text-slate-500 dark:text-text-secondary/70 font-medium leading-none mt-2">{item.desc}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setNotifs(prev => ({ ...prev, [item.id]: !prev[item.id as keyof typeof notifs] }));
-                          showToast(`${item.label} setting updated.`, "info");
-                        }}
-                        className={cn(
-                          "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-pointer",
-                          isChecked ? "bg-brand-orange shadow-[0_0_6px_rgba(255,106,0,0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
-                        )}
-                      >
-                        <span className={cn(
-                          "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute",
-                          isChecked ? "left-[18px]" : "left-0.5"
-                        )} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </section>
 
           {/* ──────────────────────────────────────────
               PRIVACY & SECURITY SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "privacy" && (
           <section id="privacy" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("privacy")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Privacy & Security</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "privacy" ? "Set profile visibility toggles, monitor connected active sessions, and configure two-factor authentication." : `Two-Factor: ${twoFactor ? "Enabled" : "Disabled"} • Active Sessions: 2`}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "privacy" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "privacy" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -772,37 +859,7 @@ export default function SettingsPage() {
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden flex flex-col gap-4 w-full"
                 >
-                  {/* Card 1: Two-Factor Auth */}
-                  <div className={cardBase}>
-              <div className="flex items-center justify-between gap-4 w-full">
-                <div className="flex items-start gap-4.5 text-left">
-                  <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col leading-none">
-                    <span className="text-[14px] font-bold text-[#111827] dark:text-white tracking-tight leading-none">Two-Factor Authentication (2FA)</span>
-                    <span className="text-[11.5px] text-slate-500 dark:text-[#9ca3af]/60 mt-2 leading-relaxed">
-                      Reinforce account security using a dynamic hardware token or mobile authenticator.
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setTwoFactor(!twoFactor);
-                    showToast(`Two-factor auth turned ${!twoFactor ? "ON" : "OFF"}.`, !twoFactor ? "success" : "info");
-                  }}
-                  className={cn(
-                    "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-pointer",
-                    twoFactor ? "bg-[#10b981] shadow-[0_0_6px_rgba(16,185,129,0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
-                  )}
-                >
-                  <span className={cn(
-                    "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute",
-                    twoFactor ? "left-[18px]" : "left-0.5"
-                  )} />
-                </button>
-              </div>
-            </div>
+
 
             {/* Card 2: Connected Devices Sessions */}
             <div className={cardBase}>
@@ -811,29 +868,41 @@ export default function SettingsPage() {
                 <span>Connected Sessions & Activity</span>
               </h3>
               <div className="flex flex-col gap-4 w-full">
-                {[
-                  { browser: "Google Chrome (Windows 11)", ip: "192.168.1.18", active: true, location: "Delhi, India" },
-                  { browser: "Safari Mobile (iPhone 15 Pro)", ip: "172.24.112.98", active: false, location: "Mumbai, India" },
-                ].map((session, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-900/[0.06] dark:border-white/[0.04] last:border-0 pb-3.5 last:pb-0">
+                {sessions.map((session, idx) => (
+                  <div key={session._id || idx} className="flex items-center justify-between py-2 border-b border-slate-900/[0.06] dark:border-white/[0.04] last:border-0 pb-3.5 last:pb-0">
                     <div className="flex items-start gap-3.5 text-left">
                       <div className="w-9 h-9 rounded-lg bg-slate-900/5 dark:bg-white/[0.02] border border-slate-900/[0.06] dark:border-white/[0.06] flex items-center justify-center shrink-0">
                         <Smartphone className="w-4.5 h-4.5 text-slate-400 dark:text-text-secondary" />
                       </div>
                       <div className="flex flex-col text-left leading-none">
-                        <span className="text-[13px] font-semibold text-[#111827] dark:text-white leading-none">{session.browser}</span>
-                        <span className="text-[10.5px] text-slate-500 dark:text-text-secondary/70 mt-2 leading-none">{session.ip} • {session.location}</span>
+                        <span className="text-[13px] font-semibold text-[#111827] dark:text-white leading-none">{parseUserAgent(session.deviceInfo)}</span>
+                        <span className="text-[10.5px] text-slate-500 dark:text-text-secondary/70 mt-2 leading-none">{session.ipAddress} • Last active: {new Date(session.lastActive).toLocaleString()}</span>
                       </div>
                     </div>
-                    {session.active ? (
+                    {session.isCurrent ? (
                       <span className="px-2.5 py-1 rounded bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/10 text-[9px] font-extrabold uppercase tracking-wide leading-none">Current</span>
                     ) : (
-                      <button onClick={() => showToast("Revoking connection session...", "info")} className="border border-[#f43f5e]/20 bg-[#f43f5e]/10 text-[#f43f5e] hover:bg-[#f43f5e]/20 text-[10.5px] font-bold rounded-lg px-3 py-1.5 transition-all cursor-pointer leading-none">
+                      <button 
+                        onClick={async () => {
+                          showToast("Revoking connection session...", "info");
+                          try {
+                            await AuthService.revokeSession(session._id);
+                            fetchSessions();
+                            showToast("Session revoked.", "success");
+                          } catch (err) {
+                            showToast("Failed to revoke session.", "info");
+                          }
+                        }} 
+                        className="border border-[#f43f5e]/20 bg-[#f43f5e]/10 text-[#f43f5e] hover:bg-[#f43f5e]/20 text-[10.5px] font-bold rounded-lg px-3 py-1.5 transition-all cursor-pointer leading-none"
+                      >
                         Revoke
                       </button>
                     )}
                   </div>
                 ))}
+                {sessions.length === 0 && (
+                  <div className="text-[12px] text-text-secondary font-medium text-center py-4">No active sessions found.</div>
+                )}
               </div>
             </div>
 
@@ -867,23 +936,23 @@ export default function SettingsPage() {
                           <Icon className="w-4.5 h-4.5 text-slate-400 dark:text-[#9ca3af]" />
                         </div>
                         <div className="flex flex-col leading-none text-left">
-                          <span className="text-[13px] font-bold text-[#111827] dark:text-white tracking-tight leading-none">{item.label}</span>
+                          <span className="text-[13px] font-bold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                            {item.label}
+                            <span className="px-1.5 py-0.5 rounded-md bg-[#111827]/5 dark:bg-white/5 border border-[#111827]/10 dark:border-white/10 text-[9px] font-bold text-[#111827]/60 dark:text-white/60 tracking-wider uppercase">
+                              Coming Soon
+                            </span>
+                          </span>
                           <span className="text-[11px] text-slate-500 dark:text-text-secondary/70 font-medium leading-none mt-2">{item.desc}</span>
                         </div>
                       </div>
                       <button
-                        onClick={() => {
-                          setVisibility(prev => ({ ...prev, [item.id]: !prev[item.id as keyof typeof visibility] }));
-                          showToast(`${item.label} visibility toggled.`, "info");
-                        }}
+                        disabled
                         className={cn(
-                          "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-pointer",
-                          isChecked ? "bg-brand-orange shadow-[0_0_6px_rgba(255,106,0,0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
+                          "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-not-allowed opacity-50 bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
                         )}
                       >
                         <span className={cn(
-                          "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute",
-                          isChecked ? "left-[18px]" : "left-0.5"
+                          "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute left-0.5"
                         )} />
                       </button>
                     </div>
@@ -892,35 +961,14 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               CONNECTED ACCOUNTS SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "connected" && (
           <section id="connected" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("connected")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Link2 className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Connected Accounts</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "connected" ? "Synchronize automatic integrations with LeetCode APIs, Codeforces, and GitHub repositories." : "LeetCode & Codeforces API Sync Active"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "connected" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "connected" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -928,12 +976,15 @@ export default function SettingsPage() {
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   className="overflow-hidden flex flex-col gap-4 w-full"
                 >
-                  <div className={cardBase}>
-              <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-brand-orange" />
-                <span>Linked Integrations</span>
-              </h3>
-              <div className="flex flex-col gap-4 w-full">
+                  <div className={cn(cardBase, "relative overflow-hidden group")}>
+                    <div className="absolute inset-0 bg-[#060816]/70 backdrop-blur-[4px] z-10 flex items-center justify-center opacity-100 transition-opacity duration-300">
+                      <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                    </div>
+                    <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-brand-orange" />
+                      <span>Linked Integrations</span>
+                    </h3>
+                    <div className="flex flex-col gap-4 w-full">
                 {[
                   { label: "LeetCode Auto-Sync API", active: true, desc: "Automatically import solved LeetCode counts history daily." },
                   { label: "Codeforces Rating Checker", active: true, desc: "Periodically fetch active competitive contest ratings." },
@@ -961,47 +1012,32 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               APPEARANCE SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "appearance" && (
           <section id="appearance" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("appearance")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Palette className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Appearance</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "appearance" ? "Pick futuristic high-contrast platform themes, colors, and compact workspace displays." : `Theme: ${selectedTheme} • Accent: ${selectedAccent}`}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "appearance" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "appearance" && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full"
-                >
-                  {/* Card 1: Theme Select Grid */}
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="overflow-hidden flex flex-col gap-4 w-full relative group pointer-events-none select-none"
+                  >
+                    <div className="absolute inset-0 bg-[#060816]/50 backdrop-blur-[3px] z-50 flex items-center justify-center opacity-100 transition-opacity duration-300 rounded-2xl">
+                      <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                    </div>
+                    {/* Card 1: Theme Select Grid */}
                   <div className={cardBase}>
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <Palette className="w-4 h-4 text-brand-orange" />
                 <span>Customize Platform Theme</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-[#8b5cf6]/10 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
+                  Pro Tier
+                </span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 {[
@@ -1047,6 +1083,9 @@ export default function SettingsPage() {
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-brand-orange" />
                 <span>Accent Highlight Highlights</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-[#8b5cf6]/10 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
+                  Pro Tier
+                </span>
               </h3>
               <div className="flex flex-col gap-5 w-full">
                 
@@ -1104,44 +1143,26 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               BILLING & SUBSCRIPTION SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "billing" && (
           <section id="billing" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("billing")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Billing & Subscription</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "billing" ? "View current Free tiers, cloud database sizes, Monaco APIs, and upgrade plans." : "Free Tier • AI Hints: 15/30 • Storage: 12.8MB"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "billing" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "billing" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full"
+                  className="overflow-hidden flex flex-col gap-4 w-full relative group"
                 >
+                  <div className="absolute inset-0 bg-[#f5f7fb]/70 dark:bg-[#060816]/70 backdrop-blur-[4px] z-10 flex items-center justify-center opacity-100 transition-opacity duration-300 rounded-[20px]">
+                    <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-card-bg border border-slate-900/[0.08] dark:border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                  </div>
                   {/* Card 1: Current Plan Details */}
-                  <div className={cardBase}>
+                  <div className={cn(cardBase, "opacity-50 pointer-events-none")}>
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-start gap-4 text-left leading-none">
                   <div className="w-12 h-12 rounded-xl bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center shrink-0">
@@ -1167,7 +1188,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Card 2: Usage statistics progress bars */}
-            <div className={cardBase}>
+            <div className={cn(cardBase, "opacity-50 pointer-events-none")}>
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-brand-orange" />
                 <span>Resource Allocation & Billing Usage</span>
@@ -1191,35 +1212,14 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               DATA & EXPORT SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "data" && (
           <section id="data" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("data")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-brand-orange/10 border border-brand-orange/20 text-brand-orange flex items-center justify-center shrink-0">
-                  <Download className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-[#111827] dark:text-white tracking-tight">Data & Export</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "data" ? "Download your competitive stats, custom settings, and streak histories as portable JSON." : "Export all practice data histories as JSON package"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 dark:text-text-secondary transition-transform duration-300 shrink-0", expandedSection === "data" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "data" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -1237,7 +1237,28 @@ export default function SettingsPage() {
                   Download a secure, highly-portable, standardized JSON backup archive containing your solved streaks, competitive rankings, custom Monaco configs, bookmarks, and solved submissions history logs.
                 </p>
                 <button
-                  onClick={() => showToast("Preparing secure backup package... download starting shortly.", "success")}
+                  onClick={async () => {
+                    showToast("Preparing secure backup package... download starting shortly.", "info");
+                    try {
+                      const data = await AuthService.exportData();
+                      if (data) {
+                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `fullprep-export-${new Date().toISOString().split("T")[0]}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        showToast("Backup package downloaded successfully.", "success");
+                      } else {
+                        showToast("Failed to generate backup package.", "error");
+                      }
+                    } catch (err) {
+                      showToast("Error during data export.", "error");
+                    }
+                  }}
                   className="flex items-center justify-center gap-1.5 border border-slate-900/[0.08] dark:border-white/[0.08] hover:bg-slate-900/5 dark:hover:bg-white/[0.04] bg-slate-900/5 dark:bg-[#111217]/50 text-[#111827] dark:text-[#f3f4f6] text-[12px] font-bold rounded-xl px-5 py-2.5 transition-all cursor-pointer self-start h-[38px] leading-none"
                 >
                   <Download className="w-4 h-4 text-[#9ca3af]" />
@@ -1246,35 +1267,14 @@ export default function SettingsPage() {
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
           {/* ──────────────────────────────────────────
               DANGER ZONE SECTION
               ────────────────────────────────────────── */}
+          {activeTab === "danger" && (
           <section id="danger" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-            {/* Header Accordion Card */}
-            <div
-              onClick={() => handleSectionToggle("danger")}
-              className="bg-card-bg border border-border-card rounded-[20px] shadow-sm dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.12] p-5 flex items-center justify-between cursor-pointer transition-all duration-300 select-none"
-            >
-              <div className="flex items-center gap-4.5">
-                <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-[14.5px] font-bold text-red-500 tracking-tight">Danger Zone</span>
-                  <span className="text-[11.5px] text-slate-500 dark:text-white/50 font-medium mt-1.5 leading-none">
-                    {expandedSection === "danger" ? "Irreversible and destructive account removals and permanent streak wipes." : "Permanently delete FullPrep coding account"}
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={cn("w-5 h-5 text-red-500 transition-transform duration-300 shrink-0", expandedSection === "danger" && "rotate-180")} />
-            </div>
-
-            <AnimatePresence initial={false}>
-              {expandedSection === "danger" && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
@@ -1300,18 +1300,17 @@ export default function SettingsPage() {
                   <span className="text-[13.5px] font-bold text-[#111827] dark:text-white leading-none">Delete FullPrep Coding Account</span>
                   <span className="text-[11px] text-slate-500 dark:text-text-secondary/50 leading-none font-medium">Wipe your profile and solutions repository permanently.</span>
                 </div>
-                <button
-                  onClick={() => showToast("Account deletion requires primary password confirmation.", "info")}
-                  className="bg-red-500/15 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-[11px] font-bold rounded-lg px-4.5 py-2.5 transition-all cursor-pointer h-[32px] leading-none shrink-0 self-center"
+                <a
+                  href={`mailto:support@fullprep.com?subject=Account Deletion Request - ${user?.email}&body=Hi Support Team,%0D%0A%0D%0AI would like to request the deletion of my FullPrep account. %0D%0A%0D%0AReason for deletion:%0D%0A[Please type your reason here]%0D%0A%0D%0AAccount Details:%0D%0AEmail: ${user?.email}%0D%0AName: ${user?.name}%0D%0A`}
+                  className="bg-red-500/15 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-[11px] font-bold rounded-lg px-4.5 py-2.5 transition-all cursor-pointer h-[32px] leading-none shrink-0 self-center flex items-center justify-center"
                 >
-                  Delete Account
-                </button>
+                  Request Deletion
+                </a>
               </div>
             </div>
                 </motion.div>
-              )}
-            </AnimatePresence>
           </section>
+          )}
 
         </div>
 

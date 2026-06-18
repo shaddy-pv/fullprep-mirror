@@ -92,52 +92,65 @@ export default function ProblemDescription({
           </div>
         </div>
 
-        {/* Tags area */}
-        <div className="flex flex-wrap gap-1.5 mt-4 select-none">
-          {problem.tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-[#f3f4f6] dark:bg-white/[0.04] text-text-secondary border border-border-card tracking-[-0.01em]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
 
         {/* Problem Description content */}
         <div 
-          className="text-[13.5px] text-text-primary mt-6 leading-relaxed space-y-4 font-medium tracking-[-0.01em] markdown-description"
+          className="text-[13.5px] text-text-primary mt-6 leading-relaxed font-medium tracking-[-0.01em] markdown-description"
           dangerouslySetInnerHTML={{ __html: problem.description }}
         />
 
         {/* Examples rendered dynamically */}
-        <div className="mt-6 space-y-4">
-          {problem.examples.map((example, idx) => (
-            <div key={idx} className="space-y-2">
-              <span className="font-bold text-text-primary text-[13.5px]">Example {idx + 1}:</span>
-              <div className="p-4 bg-[#fcfcfa] dark:bg-[#0f121d] border border-border-card rounded-xl font-mono text-[12.5px] leading-relaxed text-text-primary whitespace-pre-wrap select-text shadow-inner">
-                <div><strong>Input:</strong> {example.input}</div>
-                <div><strong>Output:</strong> {example.output}</div>
+        {problem.examples && problem.examples.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <h3 className="text-brand-orange text-[13px] font-bold tracking-[0.08em] uppercase border-b border-border-card pb-2 mt-8 mb-4 block w-full">
+              Examples
+            </h3>
+            {problem.examples.map((example, idx) => (
+              <div key={idx} className="bg-[#1e2330] dark:bg-white/[0.02] border border-border-card rounded-xl p-5 select-text space-y-4">
+                <div>
+                  <h4 className="font-bold text-white text-[12px] uppercase tracking-[0.08em] mb-2 text-brand-orange/80">Input</h4>
+                  <pre className="text-gray-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">{example.input}</pre>
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-[12px] uppercase tracking-[0.08em] mb-2 text-brand-orange/80">Output</h4>
+                  <pre className="text-gray-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">{example.output}</pre>
+                </div>
                 {example.explanation && (
-                  <div className="mt-1 text-text-secondary">
-                    <strong>Explanation:</strong> {example.explanation}
+                  <div className="pt-2 border-t border-white/5">
+                    <h4 className="font-bold text-white text-[12px] uppercase tracking-[0.08em] mb-2 text-brand-orange/80">Explanation</h4>
+                    <p className="text-gray-300 text-[13px] font-mono whitespace-pre-wrap leading-relaxed">{example.explanation}</p>
                   </div>
                 )}
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Constraints rendered dynamically */}
-        <div className="pt-6 space-y-2 select-none">
-          <span className="font-bold text-text-primary text-[13.5px]">Constraints:</span>
-          <ul className="list-disc pl-5 space-y-1.5 text-text-secondary text-[13px] font-medium leading-normal">
+        <div className="mt-12 bg-[#1e2330] dark:bg-white/[0.02] border border-border-card rounded-xl p-5 select-none">
+          <h3 className="font-bold text-white text-[13px] uppercase tracking-[0.08em] mb-4">Constraints</h3>
+          <ul className="list-disc pl-5 space-y-2 text-gray-300 text-[14px] font-mono leading-normal">
             {problem.constraints.map((constraint, idx) => (
               <li key={idx}>
-                <code className="font-mono bg-gray-100 dark:bg-white/[0.04] px-1 rounded text-text-primary">{constraint}</code>
+                {constraint}
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Tags area */}
+        <div className="pt-8 pb-4 select-none">
+          <h3 className="font-bold text-white text-[13px] uppercase tracking-[0.08em] mb-4">Tags</h3>
+          <div className="flex flex-wrap gap-2">
+            {problem.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[12px] font-medium px-3.5 py-1.5 rounded-full bg-[#1e2330] dark:bg-white/[0.04] text-gray-300 border border-border-card tracking-[-0.01em]"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 

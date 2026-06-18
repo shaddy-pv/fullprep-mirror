@@ -8,16 +8,16 @@ import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { cn } from "@/lib/utils";
-import { 
-  Code2, 
-  Cpu, 
-  Network, 
-  Monitor, 
-  Server, 
-  Layers, 
-  BookOpen, 
-  Check, 
-  ChevronDown, 
+import {
+  Code2,
+  Cpu,
+  Network,
+  Monitor,
+  Server,
+  Layers,
+  BookOpen,
+  Check,
+  ChevronDown,
   ChevronRight,
   Bookmark,
   GitMerge,
@@ -230,203 +230,208 @@ function LearningPathsContent() {
       </ErrorBoundary>
 
       {/* Main Responsive Grid Layout: Left Column (Paths content) + Right Column (Sidebar widget stack) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start w-full mt-6 select-none">
-        
-        {/* Left Side: Main Learning Paths and Filters */}
-        <div className="flex flex-col gap-6 min-w-0">
-          
-          {/* Controls Bar: Category Pills + Sort Dropdown */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-[#e7e5df] dark:border-white/[0.04] w-full">
-            {/* Category pills */}
-            <div className="flex flex-wrap items-center gap-2">
-              {CATEGORIES.map((cat) => (
+      <div className="relative group mt-6">
+        <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+          <span className="px-4 py-2 rounded-xl bg-card-bg border border-border-card text-[14px] font-bold text-brand-orange shadow-xl">Coming Soon</span>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start w-full select-none opacity-60 pointer-events-none">
+
+          {/* Left Side: Main Learning Paths and Filters */}
+          <div className="flex flex-col gap-6 min-w-0">
+
+            {/* Controls Bar: Category Pills + Sort Dropdown */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-[#e7e5df] dark:border-white/[0.04] w-full">
+              {/* Category pills */}
+              <div className="flex flex-wrap items-center gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => updateUrlParam("category", cat)}
+                    className={cn(
+                      "h-9 px-4 rounded-xl text-[13px] font-semibold transition-all duration-300 cursor-pointer select-none",
+                      activeCategory === cat
+                        ? "bg-brand-orange text-white shadow-[0_4px_12px_rgba(255,106,0,0.2)]"
+                        : "bg-card-bg hover:bg-gray-50 dark:hover:bg-white/[0.02] text-text-secondary hover:text-text-primary border border-border-card"
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="relative self-start sm:self-auto">
                 <button
-                  key={cat}
-                  onClick={() => updateUrlParam("category", cat)}
-                  className={cn(
-                    "h-9 px-4 rounded-xl text-[13px] font-semibold transition-all duration-300 cursor-pointer select-none",
-                    activeCategory === cat 
-                      ? "bg-brand-orange text-white shadow-[0_4px_12px_rgba(255,106,0,0.2)]" 
-                      : "bg-card-bg hover:bg-gray-50 dark:hover:bg-white/[0.02] text-text-secondary hover:text-text-primary border border-border-card"
-                  )}
+                  onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                  className="flex items-center gap-1.5 h-[38px] px-4 bg-card-bg border border-border-card rounded-xl text-[13px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02] shadow-sm transition-all duration-300 cursor-pointer"
                 >
-                  {cat}
+                  <span>Sort by: <span className="font-bold text-brand-orange">{activeSortLabel}</span></span>
+                  <ChevronDown className={cn("w-4 h-4 text-text-secondary transition-transform duration-300", sortDropdownOpen && "rotate-180")} />
                 </button>
-              ))}
+
+                {sortDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setSortDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-1.5 w-48 bg-card-bg border border-border-card rounded-xl shadow-lg z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            updateUrlParam("sort", opt.value);
+                            setSortDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-white/[0.02] flex items-center justify-between transition-colors tracking-[-0.01em] cursor-pointer",
+                            activeSort === opt.value ? "text-brand-orange font-bold bg-brand-orange/[0.02]" : "text-text-primary font-medium"
+                          )}
+                        >
+                          <span>{opt.label}</span>
+                          {activeSort === opt.value && <Check className="w-3.5 h-3.5 text-brand-orange stroke-[2.5]" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="relative self-start sm:self-auto">
-              <button
-                onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                className="flex items-center gap-1.5 h-[38px] px-4 bg-card-bg border border-border-card rounded-xl text-[13px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02] shadow-sm transition-all duration-300 cursor-pointer"
-              >
-                <span>Sort by: <span className="font-bold text-brand-orange">{activeSortLabel}</span></span>
-                <ChevronDown className={cn("w-4 h-4 text-text-secondary transition-transform duration-300", sortDropdownOpen && "rotate-180")} />
-              </button>
+            {/* Active Search indicators */}
+            {searchVal && (
+              <div className="flex items-center gap-2 text-[12px] font-bold text-brand-orange border border-transparent px-3 py-1.5 rounded-lg bg-[#fff3eb] dark:bg-brand-orange/10 w-fit select-none">
+                <span>Filtered by search: &quot;{searchVal}&quot;</span>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete("search");
+                    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+                  }}
+                  className="hover:text-text-primary transition-colors cursor-pointer text-text-secondary/70 ml-1.5 font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-              {sortDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setSortDropdownOpen(false)} />
-                  <div className="absolute right-0 mt-1.5 w-48 bg-card-bg border border-border-card rounded-xl shadow-lg z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-                    {SORT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          updateUrlParam("sort", opt.value);
-                          setSortDropdownOpen(false);
-                        }}
-                        className={cn(
-                          "w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-white/[0.02] flex items-center justify-between transition-colors tracking-[-0.01em] cursor-pointer",
-                          activeSort === opt.value ? "text-brand-orange font-bold bg-brand-orange/[0.02]" : "text-text-primary font-medium"
-                        )}
-                      >
-                        <span>{opt.label}</span>
-                        {activeSort === opt.value && <Check className="w-3.5 h-3.5 text-brand-orange stroke-[2.5]" />}
-                      </button>
+            {/* Learning Paths List */}
+            {filteredPaths.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card-bg border border-border-card rounded-[24px] shadow-sm">
+                <Search className="w-10 h-10 text-text-secondary/50 mb-3" />
+                <h3 className="text-base font-bold text-text-primary mb-1">No roadmaps found</h3>
+                <p className="text-[13px] text-text-secondary max-w-sm">
+                  Try searching for something else or changing your level filters to find a roadmap.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6">
+                {/* Top Section Grid - 3 columns on desktop */}
+                {topPaths.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {topPaths.map((path) => (
+                      <LearningCard key={path.id} path={path} />
                     ))}
                   </div>
-                </>
-              )}
-            </div>
+                )}
+
+                {/* Bottom Section Grid - 2 columns splitting the remaining row width */}
+                {bottomPaths.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
+                    {bottomPaths.map((path) => (
+                      <LearningCard key={path.id} path={path} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
 
-          {/* Active Search indicators */}
-          {searchVal && (
-            <div className="flex items-center gap-2 text-[12px] font-bold text-brand-orange border border-transparent px-3 py-1.5 rounded-lg bg-[#fff3eb] dark:bg-brand-orange/10 w-fit select-none">
-              <span>Filtered by search: &quot;{searchVal}&quot;</span>
-              <button 
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams.toString());
-                  params.delete("search");
-                  router.push(`${pathname}?${params.toString()}`, { scroll: false });
-                }}
-                className="hover:text-text-primary transition-colors cursor-pointer text-text-secondary/70 ml-1.5 font-bold"
-              >
-                ✕
-              </button>
-            </div>
-          )}
+          {/* Right Side: Stacked Analytics Cards */}
+          <div className="flex flex-col gap-4 w-full shrink-0">
 
-          {/* Learning Paths List */}
-          {filteredPaths.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-card-bg border border-border-card rounded-[24px] shadow-sm">
-              <Search className="w-10 h-10 text-text-secondary/50 mb-3" />
-              <h3 className="text-base font-bold text-text-primary mb-1">No roadmaps found</h3>
-              <p className="text-[13px] text-text-secondary max-w-sm">
-                Try searching for something else or changing your level filters to find a roadmap.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {/* Top Section Grid - 3 columns on desktop */}
-              {topPaths.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {topPaths.map((path) => (
-                    <LearningCard key={path.id} path={path} />
-                  ))}
+            {/* Card 1: Your Progress */}
+            <DashboardCard className="p-5 flex flex-col gap-4 border border-border-card bg-card-bg shadow-sm">
+              <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
+                Your Progress
+              </h3>
+
+              <div className="flex flex-col gap-3">
+                {/* Item 1 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
+                      <Bookmark className="w-4 h-4" />
+                    </div>
+                    <span className="text-[13px] text-text-secondary font-medium">Paths Enrolled</span>
+                  </div>
+                  <span className="text-[14px] font-bold text-text-primary">4</span>
                 </div>
-              )}
 
-              {/* Bottom Section Grid - 2 columns splitting the remaining row width */}
-              {bottomPaths.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
-                  {bottomPaths.map((path) => (
-                    <LearningCard key={path.id} path={path} />
-                  ))}
+                {/* Item 2 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
+                      <Compass className="w-4 h-4" />
+                    </div>
+                    <span className="text-[13px] text-text-secondary font-medium">Total Progress</span>
+                  </div>
+                  <span className="text-[14px] font-bold text-[#10b981]">46%</span>
                 </div>
-              )}
-            </div>
-          )}
 
+                {/* Item 3 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
+                      <Code2 className="w-4 h-4" />
+                    </div>
+                    <span className="text-[13px] text-text-secondary font-medium">Problems Solved</span>
+                  </div>
+                  <span className="text-[14px] font-bold text-text-primary">342</span>
+                </div>
+
+                {/* Item 4 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <span className="text-[13px] text-text-secondary font-medium">Total Learning Time</span>
+                  </div>
+                  <span className="text-[14px] font-bold text-text-primary">128h</span>
+                </div>
+              </div>
+            </DashboardCard>
+
+            {/* Card 2: Weekly Goal */}
+            <WeeklyGoal />
+
+            {/* Card 3: Recommended Next */}
+            <DashboardCard className="p-5 flex flex-col gap-3.5 border border-border-card bg-card-bg shadow-sm">
+              <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
+                Recommended Next
+              </h3>
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
+                  <GitMerge className="w-4.5 h-4.5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[13.5px] font-bold text-text-primary leading-tight">Trees in DSA</span>
+                  <span className="text-[11px] text-text-secondary font-semibold mt-0.5">7 Problems</span>
+                </div>
+              </div>
+
+              <Button variant="primary" className="w-full h-9 mt-0.5 rounded-xl text-[12.5px] font-bold flex items-center justify-center gap-1.5 transition-all">
+                <span>Start Learning</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </DashboardCard>
+
+            {/* Card 4: Achievements */}
+            <Achievements />
+
+          </div>
         </div>
-
-        {/* Right Side: Stacked Analytics Cards */}
-        <div className="flex flex-col gap-4 w-full shrink-0">
-          
-          {/* Card 1: Your Progress */}
-          <DashboardCard className="p-5 flex flex-col gap-4 border border-border-card bg-card-bg shadow-sm">
-            <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
-              Your Progress
-            </h3>
-            
-            <div className="flex flex-col gap-3">
-              {/* Item 1 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
-                    <Bookmark className="w-4 h-4" />
-                  </div>
-                  <span className="text-[13px] text-text-secondary font-medium">Paths Enrolled</span>
-                </div>
-                <span className="text-[14px] font-bold text-text-primary">4</span>
-              </div>
-
-              {/* Item 2 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
-                    <Compass className="w-4 h-4" />
-                  </div>
-                  <span className="text-[13px] text-text-secondary font-medium">Total Progress</span>
-                </div>
-                <span className="text-[14px] font-bold text-[#10b981]">46%</span>
-              </div>
-
-              {/* Item 3 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
-                    <Code2 className="w-4 h-4" />
-                  </div>
-                  <span className="text-[13px] text-text-secondary font-medium">Problems Solved</span>
-                </div>
-                <span className="text-[14px] font-bold text-text-primary">342</span>
-              </div>
-
-              {/* Item 4 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-border-card flex items-center justify-center text-text-secondary">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <span className="text-[13px] text-text-secondary font-medium">Total Learning Time</span>
-                </div>
-                <span className="text-[14px] font-bold text-text-primary">128h</span>
-              </div>
-            </div>
-          </DashboardCard>
-
-          {/* Card 2: Weekly Goal */}
-          <WeeklyGoal />
-
-          {/* Card 3: Recommended Next */}
-          <DashboardCard className="p-5 flex flex-col gap-3.5 border border-border-card bg-card-bg shadow-sm">
-            <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
-              Recommended Next
-            </h3>
-
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
-                <GitMerge className="w-4.5 h-4.5" />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-[13.5px] font-bold text-text-primary leading-tight">Trees in DSA</span>
-                <span className="text-[11px] text-text-secondary font-semibold mt-0.5">7 Problems</span>
-              </div>
-            </div>
-
-            <Button variant="primary" className="w-full h-9 mt-0.5 rounded-xl text-[12.5px] font-bold flex items-center justify-center gap-1.5 transition-all">
-              <span>Start Learning</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          </DashboardCard>
-
-          {/* Card 4: Achievements */}
-          <Achievements />
-
-        </div>
-
       </div>
     </ContentContainer>
   );

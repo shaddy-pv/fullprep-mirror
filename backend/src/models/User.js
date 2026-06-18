@@ -16,6 +16,7 @@ const socialLinksSchema = new mongoose.Schema(
     linkedin: { type: String, default: "" },
     twitter: { type: String, default: "" },
     website: { type: String, default: "" },
+    leetcode: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -83,6 +84,11 @@ const userSchema = new mongoose.Schema(
       min: [0, "Streak cannot be negative"],
     },
 
+    lastSolvedDate: {
+      type: Date,
+      default: null,
+    },
+
     level: {
       type: Number,
       default: 1,
@@ -144,6 +150,53 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
       select: false, // Internal — not exposed in API responses
+    },
+
+    // ── Solved Problems ───────────────────────────────────────────
+    // Array of problemExternalIds the user has solved (ACCEPTED submission).
+    // Used to: (1) show solved checkmark on problem list, (2) award XP only once.
+    solvedProblems: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    // ── Bookmarked Problems ───────────────────────────────────────
+    // Array of problemExternalIds the user has bookmarked.
+    bookmarks: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    backupEmail: {
+      type: String,
+      default: "",
+    },
+
+    preferences: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
+    notifs: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
+    visibility: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
+    twoFactor: {
+      type: Boolean,
+      default: false,
     },
   },
   {

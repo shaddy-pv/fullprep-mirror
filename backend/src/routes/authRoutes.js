@@ -26,6 +26,10 @@ import {
   forgotPassword,
   resetPassword,
   getLeaderboard,
+  updatePassword,
+  getSessions,
+  revokeSession,
+  exportData,
 } from "../controllers/authController.js";
 import { getUserStats } from "../controllers/submissionController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
@@ -51,7 +55,10 @@ router.get("/me", getMe);
 router.get("/stats", getUserStats);
 router.get("/leaderboard", getLeaderboard);
 router.patch("/update-profile", updateProfile);
-
+router.patch("/update-password", updatePassword);
+router.get("/sessions", getSessions);
+router.delete("/sessions/:id", revokeSession);
+router.get("/export", exportData);
 router.post("/resend-verification", resendVerification);
 router.post("/sync-verification", syncVerification);
 

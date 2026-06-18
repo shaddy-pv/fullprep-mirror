@@ -6,6 +6,7 @@
 
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Session from "../models/Session.js";
 
 // ── Protect Middleware ────────────────────────────────────────────────────────
 
@@ -72,8 +73,29 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // ── 4. Attach user to request ───────────────────────────────
+  // ── 3.5 Fetch Session from DB ────────────────────────────────
+  if (!decoded.sessionId) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token format. Session ID missing. Please log in again.",
+    });
+  }
+
+  const session = await Session.findById(decoded.sessionId);
+  if (!session) {
+    return res.status(401).json({
+      success: false,
+      message: "Session expired or revoked. Please log in again.",
+    });
+  }
+
+  // Update last active on the session
+  session.lastActive = new Date();
+  await session.save().catch(() => {});
+
+  // ── 4. Attach user & session to request ───────────────────────
   req.user = user;
+  req.sessionId = decoded.sessionId;
   next();
 };
 

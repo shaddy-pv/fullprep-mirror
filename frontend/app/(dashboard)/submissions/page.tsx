@@ -31,6 +31,7 @@ import { useNotificationStore } from "@/store/notificationStore";
 import { SubmissionsService } from "@/services/submissions.service";
 import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
+import SubmissionModal from "@/components/submissions/SubmissionModal";
 
 // Custom inline brand icons for perfect baseline typography alignments
 const PythonIcon = () => (
@@ -77,11 +78,12 @@ interface SubmissionItem {
 export default function SubmissionsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
 
-  // States
   const [activeMainTab, setActiveMainTab] = useState("All Submissions");
+  const [activeLanguage, setActiveLanguage] = useState("All Languages");
+  const [openDropdown, setOpenDropdown] = useState<"status" | "language" | "statsTime" | "statsTime2" | null>(null);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastUpdatedText, setLastUpdatedText] = useState("Just now");
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [statsTimeFilter, setStatsTimeFilter] = useState("all_time");
   const [isMounted, setIsMounted] = useState(false);
 
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -105,7 +107,7 @@ export default function SubmissionsPage() {
           statusFilter = activeMainTab;
         }
 
-        const response = await SubmissionsService.getSubmissions(currentPage, 10, statusFilter);
+        const response = await SubmissionsService.getSubmissions(currentPage, 10, statusFilter, undefined, activeLanguage);
         if (response && response.success) {
           setSubmissions(response.data);
           setPagination(response.pagination);
@@ -118,14 +120,14 @@ export default function SubmissionsPage() {
     }
 
     loadData();
-  }, [isMounted, currentPage, activeMainTab]);
+  }, [isMounted, currentPage, activeMainTab, activeLanguage]);
 
   useEffect(() => {
     if (!isMounted) return;
     
     async function loadStats() {
       try {
-        const stats = await AuthService.getStats();
+        const stats = await AuthService.getStats(statsTimeFilter === "all_time" ? undefined : statsTimeFilter);
         if (stats) {
           setStatsData(stats);
         }
@@ -134,7 +136,7 @@ export default function SubmissionsPage() {
       }
     }
     loadStats();
-  }, [isMounted]);
+  }, [isMounted, statsTimeFilter]);
 
   const mainTabs = [
     "All Submissions", 
@@ -195,35 +197,7 @@ export default function SubmissionsPage() {
         { month: "Sun", value: 0 },
       ];
 
-  // Recent Difficult Problems list
-  const recentDifficult = [
-    { id: 1, title: "Median of Two Sorted Arrays", difficulty: "Hard" as const, attempts: "3 attempts" },
-    { id: 2, title: "Regular Expression Matching", difficulty: "Hard" as const, attempts: "2 attempts" },
-    { id: 3, title: "Merge k Sorted Lists", difficulty: "Hard" as const, attempts: "2 attempts" },
-  ];
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    showToast("Refreshing submissions log...", "info");
-    try {
-      let statusFilter: string | undefined = undefined;
-      if (activeMainTab !== "All Submissions") {
-        statusFilter = activeMainTab;
-      }
-      const response = await SubmissionsService.getSubmissions(currentPage, 10, statusFilter);
-      if (response && response.success) {
-        setSubmissions(response.data);
-        setPagination(response.pagination);
-      }
-      setLastUpdatedText("Just now");
-      showToast("Submissions updated successfully.", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Refresh failed.", "info");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   // Helper to format status pill
   const renderStatus = (status: string) => {
@@ -329,36 +303,56 @@ export default function SubmissionsPage() {
       {/* Horizontal Filter Bar matching exact Problems heights and styles */}
       <div className="flex items-center gap-3.5 mb-6 select-none overflow-x-auto pb-1 w-full shrink-0">
         
-        {/* All Problems */}
-        <button className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm">
-          <span>All Problems</span>
-          <ChevronDown className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
-        </button>
 
         {/* All Languages */}
-        <button className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm">
-          <span>All Languages</span>
-          <ChevronDown className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
-        </button>
-
-        {/* All Status */}
-        <button className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm">
-          <span>All Status</span>
-          <ChevronDown className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
-        </button>
-
-        {/* Sort Trigger */}
-        <div className="flex items-center gap-2.5 ml-auto shrink-0">
-          <button className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm">
-            <span>Newest First</span>
+        <div className="relative">
+          <button 
+            onClick={() => setOpenDropdown(openDropdown === "language" ? null : "language")} 
+            className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm"
+          >
+            <span>{activeLanguage}</span>
             <ChevronDown className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
           </button>
-          
-          {/* Advanced filter config toggle */}
-          <button className="w-[38px] h-[38px] rounded-xl border border-border-card bg-card-bg flex items-center justify-center text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02] shadow-sm transition-all duration-200 cursor-pointer">
-            <SlidersHorizontal className="w-4 h-4 text-text-secondary shrink-0" />
-          </button>
+          {openDropdown === "language" && (
+            <div className="absolute left-0 mt-1.5 w-full bg-card-bg border border-border-card rounded-xl shadow-lg z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+              {["All Languages", "Python 3", "C++", "Java", "JavaScript"].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => { setActiveLanguage(opt); setCurrentPage(1); setOpenDropdown(null); }}
+                  className={cn("w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors", activeLanguage === opt ? "text-brand-orange font-bold bg-brand-orange/[0.02]" : "text-text-primary font-medium")}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* All Status */}
+        <div className="relative">
+          <button 
+            onClick={() => setOpenDropdown(openDropdown === "status" ? null : "status")} 
+            className="flex items-center justify-between border border-border-card rounded-xl px-4 py-2.5 bg-card-bg text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer min-w-[150px] shadow-sm"
+          >
+            <span>{activeMainTab === "All Submissions" ? "All Status" : activeMainTab}</span>
+            <ChevronDown className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
+          </button>
+          {openDropdown === "status" && (
+            <div className="absolute left-0 mt-1.5 w-full bg-card-bg border border-border-card rounded-xl shadow-lg z-50 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+              {["All Submissions", "Accepted", "Wrong Answer", "Time Limit Exceeded", "Runtime Error", "Compilation Error"].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => { setActiveMainTab(opt); setCurrentPage(1); setOpenDropdown(null); }}
+                  className={cn("w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors", activeMainTab === opt ? "text-brand-orange font-bold bg-brand-orange/[0.02]" : "text-text-primary font-medium")}
+                >
+                  {opt === "All Submissions" ? "All Status" : opt}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+
       </div>
 
       {/* Section split Wrapper with strict Stretch behaviors matching Leaderboard height */}
@@ -389,7 +383,8 @@ export default function SubmissionsPage() {
                     displaySubmissions.map((sub) => (
                       <tr 
                         key={sub.id}
-                        className="group hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-150 align-middle"
+                        onClick={() => setSelectedSubmissionId(sub.id)}
+                        className="group hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-all duration-150 align-middle cursor-pointer"
                       >
                         {/* Index */}
                         <td className="py-[13px] px-4 align-middle text-center text-text-secondary font-medium select-none text-[12px] font-mono">
@@ -503,10 +498,32 @@ export default function SubmissionsPage() {
               <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
                 Submission Stats
               </span>
-              <button className="text-[11px] font-semibold text-text-secondary flex items-center gap-1 hover:text-text-primary transition cursor-pointer">
-                <span>All Time</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === "statsTime" ? null : "statsTime")}
+                  className="text-[11px] font-semibold text-text-secondary flex items-center gap-1 hover:text-text-primary transition cursor-pointer"
+                >
+                  <span>{statsTimeFilter === "last_7_days" ? "Last 7 Days" : statsTimeFilter === "last_30_days" ? "Last 30 Days" : "All Time"}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+                {openDropdown === "statsTime" && (
+                  <div className="absolute right-0 mt-2 w-[120px] bg-card-bg border border-border-card rounded-lg shadow-lg z-50 py-1 overflow-hidden animate-in fade-in">
+                    {[
+                      { label: "All Time", value: "all_time" },
+                      { label: "Last 7 Days", value: "last_7_days" },
+                      { label: "Last 30 Days", value: "last_30_days" }
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setStatsTimeFilter(opt.value); setOpenDropdown(null); }}
+                        className={cn("w-full px-3 py-1.5 text-left text-[11px] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors", statsTimeFilter === opt.value ? "text-brand-orange font-bold" : "text-text-primary")}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center justify-between gap-4 mt-2">
@@ -535,7 +552,7 @@ export default function SubmissionsPage() {
                 )}
                 {/* Total runs overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center select-none pointer-events-none">
-                  <span className="text-[15px] font-extrabold text-text-primary leading-none">1,248</span>
+                  <span className="text-[15px] font-extrabold text-text-primary leading-none">{totalSubmissionsCount}</span>
                   <span className="text-[7px] text-text-secondary font-bold mt-0.5 uppercase tracking-wider">Total</span>
                 </div>
               </div>
@@ -563,15 +580,36 @@ export default function SubmissionsPage() {
               <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
                 Acceptance Rate
               </span>
-              <button className="text-[11px] font-semibold text-text-secondary flex items-center gap-1 hover:text-text-primary transition cursor-pointer">
-                <span>All Time</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === "statsTime2" ? null : "statsTime2")}
+                  className="text-[11px] font-semibold text-text-secondary flex items-center gap-1 hover:text-text-primary transition cursor-pointer"
+                >
+                  <span>{statsTimeFilter === "last_7_days" ? "Last 7 Days" : statsTimeFilter === "last_30_days" ? "Last 30 Days" : "All Time"}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+                {openDropdown === "statsTime2" && (
+                  <div className="absolute right-0 mt-2 w-[120px] bg-card-bg border border-border-card rounded-lg shadow-lg z-50 py-1 overflow-hidden animate-in fade-in">
+                    {[
+                      { label: "All Time", value: "all_time" },
+                      { label: "Last 7 Days", value: "last_7_days" },
+                      { label: "Last 30 Days", value: "last_30_days" }
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setStatsTimeFilter(opt.value); setOpenDropdown(null); }}
+                        className={cn("w-full px-3 py-1.5 text-left text-[11px] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors", statsTimeFilter === opt.value ? "text-brand-orange font-bold" : "text-text-primary")}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-[24px] font-bold text-[#10b981] leading-none tracking-[-0.02em]">67.6%</span>
-              <span className="text-[11px] font-bold text-[#10b981] tracking-[-0.01em]">↑ 12.4% more than last month</span>
+              <span className="text-[24px] font-bold text-[#10b981] leading-none tracking-[-0.02em]">{statsData?.acceptanceRate ?? 0}%</span>
             </div>
 
             {/* Smooth Recharts Green Glow Area */}
@@ -638,59 +676,15 @@ export default function SubmissionsPage() {
             </p>
           </DashboardCard>
 
-          {/* Recent Difficult Problems Attempts Card */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[300px] shadow-sm select-none text-left shrink-0">
-            <div className="flex items-baseline justify-between mb-3.5">
-              <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
-                Recent Difficult Problems
-              </span>
-              <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer">
-                View all
-              </button>
-            </div>
 
-            <div className="flex flex-col gap-2.5 mt-0.5">
-              {recentDifficult.map((prob) => (
-                <div key={prob.id} className="flex items-center justify-between border-b border-border-card/45 pb-2.5 last:border-0 last:pb-0 group cursor-pointer hover:bg-gray-50/[0.02] transition-colors rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <DifficultyBadge difficulty={prob.difficulty} />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[12.5px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors truncate max-w-[170px] leading-tight">
-                        {prob.title}
-                      </span>
-                      <span className="text-[11px] text-text-secondary font-medium leading-none mt-0.5">
-                        {prob.attempts}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-text-secondary/40 group-hover:text-text-primary group-hover:translate-x-0.5 transition-all shrink-0 mr-1.5" />
-                </div>
-              ))}
-            </div>
-          </DashboardCard>
-
-          {/* Real-time Info updates card bottom */}
-          <DashboardCard className="p-4 flex items-start gap-3 select-none shrink-0 text-left">
-            <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-1.5 flex-1">
-              <span className="text-[12px] font-bold text-text-primary leading-none">Submissions are updated in real-time.</span>
-              <div className="flex items-center gap-1.5 text-[11px] text-text-secondary font-medium">
-                <span>Last updated: <span className="font-mono text-text-primary font-bold">{lastUpdatedText}</span></span>
-                
-                {/* Refresh Trigger button */}
-                <button 
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-1 text-brand-orange hover:text-[#e05d00] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <RefreshCw className={cn("w-3 h-3 shrink-0 inline-block align-middle", isRefreshing && "animate-spin")} />
-                </button>
-              </div>
-            </div>
-          </DashboardCard>
 
         </div>
       </SectionWrapper>
+
+      <SubmissionModal 
+        submissionId={selectedSubmissionId} 
+        onClose={() => setSelectedSubmissionId(null)} 
+      />
     </ContentContainer>
   );
 }

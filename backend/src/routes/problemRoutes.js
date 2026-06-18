@@ -34,6 +34,8 @@ import {
   createProblem,
   updateProblem,
   deleteProblem,
+  toggleBookmark,
+  getBookmarkedProblems,
 } from "../controllers/problemController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
@@ -62,8 +64,14 @@ router.post("/", protect, restrictTo("admin"), createProblem);
 
 // ── Dynamic /:id Routes ───────────────────────────────────────────────────────
 
+// Bookmarks list (Private, must be before /:id)
+router.get("/bookmarks", protect, getBookmarkedProblems);
+
 // Full problem detail (public, but auth user gets enriched response in future)
 router.get("/:id", getProblem);
+
+// Toggle bookmark on a problem (Private)
+router.post("/:id/bookmark", protect, toggleBookmark);
 
 // Public tests for a problem (optional auth — admins get private tests too)
 router.get("/:id/tests", getProblemTests);

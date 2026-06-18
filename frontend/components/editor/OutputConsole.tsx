@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Check } from "lucide-react";
+import { Check, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import DashboardCard from "../ui/DashboardCard";
+import type { RunTestResult } from "@/services/submissions.service";
 
 interface OutputConsoleProps {
   activeConsoleTab: "testcase" | "result" | "console";
@@ -12,6 +13,11 @@ interface OutputConsoleProps {
   setSelectedTestCase: (tc: number) => void;
   testResultState: "none" | "running" | "accepted" | "wrong_answer" | "compile_error" | "runtime_error";
   submissionDetails?: any;
+  // Run-mode results (public test cases, shown immediately)
+  runResults?: RunTestResult[] | null;
+  isRunMode?: boolean;
+  // Real public tests to display in "Testcase" tab
+  publicTests?: { input: string; output: string }[];
 }
 
 export default function OutputConsole({
@@ -20,8 +26,20 @@ export default function OutputConsole({
   selectedTestCase,
   setSelectedTestCase,
   testResultState,
-  submissionDetails
+  submissionDetails,
+  runResults,
+  isRunMode,
+  publicTests,
 }: OutputConsoleProps) {
+
+  const displayTests = publicTests && publicTests.length > 0 ? publicTests : [];
+  const numTestCases = Math.max(displayTests.length, 1);
+
+  // For run-mode result display
+  const runResult = runResults && runResults.length > 0
+    ? runResults[selectedTestCase - 1] ?? runResults[0]
+    : null;
+
   return (
     <DashboardCard className="p-4 flex flex-col justify-between h-[230px] rounded-[24px] border border-border-card bg-card-bg shadow-sm shrink-0 overflow-hidden">
       <div className="flex flex-col h-full">
@@ -29,8 +47,8 @@ export default function OutputConsole({
         <div className="flex border-b border-border-card pb-2.5 gap-5 select-none shrink-0">
           {[
             { id: "testcase", label: "Testcase" },
-            { id: "result", label: "Test Result" },
-            { id: "console", label: "Console" },
+            { id: "result",   label: "Test Result" },
+            { id: "console",  label: "Console" },
           ].map((tab) => {
             const isActive = activeConsoleTab === tab.id;
             return (
@@ -39,8 +57,8 @@ export default function OutputConsole({
                 onClick={() => setActiveConsoleTab(tab.id as "testcase" | "result" | "console")}
                 className={cn(
                   "pb-1.5 text-[13px] font-bold tracking-[-0.01em] relative cursor-pointer transition-colors duration-200 focus:outline-none",
-                  isActive 
-                    ? "text-brand-orange" 
+                  isActive
+                    ? "text-brand-orange"
                     : "text-text-secondary hover:text-text-primary"
                 )}
               >
@@ -59,14 +77,14 @@ export default function OutputConsole({
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none">
               <div className="w-5 h-5 rounded-full border-[2.5px] border-[#d1d5db] dark:border-white/[0.1] border-t-brand-orange animate-spin" />
               <span className="text-[12px] font-bold text-text-secondary animate-pulse font-mono uppercase tracking-wider">
-                Compiling & running tests...
+                {isRunMode ? "Running against example tests..." : "Judging against hidden tests..."}
               </span>
             </div>
           ) : activeConsoleTab === "testcase" ? (
-            /* Testcase Inputs Column */
+            /* ── Testcase Tab: show real public test inputs ── */
             <div className="flex flex-col h-full gap-2.5 overflow-y-auto custom-scrollbar pr-1">
               <div className="flex items-center gap-1.5 select-none">
-                {[1, 2, 3].map((tc) => (
+                {Array.from({ length: numTestCases }, (_, i) => i + 1).map((tc) => (
                   <button
                     key={tc}
                     onClick={() => setSelectedTestCase(tc)}
@@ -82,22 +100,26 @@ export default function OutputConsole({
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-[12px]">
-                <div className="flex flex-col gap-1 text-left">
-                  <span className="font-bold text-text-secondary font-mono">nums =</span>
-                  <div className="p-2.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text">
-                    {selectedTestCase === 1 ? "[2,7,11,15]" : selectedTestCase === 2 ? "[3,2,4]" : "[3,3]"}
+              {displayTests.length > 0 ? (
+                <div className="flex flex-col gap-1.5 text-[12px]">
+                  <span className="font-bold text-text-secondary font-mono">Input</span>
+                  <div className="p-2.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text overflow-auto max-h-[100px] whitespace-pre">
+                    {displayTests[selectedTestCase - 1]?.input ?? ""}
+                  </div>
+                  <span className="font-bold text-text-secondary font-mono mt-1">Expected Output</span>
+                  <div className="p-2.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text overflow-auto max-h-[60px] whitespace-pre">
+                    {displayTests[selectedTestCase - 1]?.output ?? ""}
                   </div>
                 </div>
-                <div className="flex flex-col gap-1 text-left">
-                  <span className="font-bold text-text-secondary font-mono">target =</span>
-                  <div className="p-2.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text">
-                    {selectedTestCase === 1 ? "9" : selectedTestCase === 2 ? "6" : "6"}
-                  </div>
+              ) : (
+                <div className="text-[12px] text-text-secondary font-semibold">
+                  No public test cases available for this problem.
                 </div>
-              </div>
+              )}
             </div>
+
           ) : activeConsoleTab === "result" ? (
+            /* ── Result Tab ── */
             testResultState === "none" ? (
               <div className="w-full h-full flex flex-col items-center justify-center text-text-secondary text-[12px] font-semibold select-none">
                 <span>Please run or submit your solution first.</span>
@@ -109,69 +131,105 @@ export default function OutputConsole({
                   {testResultState === "compile_error" ? "Compile Error" : "Runtime Error"}
                 </div>
                 <pre className="mt-2 whitespace-pre-wrap font-semibold leading-relaxed">
-                  {submissionDetails?.errorMessage || "An error occurred during code evaluation."}
+                  {submissionDetails?.errorMessage
+                    ?? runResult?.stderr
+                    ?? "An error occurred during code evaluation."}
                 </pre>
               </div>
-            ) : (
-              /* Testcase Results Column */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar pr-1">
-                {/* Left case selectors & details */}
-                <div className="flex flex-col gap-2.5">
-                  <div className="flex items-center gap-1.5 select-none">
-                    {[1, 2, 3].map((tc) => (
-                      <button
-                        key={tc}
-                        onClick={() => setSelectedTestCase(tc)}
-                        className={cn(
-                          "px-3 py-1 rounded-lg text-[12px] font-bold cursor-pointer transition focus:outline-none",
-                          selectedTestCase === tc
-                            ? "bg-gray-200 dark:bg-white/[0.08] text-text-primary"
-                            : "bg-gray-100 dark:bg-white/[0.03] text-text-secondary hover:text-text-primary"
-                        )}
-                      >
-                        Case {tc}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col gap-1.5 text-left text-[12px]">
-                    <span className="font-bold text-text-secondary font-mono">Input</span>
-                    <div className="p-2 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text overflow-x-auto">
-                      {selectedTestCase === 1 ? "nums = [2,7,11,15], target = 9" : selectedTestCase === 2 ? "nums = [3,2,4], target = 6" : "nums = [3,3], target = 6"}
-                    </div>
-                  </div>
+            ) : isRunMode && runResults ? (
+              /* ── Run Mode: show per-test results ── */
+              <div className="flex flex-col h-full gap-2 overflow-y-auto custom-scrollbar pr-1">
+                {/* Test case selector with pass/fail indicators */}
+                <div className="flex items-center gap-1.5 select-none">
+                  {runResults.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedTestCase(i + 1)}
+                      className={cn(
+                        "flex items-center gap-1 px-3 py-1 rounded-lg text-[12px] font-bold cursor-pointer transition focus:outline-none",
+                        selectedTestCase === i + 1
+                          ? "bg-gray-200 dark:bg-white/[0.08] text-text-primary"
+                          : "bg-gray-100 dark:bg-white/[0.03] text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {r.passed
+                        ? <Check className="w-3 h-3 text-[#10b981] stroke-[3]" />
+                        : <X className="w-3 h-3 text-red-500 stroke-[3]" />
+                      }
+                      Case {i + 1}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Right console output details */}
-                <div className="flex flex-col gap-2 border-l border-border-card/60 pl-0 md:pl-4 text-left text-[12px]">
-                  {/* Accepted/Failed Status header */}
-                  <div className="flex items-baseline justify-between select-none">
-                    <div className="flex items-baseline gap-2">
+                {runResult && (
+                  <div className="flex flex-col gap-1.5 text-[12px]">
+                    {/* Status badge */}
+                    <div className="flex items-center gap-2">
                       <span className={cn(
                         "text-[13px] font-bold",
-                        testResultState === "accepted" ? "text-[#10b981]" : "text-red-500"
+                        runResult.passed ? "text-[#10b981]" : "text-red-500"
                       )}>
-                        {testResultState === "accepted" ? "Accepted" : "Wrong Answer"}
+                        {runResult.passed ? "✓ Passed" : "✗ Failed"}
                       </span>
-                      <span className="text-[11px] text-text-secondary font-bold font-mono">
-                        Runtime: {submissionDetails?.executionTimeMs ?? 32} ms
-                      </span>
+                      {runResult.executionTime > 0 && (
+                        <span className="text-[11px] text-text-secondary font-mono">
+                          {runResult.executionTime.toFixed(3)}s
+                        </span>
+                      )}
                     </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-bold text-text-secondary font-mono">Your Output</span>
+                        <div className={cn(
+                          "p-1.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono font-bold select-text overflow-auto max-h-[60px] whitespace-pre text-[11px]",
+                          runResult.passed ? "text-[#10b981]" : "text-red-500"
+                        )}>
+                          {runResult.actual || <span className="text-text-secondary italic">(empty)</span>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-bold text-text-secondary font-mono">Expected</span>
+                        <div className="p-1.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text overflow-auto max-h-[60px] whitespace-pre text-[11px]">
+                          {runResult.expected}
+                        </div>
+                      </div>
+                    </div>
+
+                    {runResult.stderr && !runResult.passed && (
+                      <div className="text-[11px] text-red-500 font-mono bg-red-500/5 p-2 rounded-lg border border-red-500/20 overflow-auto max-h-[50px] whitespace-pre">
+                        {runResult.stderr}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ── Submit Mode result ── */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full overflow-y-auto custom-scrollbar pr-1">
+                {/* Left */}
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex items-baseline justify-between select-none">
+                    <span className={cn(
+                      "text-[13px] font-bold",
+                      testResultState === "accepted" ? "text-[#10b981]" : "text-red-500"
+                    )}>
+                      {testResultState === "accepted" ? "✓ Accepted" : "✗ Wrong Answer"}
+                    </span>
                     <span className="text-[11px] text-text-secondary font-bold font-mono">
-                      Memory: {submissionDetails?.memoryUsedMb ?? "12.4"} MB
+                      Runtime: {submissionDetails?.executionTimeMs ?? 0} ms
                     </span>
                   </div>
 
-                  {/* Casepassed tick */}
                   {testResultState === "accepted" ? (
                     <div className="flex items-center gap-1.5 text-[#10b981] font-bold text-[11.5px] select-none">
                       <Check className="w-3.5 h-3.5 stroke-[3.5]" />
-                      <span>All {submissionDetails?.testCasesTotal ?? 3} test cases passed</span>
+                      <span>All {submissionDetails?.testCasesTotal ?? "–"} test cases passed</span>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-1 text-[11.5px] select-none text-left">
                       <span className="text-red-500 font-bold">
-                        Failed Case ({submissionDetails?.testCasesPassed ?? 2} / {submissionDetails?.testCasesTotal ?? 3} cases passed)
+                        Failed ({submissionDetails?.testCasesPassed ?? 0} / {submissionDetails?.testCasesTotal ?? "–"} cases passed)
                       </span>
                       {submissionDetails?.errorMessage && (
                         <span className="text-text-secondary font-mono text-[10.5px] mt-0.5 leading-snug">
@@ -180,53 +238,46 @@ export default function OutputConsole({
                       )}
                     </div>
                   )}
+                </div>
 
-                  {/* Output / Expected */}
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-bold text-text-secondary font-mono">Output</span>
-                      <div className={cn(
-                        "p-1.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono font-bold select-text text-center",
-                        testResultState === "accepted" ? "text-[#10b981]" : "text-red-500"
-                      )}>
-                        {testResultState === "accepted"
-                          ? (selectedTestCase === 1 ? "[0,1]" : selectedTestCase === 2 ? "[1,2]" : "[0,1]")
-                          : (selectedTestCase === 1 ? "[0,1]" : selectedTestCase === 2 ? "[1,2]" : "[]")
-                        }
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-bold text-text-secondary font-mono">Expected</span>
-                      <div className="p-1.5 bg-gray-100 dark:bg-white/[0.03] border border-border-card rounded-lg font-mono text-text-primary select-text text-center">
-                        {selectedTestCase === 1 ? "[0,1]" : selectedTestCase === 2 ? "[1,2]" : "[0,1]"}
-                      </div>
-                    </div>
-                  </div>
+                {/* Right: memory */}
+                <div className="flex flex-col gap-2 border-l border-border-card/60 pl-0 md:pl-4 text-left text-[12px]">
+                  <span className="text-[11px] text-text-secondary font-bold font-mono">
+                    Memory: {submissionDetails?.memoryUsedMb ?? "–"} MB
+                  </span>
                 </div>
               </div>
             )
           ) : (
-            /* Raw Console execution logs */
+            /* ── Console Tab ── */
             <div className="w-full h-full bg-gray-100 dark:bg-white/[0.02] border border-border-card rounded-xl p-3.5 font-mono text-[11.5px] leading-relaxed text-text-secondary select-text overflow-y-auto custom-scrollbar text-left shadow-inner">
-              <div className="text-text-primary font-bold">~ Compiled code successfully on Sandbox.</div>
-              <div className="text-brand-orange font-bold mt-1">Running test suite cases...</div>
+              <div className="text-text-primary font-bold">~ Compiled code on Sandbox.</div>
+              <div className="text-brand-orange font-bold mt-1">Running test cases...</div>
               {testResultState === "accepted" ? (
                 <>
-                  <div className="text-[#10b981] mt-0.5">&gt; TestCase 1: Passed (Runtime: 12ms, Memory: 11MB)</div>
-                  <div className="text-[#10b981]">&gt; TestCase 2: Passed (Runtime: 18ms, Memory: 12MB)</div>
-                  <div className="text-[#10b981]">&gt; TestCase 3: Passed (Runtime: 15ms, Memory: 11MB)</div>
-                  <div className="text-[#10b981] font-bold mt-1">&gt;&gt; All test suite validations passed. Accepted solution.</div>
+                  {(runResults ?? []).map((r, i) => (
+                    <div key={i} className={r.passed ? "text-[#10b981]" : "text-red-500"}>
+                      &gt; Case {i + 1}: {r.passed ? `Passed (${r.executionTime.toFixed(3)}s)` : `Failed — got "${r.actual}", expected "${r.expected}"`}
+                    </div>
+                  ))}
+                  {!runResults && (
+                    <div className="text-[#10b981] font-bold mt-1">&gt;&gt; All test cases passed. Accepted.</div>
+                  )}
                 </>
               ) : testResultState === "wrong_answer" ? (
                 <>
-                  <div className="text-[#10b981] mt-0.5">&gt; TestCase 1: Passed (Runtime: 12ms, Memory: 11MB)</div>
-                  <div className="text-[#10b981]">&gt; TestCase 2: Passed (Runtime: 18ms, Memory: 12MB)</div>
-                  <div className="text-red-500">&gt; TestCase 3: Failed (Assertion failed: expected [1,2] but got [0,1])</div>
-                  <div className="text-red-500 font-bold mt-1">&gt;&gt; Test suite failed. Wrong Answer.</div>
+                  {(runResults ?? []).map((r, i) => (
+                    <div key={i} className={r.passed ? "text-[#10b981]" : "text-red-500"}>
+                      &gt; Case {i + 1}: {r.passed ? "Passed" : `Failed — got "${r.actual?.trim()}", expected "${r.expected?.trim()}"`}
+                    </div>
+                  ))}
+                  {!runResults && (
+                    <div className="text-red-500 font-bold mt-1">&gt;&gt; Wrong Answer.</div>
+                  )}
                 </>
               ) : testResultState === "compile_error" || testResultState === "runtime_error" ? (
                 <div className="text-red-500 font-bold">
-                  &gt;&gt; Code execution failed. Check the &apos;Test Result&apos; tab for detail logs.
+                  &gt;&gt; Code execution failed. Check the &apos;Test Result&apos; tab for details.
                 </div>
               ) : (
                 <div className="text-text-secondary mt-1">~ Idle. Run or submit your solution.</div>

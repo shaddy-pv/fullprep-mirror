@@ -12,7 +12,7 @@ interface SidebarState {
 export const useSidebarStore = create<SidebarState>((set) => ({
   isSidebarCollapsed: false,
   isMobileSidebarOpen: false,
-  notificationCount: 1,
+  notificationCount: 0,
   setIsSidebarCollapsed: (collapsed) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("sidebar-collapsed", String(collapsed));

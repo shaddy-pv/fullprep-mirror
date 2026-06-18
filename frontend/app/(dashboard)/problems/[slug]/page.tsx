@@ -14,11 +14,15 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { ProblemsService } from "@/services/problems.service";
-import { SubmissionsService } from "@/services/submissions.service";
+import { BookmarksService } from "@/services/bookmarks.service";
+import { SubmissionsService, type RunTestResult } from "@/services/submissions.service";
+import { AuthService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/authStore";
 import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
+import { getStarterCode, getApiLanguage } from "@/lib/starterCode";
 
 // Zustand stores
 import { useEditorStore } from "@/store/editorStore";
@@ -43,6 +47,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   // Zustand stores bindings
   const editorStore = useEditorStore();
   const { toast, showToast } = useNotificationStore();
+  const { user, setUser } = useAuthStore();
 
   // Page layout states (strictly for split panel resizing)
   const [leftWidth, setLeftWidth] = useState(45);
@@ -52,11 +57,49 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   // Bookmarks & Star state
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+
+  // Sync page isBookmarked with authStore user bookmarks
+  useEffect(() => {
+    if (user) {
+      setIsBookmarked(user.bookmarks?.includes(slug) || false);
+    }
+  }, [user, slug]);
+
+  const handleToggleBookmark = async () => {
+    if (!user) {
+      showToast("Please log in to bookmark problems.", "info");
+      return;
+    }
+    try {
+      const response = await BookmarksService.toggleBookmark(slug);
+      if (response && response.success) {
+        setIsBookmarked(response.isBookmarked);
+        setUser({
+          ...user,
+          bookmarks: response.bookmarks
+        });
+        showToast(response.isBookmarked ? "Problem bookmarked!" : "Bookmark removed.", "success");
+      }
+    } catch (err) {
+      showToast("Failed to toggle bookmark.", "info");
+    }
+  };
   const [upvotes, setUpvotes] = useState(0);
   const [downvotes, setDownvotes] = useState(0);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Monaco local code buffer
+  const [code, setCode] = useState("");
+
+  // Console select case state
+  const [selectedTestCase, setSelectedTestCase] = useState(1);
+  const [testResultState, setTestResultState] = useState<"none" | "running" | "accepted" | "wrong_answer" | "compile_error" | "runtime_error">("none");
+  const [submissionDetails, setSubmissionDetails] = useState<any>(null);
+  // Run mode state — results from the Run button (public tests)
+  const [runResults, setRunResults] = useState<RunTestResult[] | null>(null);
+  const [isRunMode, setIsRunMode] = useState(false);
 
   useEffect(() => {
     ProblemsService.getProblemBySlug(slug).then((data) => {
@@ -64,23 +107,53 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         setProblem(data);
         setUpvotes(data.upvotes);
         setDownvotes(data.downvotes);
+        
+        // Fetch user's latest submission for this problem
+        SubmissionsService.getSubmissions(1, 1, undefined, data.slug).then(async (subRes) => {
+          if (subRes?.data && subRes.data.length > 0) {
+            const latestSub = subRes.data[0];
+            const fullSub = await SubmissionsService.getSubmissionById(latestSub._id);
+            if (fullSub?.data) {
+              const details = fullSub.data;
+              
+              // Load the latest submission status into the console
+              setSubmissionDetails(details);
+              if (details.status === "ACCEPTED") {
+                setTestResultState("accepted");
+                editorStore.setActiveTab("result");
+              } else if (details.status === "WRONG_ANSWER") {
+                setTestResultState("wrong_answer");
+                editorStore.setActiveTab("result");
+              } else if (details.status === "COMPILE_ERROR") {
+                setTestResultState("compile_error");
+                editorStore.setActiveTab("result");
+              } else if (details.status === "RUNTIME_ERROR") {
+                setTestResultState("runtime_error");
+                editorStore.setActiveTab("result");
+              }
+              
+              // Set the code from the previous submission
+              if (details.code) {
+                setCode(details.code);
+                // Also save to localStorage to override the empty template
+                if (typeof window !== "undefined") {
+                  const langMap: Record<string, string> = { "JAVASCRIPT": "javascript", "PYTHON3": "python", "JAVA": "java", "CPP17": "cpp", "CPP20": "cpp", "CPP": "cpp" };
+                  const langToSave = details.language ? (langMap[details.language] || "cpp") : "cpp";
+                  localStorage.setItem(`fullprep_code_${data.slug}_${langToSave}`, details.code);
+                }
+              }
+            }
+          }
+        });
       }
       setLoadingProblem(false);
     });
   }, [slug]);
 
-  // Monaco local code buffer
-  const [code, setCode] = useState("");
-
   // Modal display toggles
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
-  
-  // Console select case state
-  const [selectedTestCase, setSelectedTestCase] = useState(1);
-  const [testResultState, setTestResultState] = useState<"none" | "running" | "accepted" | "wrong_answer" | "compile_error" | "runtime_error">("none");
-  const [submissionDetails, setSubmissionDetails] = useState<any>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,16 +193,15 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
 
   // Reset code to starter template
   const handleResetCode = useCallback(() => {
-    if (problem && problem.starterCode[editorStore.language]) {
-      setCode(problem.starterCode[editorStore.language]);
-      // Clear persisted code so refresh loads starter
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(getCodeStorageKey(slug, editorStore.language));
-      }
+    const starter = getStarterCode(editorStore.language);
+    setCode(starter);
+    // Clear persisted code so refresh loads starter
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(getCodeStorageKey(slug, editorStore.language));
     }
     setIsResetConfirmOpen(false);
     showToast("Code reset to starter template", "info");
-  }, [problem, editorStore.language, slug, getCodeStorageKey, showToast]);
+  }, [editorStore.language, slug, getCodeStorageKey, showToast]);
 
   // Sync editor settings from localStorage on mount
   useEffect(() => {
@@ -137,6 +209,11 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
       setIsMounted(true);
       if (typeof window !== "undefined") {
         try {
+          const savedLang = localStorage.getItem("fullprep_default_language");
+          if (savedLang) {
+            editorStore.setLanguage(savedLang);
+          }
+
           const raw = localStorage.getItem("fullprep_editor_settings");
           if (raw) {
             const parsed = JSON.parse(raw);
@@ -164,8 +241,9 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         const savedCode = localStorage.getItem(getCodeStorageKey(slug, editorStore.language));
         if (savedCode) {
           setCode(savedCode);
-        } else if (problem && problem.starterCode[editorStore.language]) {
-          setCode(problem.starterCode[editorStore.language]);
+        } else {
+          // Always fall back to our starter code template
+          setCode(getStarterCode(editorStore.language));
         }
       }
     }, 0);
@@ -268,37 +346,64 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
     }
   };
 
-  const handleRunCode = () => {
+  const handleRunCode = async () => {
+    if (!problem) return;
     setTestResultState("running");
     setSubmissionDetails(null);
-    setTimeout(() => {
-      setTestResultState("accepted");
-      editorStore.setActiveTab("result");
-    }, 800);
+    setRunResults(null);
+    setIsRunMode(true);
+    editorStore.setActiveTab("result");
+
+    try {
+      const apiLang = getApiLanguage(editorStore.language);
+      const response = await SubmissionsService.runCode(slug, code, apiLang);
+
+      if (response?.success && response.data) {
+        const { status, testResults, hasCompileError } = response.data;
+        setRunResults(testResults);
+
+        if (hasCompileError) {
+          setTestResultState("compile_error");
+          setSubmissionDetails({ errorMessage: testResults[0]?.stderr || "Compilation failed" });
+          showToast("Compile Error.", "info");
+        } else if (status === "ACCEPTED") {
+          setTestResultState("accepted");
+          showToast(`Ran ${testResults.length} example test(s) — all passed! ✓`, "success");
+        } else {
+          setTestResultState("wrong_answer");
+          showToast("Wrong answer on example test case.", "info");
+        }
+        // Auto-select first failed test for easy viewing
+        const firstFail = testResults.findIndex((r) => !r.passed);
+        setSelectedTestCase(firstFail >= 0 ? firstFail + 1 : 1);
+      } else {
+        throw new Error("Invalid response from run endpoint.");
+      }
+    } catch (err: any) {
+      console.error("Run failed:", err);
+      setTestResultState("runtime_error");
+      setSubmissionDetails({ errorMessage: err.message || "Failed to run code." });
+      showToast(err.message || "Failed to run code.", "info");
+    }
   };
 
   const handleSubmitCode = async () => {
     if (!problem) return;
     setTestResultState("running");
     setSubmissionDetails(null);
+    setRunResults(null);
+    setIsRunMode(false);
     editorStore.setActiveTab("result");
 
     try {
-      // Map user language selection to backend expected values
-      // Backend: ["PYTHON3", "CPP17", "CPP20", "JAVA", "JAVASCRIPT", "C", "RUST", "GO"]
-      let mappedLang = "JAVASCRIPT";
-      const currentLang = editorStore.language;
-      if (currentLang === "python") mappedLang = "PYTHON3";
-      else if (currentLang === "cpp") mappedLang = "CPP17";
-      else if (currentLang === "java") mappedLang = "JAVA";
-      else if (currentLang === "javascript") mappedLang = "JAVASCRIPT";
+      const apiLang = getApiLanguage(editorStore.language);
 
       // The slug serves as externalId
       const response = await SubmissionsService.submitCode(
         slug,
-        problem.title || "Problem",
+        problem.title || problem.name || "Problem",
         code,
-        mappedLang
+        apiLang
       );
 
       if (response && response.success && response.data?.submissionId) {
@@ -318,6 +423,8 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                 if (status === "ACCEPTED") {
                   setTestResultState("accepted");
                   showToast("Solution Accepted! 🎉 +10 XP", "success");
+                  // Refresh user data (like Streak & XP) live
+                  AuthService.getCurrentUser();
                 } else if (status === "WRONG_ANSWER") {
                   setTestResultState("wrong_answer");
                   showToast("Wrong Answer on testcase.", "info");
@@ -415,7 +522,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
           <ProblemDescription
             problem={problem}
             isBookmarked={isBookmarked}
-            setIsBookmarked={setIsBookmarked}
+            setIsBookmarked={handleToggleBookmark}
             isStarred={isStarred}
             setIsStarred={setIsStarred}
             hasUpvoted={hasUpvoted}
@@ -537,6 +644,9 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
             setSelectedTestCase={setSelectedTestCase}
             testResultState={testResultState}
             submissionDetails={submissionDetails}
+            runResults={runResults}
+            isRunMode={isRunMode}
+            publicTests={problem?.examples ?? []}
           />
         </div>
       </div>
@@ -656,20 +766,6 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         </div>
       </Modal>
 
-      {/* Toast Notification */}
-      {toast.show && (
-        <div 
-          className={cn(
-            "fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12.5px] font-bold shadow-lg border animate-in fade-in slide-in-from-bottom-2 duration-300 select-none pointer-events-none",
-            toast.type === "success"
-              ? "bg-[#111217] dark:bg-[#06090f] text-[#10b981] border-[#10b981]/20 shadow-[#10b981]/10"
-              : "bg-[#111217] dark:bg-[#06090f] text-brand-orange border-brand-orange/20 shadow-brand-orange/10"
-          )}
-        >
-          <CheckCircle2 className={cn("w-4 h-4 shrink-0", toast.type === "success" ? "text-[#10b981]" : "text-brand-orange")} />
-          <span>{toast.message}</span>
-        </div>
-      )}
     </div>
   );
 }

@@ -18,6 +18,47 @@ const ChartCard = dynamic(() => import("./ChartCard"), {
 
 export default function Analytics() {
   const router = useRouter();
+  const [topicData, setTopicData] = React.useState(TOPICS_MOCK_DATA);
+
+  React.useEffect(() => {
+    async function fetchStats() {
+      try {
+        const { AuthService } = await import("@/services/auth.service");
+        const stats = await AuthService.getStats();
+        
+        if (stats && stats.topicStrength && stats.topicStrength.length > 0) {
+          const top4 = stats.topicStrength.slice(0, 4);
+          const totalSolved = stats.problemsSolved || 1;
+          
+          const mapped = top4.map((t: any) => {
+            // Capitalize and format tag strings like "dynamic programming" -> "Dynamic Programming"
+            const formattedName = t.topic
+              .split("-")
+              .join(" ")
+              .split(" ")
+              .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" ");
+              
+            return {
+              name: formattedName,
+              percentage: Math.round((t.count / totalSolved) * 100)
+            };
+          });
+          
+          // Fill remaining slots with mock data if we have less than 4
+          if (mapped.length < 4) {
+             const remaining = TOPICS_MOCK_DATA.slice(mapped.length, 4);
+             setTopicData([...mapped, ...remaining]);
+          } else {
+             setTopicData(mapped);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch topic stats:", err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   const handleTopicClick = (topicName: string) => {
     const slug = topicName.toLowerCase().replace(/\s+/g, "-");
@@ -34,7 +75,7 @@ export default function Analytics() {
         <SectionHeader title="Topic Strength" />
 
         <div className="flex flex-col gap-[12.5px] mt-2">
-          {TOPICS_MOCK_DATA.map((topic, index) => (
+          {topicData.map((topic, index) => (
             <div 
               key={index} 
               onClick={() => handleTopicClick(topic.name)}
