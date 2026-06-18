@@ -96,11 +96,14 @@ export default function SettingsPage() {
   const isScrollingRef = useRef(false);
 
   // Profile Form States
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [website, setWebsite] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState("");
 
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -112,6 +115,20 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.name || "");
+      setUsername(user.email ? user.email.split("@")[0] : "coder");
+      setBio(user.bio || "");
+      setWebsite(user.socialLinks?.website || "");
+      setGithub(user.socialLinks?.github || "");
+      setLinkedin(user.socialLinks?.linkedin || "");
+      setTwitter(user.socialLinks?.twitter || "");
+      setAvatar(user.avatar || "");
+      setAvatarPreview(user.avatarUrl || "");
+    }
+  }, [user]);
 
   // Preferences States
   const [defaultLanguage, setDefaultLanguage] = useState("Python");
@@ -246,7 +263,7 @@ export default function SettingsPage() {
     };
 
     const observer = new IntersectionObserver(observerCallback, observerOptions);
-    const sections = ["profile", "account", "preferences", "privacy", "connected", "appearance", "billing", "data", "danger"];
+    const sections = ["profile", "account", "preferences", "privacy", "connected", "appearance", "billing", "data"];
     
     sections.forEach((id) => {
       const el = document.getElementById(id);
@@ -277,12 +294,76 @@ export default function SettingsPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Please select a valid image file.", "info");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image size must be less than 5MB.", "info");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 150;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          setAvatar(dataUrl);
+          setAvatarPreview(dataUrl);
+          showToast("Avatar image loaded. Click 'Save Changes' to update.", "info");
+        }
+      };
+      img.onerror = () => {
+        showToast("Failed to load image file.", "info");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatar("");
+    setAvatarPreview(`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || "U")}&background=6366f1&color=fff&size=128`);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    showToast("Avatar removed. Click 'Save Changes' to update.", "info");
+  };
+
   const handleSaveChanges = async () => {
     showToast("Saving changes...", "info");
     try {
       await AuthService.updateProfile({
         name: displayName,
         bio,
+        avatar,
         socialLinks: {
           github,
           linkedin,
@@ -352,7 +433,6 @@ export default function SettingsPage() {
     { id: "appearance", name: "Appearance", icon: Palette },
     { id: "billing", name: "Billing & Subscription", icon: CreditCard },
     { id: "data", name: "Data & Export", icon: Download },
-    { id: "danger", name: "Danger Zone", icon: AlertTriangle },
   ];
 
   const accentsList = [
@@ -497,18 +577,49 @@ export default function SettingsPage() {
                 {/* Avatar Picker & Indicator */}
                 <div className="flex flex-col items-center gap-3.5 shrink-0 mx-auto md:mx-0">
                   <div className="relative group">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
-                      <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>
-                    </div>
-                    <span className="w-4 h-4 rounded-full bg-[#10b981] border-2 border-white dark:border-[#0d0e19] absolute bottom-1 right-1 shadow-md shadow-[#10b981]/30 animate-pulse" />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-24 h-24 rounded-full border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-orange group-hover:opacity-90 transition-opacity"
+                    >
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white">
+                          <span className="group-hover:scale-95 transition-transform duration-300">
+                            {(displayName || "U").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                    <span className="w-4 h-4 rounded-full bg-[#10b981] border-2 border-white dark:border-[#0d0e19] absolute bottom-1 right-1 shadow-md shadow-[#10b981]/30 animate-pulse pointer-events-none" />
                   </div>
-                  <button
-                    onClick={() => showToast("Opening file avatar uploader...", "info")}
-                    className="flex items-center justify-center gap-1.5 border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/5 dark:bg-white/[0.04] hover:bg-slate-900/10 dark:hover:bg-white/[0.08] text-[#111827] dark:text-white px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer h-[28px] leading-none"
-                  >
-                    <Upload className="w-3 h-3 text-slate-400 dark:text-[#9ca3af]" />
-                    <span>Change Avatar</span>
-                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center justify-center gap-1.5 border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/5 dark:bg-white/[0.04] hover:bg-slate-900/10 dark:hover:bg-white/[0.08] text-[#111827] dark:text-white px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer h-[28px] leading-none"
+                    >
+                      <Upload className="w-3 h-3 text-slate-400 dark:text-[#9ca3af]" />
+                      <span>Change Avatar</span>
+                    </button>
+                    {avatar && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        className="flex items-center justify-center gap-1.5 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-500 px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer h-[28px] leading-none"
+                      >
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Form fields */}
@@ -1270,47 +1381,6 @@ export default function SettingsPage() {
           </section>
           )}
 
-          {/* ──────────────────────────────────────────
-              DANGER ZONE SECTION
-              ────────────────────────────────────────── */}
-          {activeTab === "danger" && (
-          <section id="danger" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full"
-                >
-                  <div className="rounded-[20px] border border-red-500/20 bg-red-500/[0.02] shadow-[0_8px_32px_rgba(239,68,68,0.08)] p-6 pt-5 flex flex-col gap-5 w-full text-left">
-              <div className="flex items-start gap-4.5 text-left leading-none">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0 text-red-500">
-                  <AlertTriangle className="w-6.5 h-6.5" />
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className="text-[15.5px] font-bold text-red-500 tracking-tight leading-none">Destructive Account Actions</span>
-                  <p className="text-sm text-slate-500 dark:text-white/60 font-medium mt-2.5 leading-relaxed max-w-[550px]">
-                    Actions in this section are irreversible. Terminating your FullPrep account will wipe solved metrics, streak levels, unlocked badges, and historical submission files permanently.
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-900/[0.06] dark:border-white/[0.05] pt-4.5 flex items-center justify-between gap-6">
-                <div className="flex flex-col text-left leading-none gap-2">
-                  <span className="text-[13.5px] font-bold text-[#111827] dark:text-white leading-none">Delete FullPrep Coding Account</span>
-                  <span className="text-[11px] text-slate-500 dark:text-text-secondary/50 leading-none font-medium">Wipe your profile and solutions repository permanently.</span>
-                </div>
-                <a
-                  href={`mailto:support@fullprep.com?subject=Account Deletion Request - ${user?.email}&body=Hi Support Team,%0D%0A%0D%0AI would like to request the deletion of my FullPrep account. %0D%0A%0D%0AReason for deletion:%0D%0A[Please type your reason here]%0D%0A%0D%0AAccount Details:%0D%0AEmail: ${user?.email}%0D%0AName: ${user?.name}%0D%0A`}
-                  className="bg-red-500/15 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-[11px] font-bold rounded-lg px-4.5 py-2.5 transition-all cursor-pointer h-[32px] leading-none shrink-0 self-center flex items-center justify-center"
-                >
-                  Request Deletion
-                </a>
-              </div>
-            </div>
-                </motion.div>
-          </section>
-          )}
 
         </div>
 

@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import "dotenv/config";
 import { firebaseAdmin } from "./src/config/firebase.js";
 
 if (firebaseAdmin) {
