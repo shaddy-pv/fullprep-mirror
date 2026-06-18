@@ -16,9 +16,14 @@ const ChartCard = dynamic(() => import("./ChartCard"), {
   ),
 });
 
+interface TopicData {
+  name: string;
+  percentage: number;
+}
+
 export default function Analytics() {
   const router = useRouter();
-  const [topicData, setTopicData] = React.useState(TOPICS_MOCK_DATA);
+  const [topicData, setTopicData] = React.useState<TopicData[]>([...TOPICS_MOCK_DATA]);
 
   React.useEffect(() => {
     async function fetchStats() {

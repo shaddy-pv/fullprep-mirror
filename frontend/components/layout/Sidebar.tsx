@@ -201,7 +201,7 @@ export default function Sidebar() {
               Keep solving to maintain your coding streak.
             </p>
             <div className="flex justify-between items-center px-1">
-              {dynamicStreakDays.map((day, idx) => (
+              {dynamicStreakDays.map((day: { label: string; status: string }, idx: number) => (
                 <div key={idx} className="flex flex-col items-center gap-1.5">
                   {day.status === "completed" ? (
                     <div className="w-[10px] h-[10px] rounded-full bg-brand-orange shadow-[0_0_8px_rgba(255,106,0,0.6)]" />

@@ -51,7 +51,8 @@ export const BookmarksService = {
   async toggleBookmark(problemId: string) {
     try {
       const response = await api.post<{ success: boolean; isBookmarked: boolean; bookmarks: string[] }>(
-        `${BASE_URL}/problems/${problemId}/bookmark`
+        `${BASE_URL}/problems/${problemId}/bookmark`,
+        {}
       );
       return response;
     } catch (error) {

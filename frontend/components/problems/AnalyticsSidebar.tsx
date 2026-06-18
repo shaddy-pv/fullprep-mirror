@@ -274,7 +274,7 @@ export default function AnalyticsSidebar() {
                     padding: "4px 8px",
                   }}
                   cursor={{ stroke: "#ff6a00", strokeWidth: 1, strokeDasharray: "3 3" }}
-                  formatter={(value: any, name: string) => [value, name === "value" ? "Submissions" : name]}
+                  formatter={(value: any, name: any) => [value, name === "value" ? "Submissions" : name]}
                 />
                 <Area
                   type="monotone"
