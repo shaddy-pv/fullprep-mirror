@@ -160,13 +160,6 @@ export const login = async (req, res) => {
   }
 
   // ── 4. Compare passwords ────────────────────────────────────
-  if (!user.password) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid email or password.",
-    });
-  }
-
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     return res.status(401).json({
