@@ -9,8 +9,8 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
   },
   
-  // Disable telemetry
-  telemetry: false,
+  // Disable telemetry (use env var instead)
+  // NEXT_TELEMETRY_DISABLED=1 set in Dockerfile
   
   // Webpack configuration
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -24,8 +24,7 @@ const nextConfig = {
   },
   
   // Production optimizations
-  swcMinify: true,
-  compress: true,
+  poweredByHeader: false,
   
   // Security headers
   async headers() {
