@@ -22,6 +22,7 @@ interface UserProfile {
   bookmarks?: string[];
   location?: string;
   backupEmail?: string;
+  createdAt?: string;
   preferences?: any;
   notifs?: any;
   visibility?: any;

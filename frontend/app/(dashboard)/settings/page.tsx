@@ -1253,10 +1253,10 @@ export default function SettingsPage() {
                         URL.revokeObjectURL(url);
                         showToast("Backup package downloaded successfully.", "success");
                       } else {
-                        showToast("Failed to generate backup package.", "error");
+                        showToast("Failed to generate backup package.", "info");
                       }
                     } catch (err) {
-                      showToast("Error during data export.", "error");
+                      showToast("Error during data export.", "info");
                     }
                   }}
                   className="flex items-center justify-center gap-1.5 border border-slate-900/[0.08] dark:border-white/[0.08] hover:bg-slate-900/5 dark:hover:bg-white/[0.04] bg-slate-900/5 dark:bg-[#111217]/50 text-[#111827] dark:text-[#f3f4f6] text-[12px] font-bold rounded-xl px-5 py-2.5 transition-all cursor-pointer self-start h-[38px] leading-none"

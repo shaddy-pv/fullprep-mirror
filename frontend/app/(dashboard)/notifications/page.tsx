@@ -40,7 +40,7 @@ export default function NotificationsPage() {
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
       showToast("All notifications marked as read.", "success");
     } else {
-      showToast("Failed to mark notifications as read.", "error");
+      showToast("Failed to mark notifications as read.", "info");
     }
   };
 
@@ -50,7 +50,7 @@ export default function NotificationsPage() {
       setNotifications([]);
       showToast("Notifications cleared successfully.", "info");
     } else {
-      showToast("Failed to clear notifications.", "error");
+      showToast("Failed to clear notifications.", "info");
     }
   };
 
