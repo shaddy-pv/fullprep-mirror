@@ -23,6 +23,10 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 
 const app = express();
 
+// Trust reverse proxy (e.g., Render, Vercel load balancers) 
+// so rate limiters see actual client IP instead of proxy IP
+app.set("trust proxy", 1);
+
 // Sentry request handler must be the first middleware
 Sentry.setupExpressErrorHandler(app);
 
