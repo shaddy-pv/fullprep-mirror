@@ -2,9 +2,6 @@
 
 <div align="center">
   <br />
-  <img src="public/favicon.svg" width="96" height="96" alt="FullPrep Logo" />
-  <br />
-  <br />
 
   # **FULLPREP**
 
