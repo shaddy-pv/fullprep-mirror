@@ -8,7 +8,7 @@
 
   # **FULLPREP**
 
-  **`// The Smart Way to Master DSA`**
+  **`The Smart Way to Master DSA`**
 
   *A premium, production-ready landing page for an AI-powered DSA learning & interview prep platform.*
 
