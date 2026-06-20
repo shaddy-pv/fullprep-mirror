@@ -1,29 +1,24 @@
 <!-- FULLPREP README — Terminal × Pixel Aesthetic -->
 
 <div align="center">
+  <br />
+  <img src="public/favicon.svg" width="96" height="96" alt="FullPrep Logo" />
+  <br />
+  <br />
 
-```
-███████╗██╗   ██╗██╗     ██╗     ██████╗ ██████╗ ███████╗██████╗
-██╔════╝██║   ██║██║     ██║     ██╔══██╗██╔══██╗██╔════╝██╔══██╗
-█████╗  ██║   ██║██║     ██║     ██████╔╝██████╔╝█████╗  ██████╔╝
-██╔══╝  ██║   ██║██║     ██║     ██╔═══╝ ██╔══██╗██╔══╝  ██╔═══╝
-██║     ╚██████╔╝███████╗███████╗██║     ██║  ██║███████╗██║
-╚═╝      ╚═════╝ ╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝╚═╝
-```
+  # **FULLPREP**
 
-**`// The Smart Way to Master DSA`**
+  **`// The Smart Way to Master DSA`**
 
-<img src="public/favicon.ico" width="56" alt="FullPrep Logo" />
+  *A premium, production-ready landing page for an AI-powered DSA learning & interview prep platform.*
 
-*A premium, production-ready landing page for an AI-powered DSA learning & interview prep platform.*
+  ---
 
----
-
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Framer Motion](https://img.shields.io/badge/Framer_Motion-latest-FF0055?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion)
-[![License: MIT](https://img.shields.io/badge/License-MIT-FF6B00?style=for-the-badge)](LICENSE)
+  [![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+  [![Framer Motion](https://img.shields.io/badge/Framer_Motion-latest-FF0055?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-FF6B00?style=for-the-badge)](LICENSE)
 
 </div>
 
