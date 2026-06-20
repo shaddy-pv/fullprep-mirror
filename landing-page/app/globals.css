@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: var(--font-outfit), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+  
+  --color-primary: #FF6B00;
+  --color-bg-dark: #050816;
+  --color-bg-light: #FAFAFA;
+  --color-text-dark: #0F172A;
+  
+  --color-border-dark: rgba(255, 255, 255, 0.08);
+  --color-border-light: rgba(15, 23, 42, 0.08);
+}
+
+:root {
+  --envelope-shadow: drop-shadow(0 12px 24px rgba(255,107,0,0.08));
+  --plane-shadow: drop-shadow(0 8px 16px rgba(255,107,0,0.15));
+  --doc-top-highlight: rgba(226, 232, 240, 0.8);
+  --doc-stop-1: rgba(255, 255, 255, 0.95);
+  --doc-stop-2: rgba(255, 255, 255, 0.90);
+  --doc-border-start: rgba(226, 232, 240, 0.8);
+  --doc-border-end: rgba(226, 232, 240, 0.4);
+  --doc-line: #cbd5e1;
+}
+
+.dark {
+  --envelope-shadow: drop-shadow(0 0 25px rgba(255,107,0,0.25));
+  --plane-shadow: drop-shadow(0 0 18px rgba(255,107,0,0.45));
+  --doc-top-highlight: rgba(255, 255, 255, 0.16);
+  --doc-stop-1: rgba(14, 19, 56, 0.90);
+  --doc-stop-2: rgba(7, 10, 30, 0.75);
+  --doc-border-start: rgba(255, 255, 255, 0.12);
+  --doc-border-end: rgba(255, 255, 255, 0.02);
+  --doc-line: #475569;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Custom scrollbar to keep it looking premium */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.1);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+/* Neon glow and glassmorphism helpers */
+.glass-card-dark {
+  background: rgba(10, 15, 36, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.glow-orange {
+  box-shadow: 0 0 25px -5px rgba(255, 107, 0, 0.4);
+}
+
+.glow-orange-sm {
+  box-shadow: 0 0 15px -3px rgba(255, 107, 0, 0.25);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, #A5B4FC 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-orange {
+  background: linear-gradient(135deg, #FF9E00 0%, #FF6B00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
