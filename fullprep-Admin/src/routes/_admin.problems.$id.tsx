@@ -420,7 +420,7 @@ function ProblemDetailsPage() {
               <div className="space-y-3 pt-2">
                 <Link
                   to="/problems/create"
-                  search={{ clone: p._id }}
+                  search={{ edit: p.externalId }}
                   className="w-full py-2.5 rounded-lg text-sm font-semibold border border-border-card bg-background/50 hover:bg-background transition-colors flex justify-center items-center gap-2 text-text-primary"
                 >
                   <Code2 className="h-4 w-4" /> Edit Problem Configuration

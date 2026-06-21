@@ -28,6 +28,14 @@ const getMissingFields = (body, fields) =>
 // ── @route   POST /api/auth/register
 // ── @access  Public
 export const register = async (req, res) => {
+  // ── 0. Check System Settings ─────────────────────────────────
+  if (req.systemSettings && !req.systemSettings.registrationEnabled) {
+    return res.status(403).json({
+      success: false,
+      message: "Registration is currently disabled by the administrator.",
+    });
+  }
+
   const { name, email, password } = req.body;
 
   // ── 1. Input validation ─────────────────────────────────────

@@ -1,15 +1,26 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Trash2, Save, Eye, Edit2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AdminProblem } from "@/lib/types";
 
 export const Route = createFileRoute("/_admin/problems/create")({
-  head: () => ({ meta: [{ title: "Create Problem — FullPrep Admin" }] }),
+  head: () => ({ meta: [{ title: "Create/Edit Problem — FullPrep Admin" }] }),
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      edit: search.edit as string | undefined,
+      clone: search.clone as string | undefined,
+    };
+  },
   component: CreateProblemPage,
 });
 
 function CreateProblemPage() {
+  const { edit, clone } = Route.useSearch();
+  const targetId = edit || clone;
+  const isEditing = !!edit;
+
   const navigate = useNavigate();
   const [isPreview, setIsPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +51,20 @@ function CreateProblemPage() {
     originalProblemLink: "",
   });
 
+  const { data: sourceProblem, isLoading: isSourceLoading } = useQuery({
+    queryKey: ["problem", targetId],
+    queryFn: () => api.getProblem(targetId!),
+    enabled: !!targetId,
+  });
+
+  useEffect(() => {
+    if (sourceProblem) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id, externalId, createdAt, lastSyncedAt, ...rest } = sourceProblem as any;
+      setForm(isEditing ? { ...rest, _id, externalId } : rest);
+    }
+  }, [sourceProblem, isEditing]);
+
   function updateForm(field: keyof AdminProblem, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -68,8 +93,11 @@ function CreateProblemPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Concatenate all description parts into a master description if needed, or send as is
-      await api.createProblem(form);
+      if (isEditing && edit) {
+        await api.updateProblem(edit, form);
+      } else {
+        await api.createProblem(form);
+      }
       navigate({ to: "/problems" });
     } catch (err) {
       console.error("Failed to create problem:", err);
@@ -107,12 +135,16 @@ function CreateProblemPage() {
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-          Create new problem
+          {isEditing ? "Edit Problem" : "Create new problem"}
         </h1>
-        <p className="text-sm text-text-muted">Author a fully complete competitive programming problem.</p>
+        <p className="text-sm text-text-muted">
+          {isEditing ? `Editing: ${form.name || edit}` : "Author a fully complete competitive programming problem."}
+        </p>
       </div>
 
-      {isPreview ? (
+      {isSourceLoading ? (
+        <div className="p-12 text-center text-text-muted">Loading problem details...</div>
+      ) : isPreview ? (
         <Preview problem={form as AdminProblem} />
       ) : (
         <form onSubmit={onSubmit} className="space-y-8">
@@ -333,7 +365,7 @@ function CreateProblemPage() {
               disabled={isSubmitting}
               className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-6 py-2 text-sm font-semibold text-primary-foreground hover:brightness-110 transition-all disabled:opacity-50"
             >
-              <Save className="h-4 w-4" /> {isSubmitting ? "Creating..." : "Create Problem"}
+              <Save className="h-4 w-4" /> {isSubmitting ? "Saving..." : (isEditing ? "Save Changes" : "Create Problem")}
             </button>
           </div>
         </form>

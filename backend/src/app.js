@@ -113,7 +113,12 @@ app.get("/health", (_req, res) => {
   });
 });
 
+import { checkSystemSettings } from "./middleware/settingsMiddleware.js";
+
 // ── API Routes ────────────────────────────────────────────────────────────────
+
+// Enforce System Settings globally (e.g. Maintenance Mode)
+app.use("/api", checkSystemSettings);
 
 app.use("/api",          healthRoutes);
 app.use("/api/auth",     authRoutes);

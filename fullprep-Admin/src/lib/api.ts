@@ -130,6 +130,14 @@ export const api = {
     return r.data;
   },
 
+  async updateProblem(id: string, payload: Partial<AdminProblem>) {
+    const r = await request<{ data: AdminProblem }>(`/problems/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return r.data;
+  },
+
   async deleteProblem(id: string) {
     await request(`/problems/${id}`, { method: "DELETE" });
   },
