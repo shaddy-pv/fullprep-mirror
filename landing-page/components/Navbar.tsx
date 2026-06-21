@@ -124,15 +124,18 @@ export default function Navbar() {
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button className="text-sm font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white px-4 py-2 cursor-pointer transition-colors">
+            <a 
+              href={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login`}
+              className="text-sm font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white px-4 py-2 cursor-pointer transition-colors"
+            >
               Log In
-            </button>
-            <button
-              onClick={() => scrollTo("contact")}
+            </a>
+            <a
+              href={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/signup`}
               className="rounded-lg bg-[#FF6B00] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
             >
               Get Started
-            </button>
+            </a>
           </div>
 
           {/* Mobile controls */}
@@ -181,15 +184,18 @@ export default function Navbar() {
               ))}
 
               <div className="pt-4 border-t border-gray-200/20 dark:border-white/8 flex flex-col space-y-3 px-4">
-                <button className="w-full text-center py-2.5 text-base font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white transition-colors cursor-pointer">
+                <a 
+                  href={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/login`}
+                  className="w-full text-center py-2.5 text-base font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white transition-colors cursor-pointer"
+                >
                   Log In
-                </button>
-                <button
-                  onClick={() => scrollTo("contact")}
+                </a>
+                <a
+                  href={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/signup`}
                   className="w-full text-center py-2.5 rounded-lg bg-[#FF6B00] text-base font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
                 >
                   Get Started
-                </button>
+                </a>
               </div>
             </div>
           </motion.div>

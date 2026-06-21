@@ -109,7 +109,7 @@ export default function Hero() {
               className="flex flex-col sm:flex-row gap-4 pt-2"
             >
               <a
-                href="#contact"
+                href={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/signup`}
                 className="inline-flex items-center justify-center rounded-xl bg-[#FF6B00] px-6 py-4 text-base font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-xl shadow-orange-500/25 group cursor-pointer"
               >
                 Start Solving
