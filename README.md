@@ -4,6 +4,15 @@ An industry-level competitive programming platform featuring a modern Next.js 16
 
 ---
 
+## 🔗 Live Links
+
+* **Main App (Platform)**: [https://fullprep-home.vercel.app](https://fullprep-home.vercel.app)
+* **Admin Panel**: [https://fullprep-admin.vercel.app](https://fullprep-admin.vercel.app)
+* **Landing Page**: [https://fullprep.vercel.app](https://fullprep.vercel.app)
+* **Backend API Server**: [https://fullprep-frontend-mirror.onrender.com/health](https://fullprep-frontend-mirror.onrender.com/health)
+
+---
+
 ## 🚀 Key Features
 
 * **Interactive Code Workspace**: Monaco editor integration with language support (C++, Java, Python, JavaScript).
