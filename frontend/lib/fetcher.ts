@@ -30,6 +30,11 @@ export async function fetcher<T>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      
+      if (response.status === 401 && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("fp-unauthorized"));
+      }
+
       throw new ApiError(
         response.status,
         errorData.message || "Failed to fetch data from API.",

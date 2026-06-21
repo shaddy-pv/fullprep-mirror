@@ -14,12 +14,12 @@ import jwt from "jsonwebtoken";
  * @param {string}          role    - User role (user | mentor | admin)
  * @returns {string} Signed JWT string
  */
-export const generateToken = (userId, role = "user") => {
+export const generateToken = (userId, role = "user", sessionId = null) => {
+  const payload = { id: userId, role };
+  if (sessionId) payload.sessionId = sessionId;
+
   return jwt.sign(
-    {
-      id: userId,
-      role,
-    },
+    payload,
     process.env.JWT_SECRET,
     {
       expiresIn: process.env.JWT_EXPIRES_IN || "7d",
@@ -39,9 +39,10 @@ export const generateToken = (userId, role = "user") => {
  * @param {number} statusCode - HTTP status code for the response
  * @param {object} res    - Express response object
  * @param {string} message - Human-readable success message
+ * @param {string} sessionId - Database session ID
  */
-export const sendTokenResponse = (user, statusCode, res, message) => {
-  const token = generateToken(user._id, user.role);
+export const sendTokenResponse = (user, statusCode, res, message, sessionId = null) => {
+  const token = generateToken(user._id, user.role, sessionId);
 
   const cookieExpiresInDays = parseInt(
     process.env.JWT_COOKIE_EXPIRES_IN || "7",

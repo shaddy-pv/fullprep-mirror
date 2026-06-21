@@ -44,6 +44,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // `user` and `account` are only available on first sign-in
       if (account && user) {
         try {
+          const { headers } = await import("next/headers");
+          const reqHeaders = await headers();
+          const userAgent = reqHeaders.get("user-agent") || "Unknown Device";
+          const ipAddress = reqHeaders.get("x-forwarded-for") || reqHeaders.get("x-real-ip") || "Unknown IP";
+
           // Upsert the OAuth user into our backend
           const res = await fetch(`${BACKEND_URL}/auth/oauth`, {
             method: "POST",
@@ -54,6 +59,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email: user.email,
               name: user.name,
               avatar: user.image,
+              userAgent,
+              ipAddress
             }),
           });
 

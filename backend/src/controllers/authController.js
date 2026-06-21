@@ -5,6 +5,7 @@
  */
 
 import User from "../models/User.js";
+import Session from "../models/Session.js";
 import { sendTokenResponse } from "../utils/generateToken.js";
 import firebaseAdmin from "../config/firebase.js";
 import { sendEmail } from "../utils/emailService.js";
@@ -111,8 +112,15 @@ export const register = async (req, res) => {
     }
   }
 
+  // ── 4.5 Create Session ───────────────────────────────────────
+  const session = await Session.create({
+    user: user._id,
+    deviceInfo: req.headers["user-agent"] || "Unknown Device",
+    ipAddress: req.ip || req.connection.remoteAddress || "Unknown IP"
+  });
+
   // ── 5. Respond with token ───────────────────────────────────
-  sendTokenResponse(user, 201, res, "Account created! Please check your email to verify your account.");
+  sendTokenResponse(user, 201, res, "Account created! Please check your email to verify your account.", session._id);
 };
 
 // ── @desc    Authenticate user & return token
@@ -163,14 +171,26 @@ export const login = async (req, res) => {
   // ── 5. Update last login timestamp ──────────────────────────
   await User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } });
 
+  // ── 5.5 Create Session ──────────────────────────────────────
+  const session = await Session.create({
+    user: user._id,
+    deviceInfo: req.headers["user-agent"] || "Unknown Device",
+    ipAddress: req.ip || req.connection.remoteAddress || "Unknown IP"
+  });
+
   // ── 6. Respond with token ───────────────────────────────────
-  sendTokenResponse(user, 200, res, "Login successful. Welcome back! 👋");
+  sendTokenResponse(user, 200, res, "Login successful. Welcome back! 👋", session._id);
 };
 
 // ── @desc    Log out — clear the auth cookie
 // ── @route   POST /api/auth/logout
-// ── @access  Public (no token needed — just clears the cookie)
+// ── @access  Private (Needs token to know which session to delete)
 export const logout = async (req, res) => {
+  // If the user has a valid token, remove the session from the DB
+  if (req.user && req.sessionId) {
+    await Session.findByIdAndDelete(req.sessionId);
+  }
+
   res.cookie("token", "loggedout", {
     expires: new Date(Date.now() + 5 * 1000), // Expire in 5 seconds
     httpOnly: true,
@@ -181,6 +201,52 @@ export const logout = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Logged out successfully.",
+  });
+};
+
+// ── @desc    Get active sessions for user
+// ── @route   GET /api/auth/sessions
+// ── @access  Private
+export const getSessions = async (req, res) => {
+  const sessions = await Session.find({ user: req.user._id }).sort({ lastActive: -1 });
+  
+  res.status(200).json({
+    success: true,
+    data: sessions.map(s => ({
+      _id: s._id,
+      deviceInfo: s.deviceInfo,
+      ipAddress: s.ipAddress,
+      lastActive: s.lastActive,
+      isCurrent: s._id.toString() === req.sessionId
+    }))
+  });
+};
+
+// ── @desc    Revoke a specific session
+// ── @route   DELETE /api/auth/sessions/:id
+// ── @access  Private
+export const revokeSession = async (req, res) => {
+  const session = await Session.findOne({ _id: req.params.id, user: req.user._id });
+  
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      message: "Session not found or already revoked."
+    });
+  }
+
+  if (session._id.toString() === req.sessionId) {
+    return res.status(400).json({
+      success: false,
+      message: "Cannot revoke current session. Use logout instead."
+    });
+  }
+
+  await Session.findByIdAndDelete(session._id);
+
+  res.status(200).json({
+    success: true,
+    message: "Session revoked successfully."
   });
 };
 
@@ -214,7 +280,10 @@ export const getMe = async (req, res) => {
 // ── @access  Private
 export const updateProfile = async (req, res) => {
   // Whitelist updatable fields — never allow role/password here
-  const allowedUpdates = ["name", "bio", "avatar", "socialLinks"];
+  const allowedUpdates = [
+    "name", "bio", "avatar", "socialLinks", "location", "backupEmail",
+    "preferences", "notifs", "visibility", "twoFactor"
+  ];
   const updates = {};
 
   allowedUpdates.forEach((field) => {
@@ -242,6 +311,46 @@ export const updateProfile = async (req, res) => {
     message: "Profile updated successfully.",
     data:    publicUser, // consistent with all other endpoints
     user:    publicUser, // kept for backward compat
+  });
+};
+
+// ── @desc    Update password securely
+// ── @route   PATCH /api/auth/update-password
+// ── @access  Private
+export const updatePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide both current and new passwords.",
+    });
+  }
+
+  const user = await User.findById(req.user._id).select("+password");
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found.",
+    });
+  }
+
+  if (user.password) {
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect current password.",
+      });
+    }
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password updated successfully.",
   });
 };
 
@@ -386,7 +495,14 @@ export const oauthSignIn = async (req, res) => {
     });
   }
 
-  sendTokenResponse(user, 200, res, `Signed in with ${provider} successfully! 🎉`);
+  // ── 3. Create Session ─────────────────────────────────────────
+  const session = await Session.create({
+    user: user._id,
+    deviceInfo: req.body.userAgent || req.headers["user-agent"] || "Unknown Device",
+    ipAddress: req.body.ipAddress || req.ip || req.connection.remoteAddress || "Unknown IP"
+  });
+
+  sendTokenResponse(user, 200, res, `Signed in with ${provider} successfully! 🎉`, session._id);
 };
 
 // ── @desc    Generate a password reset token and send email / log it
@@ -543,6 +659,27 @@ export const getLeaderboard = async (req, res) => {
   } catch (err) {
     console.error("Leaderboard fetch error:", err.message);
     res.status(500).json({ success: false, message: "Failed to fetch leaderboard." });
+  }
+};
+
+
+// -- @desc    Export user data (Profile & Submissions)
+// -- @route   GET /api/auth/export
+// -- @access  Private
+export const exportData = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password -__v');
+    const submissions = await Submission.find({ user: req.user._id }).select('-__v');
+    
+    const exportData = {
+      profile: user,
+      submissions: submissions,
+      exportedAt: new Date().toISOString()
+    };
+    
+    res.json({ success: true, data: exportData });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server Error', error: err.message });
   }
 };
 

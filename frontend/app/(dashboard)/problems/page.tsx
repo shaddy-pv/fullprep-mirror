@@ -11,6 +11,7 @@ import ProblemsTable from "@/components/problems/ProblemsTable";
 import AnalyticsSidebar from "@/components/problems/AnalyticsSidebar";
 import { ExtendedProblemItem } from "@/constants/navigation";
 import { ProblemsService } from "@/services/problems.service";
+import { AuthService } from "@/services/auth.service";
 
 // Difficulty mapping for sorting purposes
 const DIFFICULTY_ORDER: Record<string, number> = {
@@ -37,10 +38,15 @@ function ProblemsContent() {
 
   const [problemsList, setProblemsList] = useState<ExtendedProblemItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [solvedIds, setSolvedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    ProblemsService.getProblems().then((data) => {
-      setProblemsList(data);
+    Promise.all([
+      ProblemsService.getProblems(),
+      AuthService.getSolvedProblems(),
+    ]).then(([problems, solved]) => {
+      setProblemsList(problems);
+      setSolvedIds(solved);
       setLoading(false);
     });
   }, []);
@@ -185,6 +191,7 @@ function ProblemsContent() {
               currentPage={currentPage}
               setCurrentPage={(page) => updateQueryParams({ page })}
               itemsPerPage={itemsPerPage}
+              solvedIds={solvedIds}
             />
           </ErrorBoundary>
         </div>

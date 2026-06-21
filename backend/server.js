@@ -8,6 +8,7 @@
 import "dotenv/config"; // Must be the very first import
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
+import { startSubmissionWorker } from "./src/workers/submissionWorker.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -17,6 +18,9 @@ const startServer = async () => {
   try {
     // 1. Connect to MongoDB Atlas before accepting any traffic
     await connectDB();
+
+    // 1.5 Start Background Workers
+    startSubmissionWorker();
 
     // 2. Start HTTP server
     const server = app.listen(PORT, () => {
@@ -56,4 +60,3 @@ const startServer = async () => {
 };
 
 startServer();
-// triggered restart

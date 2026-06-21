@@ -52,11 +52,16 @@ function SessionSync({ children }: { children: React.ReactNode }) {
           // Persist backend token to localStorage so fetcher.ts can use it
           if (typeof window !== "undefined") {
             localStorage.setItem("fp_token", backendToken);
+            // Also set cookie so middleware can read it server-side
+            const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            document.cookie = `fp_session=${backendToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
           }
 
           // Sync user to Zustand store
           if (backendUser) {
             setUser(backendUser);
+            // Fetch fresh data in the background to ensure XP, Bio, etc. are up-to-date
+            AuthService.getCurrentUser();
           }
           setReady(true);
           return;
@@ -66,8 +71,13 @@ function SessionSync({ children }: { children: React.ReactNode }) {
         // Token is already in localStorage — validate it against the backend
         const token = typeof window !== "undefined" ? localStorage.getItem("fp_token") : null;
         if (token) {
+          // Re-set the session cookie in case it was cleared (e.g., browser restart)
+          const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          document.cookie = `fp_session=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
           await AuthService.getCurrentUser();
         } else {
+          // No token anywhere — clear cookie too
+          document.cookie = `fp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
           setUser(null);
         }
       } catch {
@@ -80,6 +90,23 @@ function SessionSync({ children }: { children: React.ReactNode }) {
 
     syncSession();
   }, [session, status, setUser]);
+
+  // Listen for global 401 Unauthorized events from fetcher
+  useEffect(() => {
+    const handleUnauthorized = async () => {
+      // Clear token immediately so subsequent requests don't loop
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("fp_token");
+        document.cookie = `fp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+      }
+      setUser(null);
+      await AuthService.logout();
+      window.location.href = "/auth";
+    };
+
+    window.addEventListener("fp-unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("fp-unauthorized", handleUnauthorized);
+  }, [setUser]);
 
   // Show spinner while resolving session
   if (!ready) {

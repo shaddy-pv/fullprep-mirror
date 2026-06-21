@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight, X, Sparkles, User, Settings, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Badge from "@/components/ui/Badge";
-import { SIDEBAR_MENU_ITEMS, STREAK_DAYS } from "@/constants/navigation";
+import { SIDEBAR_MENU_ITEMS } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/store/DashboardContext";
 import { useNotificationStore } from "@/store/notificationStore";
@@ -52,15 +52,38 @@ export default function Sidebar() {
     router.push("/login");
   };
 
+  const [userStats, setUserStats] = useState<any>(null);
+
+  useEffect(() => {
+    AuthService.getStats().then((stats) => {
+      setUserStats(stats);
+    }).catch(() => {});
+  }, [user?.streak]); // Refresh if user streak updates via submission
+
+  // Calculate dynamic 7-day streak representation based on real activity data
+  const dynamicStreakDays = React.useMemo(() => {
+    const activityDots = (userStats?.dailyActivity || []).map((d: any) => ({
+      label: (d.label || "?").charAt(0),
+      status: d.accepted > 0 ? "completed" : d.total > 0 ? "partial" : "empty",
+    }));
+
+    // Pad to 7 days if not enough data
+    while (activityDots.length < 7) {
+      activityDots.unshift({ label: "?", status: "empty" });
+    }
+    
+    return activityDots;
+  }, [userStats]);
+
   return (
     <aside 
       className={cn(
-        "bg-[#06090f] text-white h-screen flex flex-col justify-between select-none shrink-0 border-r border-white/[0.04] transition-all duration-300 ease-in-out relative z-40",
+        "bg-[#06090f] text-white h-full flex flex-col select-none shrink-0 border-r border-white/[0.04] transition-all duration-300 ease-in-out relative z-40 overflow-hidden",
         isSidebarCollapsed ? "w-[80px]" : "w-[270px]"
       )}
     >
       {/* Top Section: Logo & Mobile Close Button */}
-      <div className={cn("transition-all duration-300", isSidebarCollapsed ? "p-4" : "p-6")}>
+      <div className={cn("flex-1 min-h-0 flex flex-col overflow-y-auto transition-all duration-300", isSidebarCollapsed ? "p-4" : "p-6")}>
         <div className={cn("flex items-center", isSidebarCollapsed ? "justify-center" : "justify-between")}>
           <Link href="/" className="text-brand-orange flex items-center font-bold tracking-[-0.02em] mx-auto md:mx-0">
             <span className="text-[18px] font-extrabold font-mono">&lt;/&gt;</span>
@@ -156,7 +179,7 @@ export default function Sidebar() {
       {/* Bottom Section */}
       <div 
         ref={panelRef}
-        className={cn("transition-all duration-300 space-y-4 relative", isSidebarCollapsed ? "px-3 pb-4" : "px-6 pb-6")}
+        className={cn("flex-none transition-all duration-300 space-y-4 relative", isSidebarCollapsed ? "px-3 pb-4" : "px-6 pb-6")}
       >
         {/* Streak Glassmorphism Card (Collapses smoothly) - Hidden on AI Hints page to prevent sidebar vertical overflow */}
         {pathname !== "/ai-hints" && (
@@ -178,7 +201,7 @@ export default function Sidebar() {
               Keep solving to maintain your coding streak.
             </p>
             <div className="flex justify-between items-center px-1">
-              {STREAK_DAYS.map((day, idx) => (
+              {dynamicStreakDays.map((day: { label: string; status: string }, idx: number) => (
                 <div key={idx} className="flex flex-col items-center gap-1.5">
                   {day.status === "completed" ? (
                     <div className="w-[10px] h-[10px] rounded-full bg-brand-orange shadow-[0_0_8px_rgba(255,106,0,0.6)]" />

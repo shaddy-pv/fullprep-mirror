@@ -3,6 +3,19 @@ import { useAuthStore } from "@/store/authStore";
 import { signOut as nextAuthSignOut } from "next-auth/react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const SESSION_COOKIE = "fp_session";
+
+function setSessionCookie(token: string) {
+  if (typeof document === "undefined") return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  document.cookie = `${SESSION_COOKIE}=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+}
+
+function clearSessionCookie() {
+  if (typeof document === "undefined") return;
+  document.cookie = `${SESSION_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+}
 
 export const AuthService = {
   async getCurrentUser() {
@@ -25,8 +38,6 @@ export const AuthService = {
       useAuthStore.getState().setUser(null);
       return null;
     } catch (error: any) {
-      // 401 Unauthorized is expected if the token is expired or invalid.
-      // We suppress the console warning for 401s to keep the browser console clean.
       if (error?.status !== 401) {
         console.warn("Failed to fetch current user profile:", error);
       }
@@ -39,9 +50,10 @@ export const AuthService = {
     }
   },
 
-  async getStats() {
+  async getStats(timeFilter?: string) {
     try {
-      const response = await api.get<{ success: boolean; data: any }>(`${BASE_URL}/auth/stats`);
+      const url = timeFilter ? `${BASE_URL}/auth/stats?timeFilter=${timeFilter}` : `${BASE_URL}/auth/stats`;
+      const response = await api.get<{ success: boolean; data: any }>(url);
       if (response && response.success && response.data) {
         return response.data;
       }
@@ -49,6 +61,34 @@ export const AuthService = {
     } catch (error) {
       console.warn("Failed to fetch user stats:", error);
       return null;
+    }
+  },
+
+  async getSolvedProblems(): Promise<string[]> {
+    try {
+      const response = await api.get<{ success: boolean; user: any }>(`${BASE_URL}/auth/me`);
+      if (response && response.success && response.user) {
+        return response.user.solvedProblems || [];
+      }
+      return [];
+    } catch (error) {
+      console.warn("Failed to fetch solved problems:", error);
+      return [];
+    }
+  },
+
+  async getSubmissions(page = 1, limit = 10) {
+    try {
+      const response = await api.get<{ success: boolean; data: any; pagination: any }>(
+        `${BASE_URL}/submissions?page=${page}&limit=${limit}`
+      );
+      if (response && response.success) {
+        return { data: response.data, pagination: response.pagination };
+      }
+      return { data: [], pagination: null };
+    } catch (error) {
+      console.warn("Failed to fetch submissions:", error);
+      return { data: [], pagination: null };
     }
   },
 
@@ -61,6 +101,7 @@ export const AuthService = {
     if (response && response.success && response.token) {
       if (typeof window !== "undefined") {
         localStorage.setItem("fp_token", response.token);
+        setSessionCookie(response.token);
       }
       useAuthStore.getState().login(response.user);
       return response;
@@ -77,6 +118,7 @@ export const AuthService = {
     if (response && response.success && response.token) {
       if (typeof window !== "undefined") {
         localStorage.setItem("fp_token", response.token);
+        setSessionCookie(response.token);
       }
       useAuthStore.getState().login(response.user);
       return response;
@@ -92,14 +134,25 @@ export const AuthService = {
     } finally {
       if (typeof window !== "undefined") {
         localStorage.removeItem("fp_token");
+        clearSessionCookie();
       }
       useAuthStore.getState().logout();
-      // Important: clear the NextAuth session so it doesn't auto-restore across tabs
       await nextAuthSignOut({ redirect: false });
     }
   },
 
-  async updateProfile(data: { name?: string; bio?: string; avatar?: string; socialLinks?: any }) {
+  async updateProfile(data: {
+    name?: string;
+    bio?: string;
+    avatar?: string;
+    socialLinks?: any;
+    location?: string;
+    backupEmail?: string;
+    preferences?: any;
+    notifs?: any;
+    visibility?: any;
+    twoFactor?: boolean;
+  }) {
     const response = await api.patch<{ success: boolean; user: any }>(
       `${BASE_URL}/auth/update-profile`,
       data
@@ -109,6 +162,14 @@ export const AuthService = {
       return response.user;
     }
     throw new Error("Failed to update profile.");
+  },
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    const response = await api.patch<{ success: boolean; message: string }>(
+      `${BASE_URL}/auth/update-password`,
+      { currentPassword, newPassword }
+    );
+    return response;
   },
 
   async forgotPassword(email: string) {
@@ -134,7 +195,46 @@ export const AuthService = {
       return [];
     } catch (error) {
       console.warn("Failed to fetch leaderboard:", error);
+      throw error;
+    }
+  },
+
+  async getSessions() {
+    try {
+      const response = await api.get<{ success: boolean; data: any[] }>(`${BASE_URL}/auth/sessions`);
+      if (response && response.success) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.warn("Failed to fetch sessions:", error);
       return [];
     }
   },
+
+  async revokeSession(id: string) {
+    try {
+      const response = await api.delete<{ success: boolean; message: string }>(`${BASE_URL}/auth/sessions/${id}`);
+      if (response && response.success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to revoke session:", error);
+      throw error;
+    }
+  },
+
+  async exportData(): Promise<any> {
+    try {
+      const response = await api.get<{ success: boolean; data: any }>(`${BASE_URL}/auth/export`);
+      if (response && response.success) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to export data:", error);
+      return null;
+    }
+  }
 };

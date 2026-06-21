@@ -22,7 +22,6 @@ export const SIDEBAR_MENU_ITEMS = [
   { name: "Leaderboard", icon: Trophy, badge: null, href: "/leaderboard" },
   { name: "Submissions", icon: FileCheck2, badge: null, href: "/submissions" },
   { name: "Profile", icon: User2, badge: null, href: "/profile" },
-  { name: "Bookmarks", icon: Bookmark, badge: null, href: "/bookmarks" },
   { name: "Settings", icon: Settings, badge: null, href: "/settings" },
 ];
 

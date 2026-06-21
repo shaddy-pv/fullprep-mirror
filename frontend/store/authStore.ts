@@ -7,6 +7,7 @@ interface UserProfile {
   role?: string;
   avatarUrl?: string;
   streak?: number;
+  lastSolvedDate?: string;
   level?: number;
   xp?: number;
   isEmailVerified?: boolean;
@@ -16,7 +17,16 @@ interface UserProfile {
     linkedin?: string;
     twitter?: string;
     website?: string;
+    leetcode?: string;
   };
+  bookmarks?: string[];
+  location?: string;
+  backupEmail?: string;
+  createdAt?: string;
+  preferences?: any;
+  notifs?: any;
+  visibility?: any;
+  twoFactor?: boolean;
 }
 
 interface AuthState {

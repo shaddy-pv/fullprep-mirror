@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import AuthCard from "@/components/auth/AuthCard";
 import AuthInput from "@/components/auth/AuthInput";
@@ -11,9 +11,13 @@ import Button from "@/components/ui/Button";
 import { useNotificationStore } from "@/store/notificationStore";
 import { AuthService } from "@/services/auth.service";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const showToast = useNotificationStore((state) => state.showToast);
+
+  // Where to redirect after successful login (set by middleware)
+  const redirectTo = searchParams.get("redirect") || "/";
 
   // Form State
   const [email, setEmail] = useState("");
@@ -59,8 +63,8 @@ export default function LoginPage() {
       const response = await AuthService.login(email, password);
       showToast(response.message || "Welcome back! Signed in successfully.", "success");
       
-      // Redirect to landing dashboard
-      router.push("/");
+      // Redirect to the page the user was trying to visit (or home)
+      router.replace(redirectTo);
     } catch (err: any) {
       showToast(err.message || "Invalid email or password", "info");
     } finally {
@@ -181,5 +185,17 @@ export default function LoginPage() {
         </Link>
       </div>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-40 items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-brand-orange/20 border-t-brand-orange animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

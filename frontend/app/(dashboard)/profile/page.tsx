@@ -19,6 +19,8 @@ import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useAuthStore } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
+import { ProblemsService } from "@/services/problems.service";
+import { BookmarksService } from "@/services/bookmarks.service";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────
@@ -166,6 +168,10 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [mounted, setMounted] = useState(false);
   const [statsData, setStatsData] = useState<any>(null);
+  const [dbStats, setDbStats] = useState<any>(null);
+  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
+  const [bookmarkedProblems, setBookmarkedProblems] = useState<any[]>([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
 
   // Settings Tab states
   const [editName, setEditName] = useState("");
@@ -191,8 +197,14 @@ export default function ProfilePage() {
     if (!mounted) return;
     async function loadStats() {
       try {
-        const stats = await AuthService.getStats();
+        const [stats, db, subs] = await Promise.all([
+          AuthService.getStats(),
+          ProblemsService.getStats(),
+          AuthService.getSubmissions(1, 10),
+        ]);
         if (stats) setStatsData(stats);
+        if (db) setDbStats(db);
+        if (subs && subs.data) setRecentSubmissions(subs.data);
       } catch (err) {
         console.error("Failed to fetch stats:", err);
       }
@@ -206,6 +218,22 @@ export default function ProfilePage() {
       setEditBio(user.bio || "");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    async function loadBookmarks() {
+      setLoadingBookmarks(true);
+      try {
+        const bookmarks = await BookmarksService.getBookmarkedProblems();
+        setBookmarkedProblems(bookmarks);
+      } catch (err) {
+        console.error("Failed to load bookmarks:", err);
+      } finally {
+        setLoadingBookmarks(false);
+      }
+    }
+    loadBookmarks();
+  }, [mounted, activeTab]);
 
   if (!mounted) {
     return <div className="min-h-screen bg-bg-page" />;
@@ -269,48 +297,91 @@ export default function ProfilePage() {
     { month: "Jul", rating: 1642 },
   ];
 
-  /* ── Heatmap config ── */
+  // Dynamic Difficulty Calculations
+  const diffBreakdown = statsData?.difficultyBreakdown || [];
+  const getCount = (diff: string) => diffBreakdown.find((d: any) => d.difficulty?.toUpperCase() === diff)?.count || 0;
 
-  const heatmapMonths = [
-    { name: "Jan", col: 0 },
-    { name: "Feb", col: 5 },
-    { name: "Mar", col: 9 },
-    { name: "Apr", col: 13 },
-    { name: "May", col: 18 },
-    { name: "Jun", col: 22 },
-    { name: "Jul", col: 26 },
-    { name: "Aug", col: 31 },
-    { name: "Sep", col: 35 },
-    { name: "Oct", col: 40 },
-    { name: "Nov", col: 44 },
-    { name: "Dec", col: 48 },
+  const easySolved = getCount("EASY");
+  const mediumSolved = getCount("MEDIUM");
+  const hardCountSolved = getCount("HARD") + getCount("HARDER") + getCount("HARDEST") + getCount("EXPERT") + getCount("VERY HARD");
+
+  const easyTotal = dbStats?.byDifficulty?.EASY || 1;
+  const mediumTotal = dbStats?.byDifficulty?.MEDIUM || 1;
+  const hardTotal = (dbStats?.byDifficulty?.HARD || 0) + (dbStats?.byDifficulty?.HARDER || 0) + (dbStats?.byDifficulty?.HARDEST || 0) + (dbStats?.byDifficulty?.EXPERT || 0) + (dbStats?.byDifficulty?.["VERY HARD"] || 0) || 1;
+
+  const difficultyStats = [
+    { label: "Easy", solved: easySolved, total: easyTotal, color: "#10b981", pct: Math.round((easySolved / easyTotal) * 100) },
+    { label: "Medium", solved: mediumSolved, total: mediumTotal, color: "#ff6a00", pct: Math.round((mediumSolved / mediumTotal) * 100) },
+    { label: "Hard", solved: hardCountSolved, total: hardTotal, color: "#f43f5e", pct: Math.round((hardCountSolved / hardTotal) * 100) },
   ];
 
-  const CELL = 11;
+  /* ── Heatmap config ── */
+  const CELL = 12; // Increased size
   const GAP = 3;
   const STEP = CELL + GAP;
-  const DAY_LABEL_W = 28;
+  
+  // Create a map of date -> count
+  const yearlyActivityMap: Record<string, number> = {};
+  if (statsData?.yearlyActivity) {
+    statsData.yearlyActivity.forEach((y: any) => {
+      yearlyActivityMap[y.date] = y.count;
+    });
+  }
 
-  const getActivityLevel = (col: number, row: number) => {
-    const isWeekend = row === 0 || row === 6;
-    const hash = (col * 29 + row * 43) % 97;
-    if (isWeekend) {
-      if (hash % 7 === 0) return 1;
-      if (hash % 13 === 0) return 2;
-      return 0;
+  // Generate a robust 52-week grid (7 rows x 52 columns)
+  const heatmapGrid: { date: string, level: number }[][] = Array.from({ length: 7 }, () => Array(52).fill({ date: "", level: 0 }));
+  
+  const today = new Date();
+  let currRow = today.getDay(); // 0 (Sun) to 6 (Sat)
+  let currCol = 51; // Last column
+  
+  for (let i = 0; i < 364; i++) {
+    const d = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+    // Use local time for YYYY-MM-DD to match backend date grouping
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${day}`;
+    
+    const count = yearlyActivityMap[dateStr] || 0;
+    let level = 0;
+    if (count > 0) level = 1;
+    if (count > 2) level = 2;
+    if (count > 4) level = 3;
+    if (count > 6) level = 4;
+    
+    if (currCol >= 0) {
+      heatmapGrid[currRow][currCol] = { date: dateStr, level };
     }
-    if (hash % 5 === 0) return 0;
-    if (hash % 7 === 0) return 3;
-    if (hash % 3 === 0) return 2;
-    return 1;
-  };
+    
+    currRow--;
+    if (currRow < 0) {
+      currRow = 6;
+      currCol--;
+    }
+  }
 
-  const cellColors = [
-    "bg-slate-200/60 dark:bg-[#0e101e] border border-slate-900/5 dark:border-white/[0.04]",
-    "bg-[#c6e48b] dark:bg-[#003820] border border-slate-900/5 dark:border-white/[0.02]",
-    "bg-[#7bc96f] dark:bg-[#006030]",
-    "bg-[#239a3b] dark:bg-[#10b981] dark:shadow-[0_0_8px_rgba(16,185,129,0.35)]",
-  ];
+  // Generate dynamic month labels based on the dates in the first row of the grid
+  const dynamicMonths: { name: string, col: number }[] = [];
+  let lastMonth = -1;
+  for (let c = 0; c < 52; c++) {
+    const cell = heatmapGrid[0][c];
+    if (cell && cell.date) {
+      // Parse YYYY-MM-DD safely
+      const parts = cell.date.split('-');
+      if (parts.length === 3) {
+        const monthNum = parseInt(parts[1], 10) - 1; // 0-indexed
+        if (monthNum !== lastMonth && c > 0) {
+          const monthDate = new Date(2000, monthNum, 1);
+          const name = monthDate.toLocaleString('default', { month: 'short' });
+          dynamicMonths.push({ name, col: c });
+          lastMonth = monthNum;
+        } else if (lastMonth === -1) {
+          lastMonth = monthNum;
+        }
+      }
+    }
+  }
 
   /* ── Helpers ── */
 
@@ -352,41 +423,25 @@ export default function ProfilePage() {
             </div>
 
             {/* Meta */}
-            <div className="flex flex-wrap items-center gap-3 text-[12px] text-text-secondary font-medium">
+            <div className="flex flex-wrap items-center gap-3 text-[12px] text-text-secondary font-medium mt-0.5">
               <span className="text-text-secondary font-semibold">@{user?.email ? user.email.split("@")[0] : "user"}</span>
               <span className="w-1.5 h-1.5 rounded-full bg-white/[0.1] shrink-0" />
               <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-text-muted" />
-                <span>India</span>
-              </div>
-              <span className="w-1.5 h-1.5 rounded-full bg-white/[0.1] shrink-0" />
-              <div className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                <span>Joined Jan 2024</span>
+                <span>
+                  {user?.createdAt 
+                    ? `Joined ${new Date(user.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' })}` 
+                    : "Joined recently"}
+                </span>
               </div>
             </div>
 
             {/* Bio */}
-            <p className="text-[12.5px] text-text-secondary font-normal tracking-tight leading-relaxed max-w-[500px]">
-              {user?.bio || "Passionate about solving problems and building cool things."}
-            </p>
-
-            {/* Social icons */}
-            <div className="flex items-center gap-2 mt-3">
-              {[
-                { icon: GithubIcon, hover: "hover:text-text-primary hover:border-white/[0.15]" },
-                { icon: Code2, hover: "hover:text-brand-orange hover:border-brand-orange/25" },
-                { icon: LinkedinIcon, hover: "hover:text-[#0a66c2] hover:border-[#0a66c2]/25" },
-                { icon: TwitterIcon, hover: "hover:text-text-primary hover:border-white/[0.15]", size: "w-3.5 h-3.5" },
-              ].map((s, i) => {
-                const Icon = s.icon;
-                return (
-                  <a key={i} href="#" className={cn("w-8 h-8 rounded-lg border border-border-card bg-slate-900/5 dark:bg-[#111217]/50 flex items-center justify-center text-text-secondary shadow-sm transition-all duration-200", s.hover)}>
-                    <Icon className={s.size || "w-4 h-4"} />
-                  </a>
-                );
-              })}
-            </div>
+            {user?.bio && (
+              <p className="text-[12.5px] text-text-secondary font-normal tracking-tight leading-relaxed max-w-[500px] mt-1.5">
+                {user.bio}
+              </p>
+            )}
           </div>
         </div>
 
@@ -473,78 +528,80 @@ export default function ProfilePage() {
                       Submission Activity
                     </h3>
 
-                    <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar pb-2">
-                      {/* Inner Grid with w-max min-w-max to prevent cropping */}
-                      <div className="flex gap-3 items-start min-w-max" style={{ width: `${53 * STEP + 60}px` }}>
-                        {/* Weekday labels - Naturally positioned next to grid without negative offsets */}
-                        <div className="flex flex-col text-[9px] text-text-secondary/50 font-medium justify-between py-1 shrink-0 select-none" style={{ width: "24px", height: `${7 * CELL + 6 * GAP}px`, marginTop: "32px" }}>
-                          <span>Mon</span>
-                          <span>Wed</span>
-                          <span>Fri</span>
+                    <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar pb-2 relative">
+                      <div className="flex flex-col min-w-max" style={{ width: `${52 * STEP + 40}px` }}>
+                        
+                        {/* Month labels */}
+                        <div className="relative h-4 mb-2 select-none" style={{ marginLeft: "32px", width: `${52 * STEP}px` }}>
+                          {dynamicMonths.map((m) => (
+                            <span
+                              key={m.name}
+                              className="absolute text-[10px] text-text-secondary/70 font-semibold leading-none"
+                              style={{ left: `${m.col * STEP}px` }}
+                            >
+                              {m.name}
+                            </span>
+                          ))}
                         </div>
 
-                        {/* Graph and Months Wrapper */}
-                        <div className="flex flex-col">
-                          {/* Month labels */}
-                          <div className="relative h-5 mb-3 select-none" style={{ width: `${53 * STEP}px` }}>
-                            {heatmapMonths.map((m) => (
-                              <span
-                                key={m.name}
-                                className="absolute text-[9px] text-text-secondary/60 font-semibold leading-none"
-                                style={{ left: `${m.col * (CELL + GAP)}px` }}
-                              >
-                                {m.name}
-                              </span>
+                        <div className="flex gap-[3px] ml-8 relative">
+                          <span className="absolute -left-8 top-[15px] text-[10px] text-text-secondary/70 font-medium leading-none">Mon</span>
+                          <span className="absolute -left-8 top-[45px] text-[10px] text-text-secondary/70 font-medium leading-none">Wed</span>
+                          <span className="absolute -left-8 top-[75px] text-[10px] text-text-secondary/70 font-medium leading-none">Fri</span>
+                          
+                          <div className="flex flex-col gap-[3px]">
+                            {Array.from({ length: 7 }).map((_, rowIdx) => (
+                              <div key={rowIdx} className="flex gap-[3px]">
+                                {Array.from({ length: 52 }).map((_, colIdx) => {
+                                  const cell = heatmapGrid[rowIdx]?.[colIdx];
+                                  const level = cell ? cell.level : 0;
+                                  return (
+                                    <div
+                                      key={colIdx}
+                                      title={cell ? `${cell.date}` : ""}
+                                      className={cn(
+                                        "w-[12px] h-[12px] rounded-[3px] transition-colors duration-300",
+                                        level === 0 && "bg-white/[0.03] hover:bg-white/[0.08]",
+                                        level === 1 && "bg-[#10b981]/30 hover:bg-[#10b981]/40",
+                                        level === 2 && "bg-[#10b981]/50 hover:bg-[#10b981]/60",
+                                        level === 3 && "bg-[#10b981]/80 hover:bg-[#10b981]/90",
+                                        level === 4 && "bg-[#10b981] hover:bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.3)]",
+                                      )}
+                                    />
+                                  );
+                                })}
+                              </div>
                             ))}
                           </div>
+                        </div>
 
-                          {/* 53 cols Grid built with robust CSS Grid column-major flow */}
-                          <div
-                            className="grid"
-                            style={{
-                              gridTemplateColumns: `repeat(53, ${CELL}px)`,
-                              gridTemplateRows: `repeat(7, ${CELL}px)`,
-                              gridAutoFlow: "column",
-                              gap: `${GAP}px`,
-                            }}
-                          >
-                            {Array.from({ length: 53 * 7 }).map((_, index) => {
-                              const c = Math.floor(index / 7);
-                              const r = index % 7;
-
-                              return (
-                                <div
-                                  key={index}
-                                  className={cn("rounded-[2px] transition-all duration-150 hover:scale-125 hover:z-10 cursor-pointer shrink-0", cellColors[getActivityLevel(c, r)])}
-                                  style={{ width: `${CELL}px`, height: `${CELL}px` }}
-                                />
-                              );
-                            })}
-                          </div>
+                        {/* Legend */}
+                        <div className="flex items-center gap-2 text-[10px] text-text-secondary/60 font-medium mt-5 self-end select-none">
+                          <span>Less</span>
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-white/[0.03]" />
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/30" />
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/50" />
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/80" />
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]" />
+                          <span>More</span>
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Legend aligned under grid columns */}
-                  <div className="flex items-center gap-1.5 text-[9px] text-text-secondary/50 font-semibold mt-6 self-start" style={{ paddingLeft: "36px" }}>
-                    <span>Less</span>
-                    {cellColors.map((c, i) => (
-                      <div key={i} className={cn("w-[10px] h-[10px] rounded-[2px]", c)} />
-                    ))}
-                    <span>More</span>
-                  </div>
                 </div>
 
                 {/* ── Badges (4fr) ── */}
-                <div className={cn(cardBase, "xl:col-span-4 flex flex-col p-6")}>
+                <div className={cn(cardBase, "xl:col-span-4 flex flex-col p-6 relative overflow-hidden group")}>
+                  <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                  </div>
                   <div className="flex items-baseline justify-between mb-6">
                     <h3 className="text-[13px] font-bold text-text-primary tracking-tight leading-none">Badges</h3>
                     <button className="text-[11px] font-bold text-brand-orange hover:text-[#e05d00] transition-colors cursor-pointer leading-none">
                       View all
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 grid-rows-2 gap-x-4 gap-y-8 w-full flex-1 items-center justify-items-center mt-2">
+                  <div className="grid grid-cols-3 grid-rows-2 gap-x-4 gap-y-8 w-full flex-1 items-center justify-items-center mt-2 opacity-60">
                     <HexagonBadge color="gold" title="Problem Solver" subtitle="SOLVED 100" icon={Code2} />
                     <HexagonBadge color="orange" title="Contest Warrior" subtitle="10 CONTESTS" icon={Zap} />
                     <HexagonBadge color="red" title="Week Streak" subtitle="7 DAYS" icon={Calendar} />
@@ -591,11 +648,7 @@ export default function ProfilePage() {
             <div className="w-full flex flex-col gap-6">
               {/* Difficulty Ring Charts */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
-                {[
-                  { label: "Easy", solved: 568, total: 800, color: "#10b981", pct: 71 },
-                  { label: "Medium", solved: 542, total: 1200, color: "#ff6a00", pct: 45 },
-                  { label: "Hard", solved: 138, total: 400, color: "#f43f5e", pct: 35 },
-                ].map((d) => (
+                {difficultyStats.map((d) => (
                   <div key={d.label} className={cn(cardBase, "p-6 flex flex-col items-center justify-center text-center h-[200px]")}>
                     <div className="relative w-[80px] h-[80px]">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -614,8 +667,11 @@ export default function ProfilePage() {
               </div>
 
               {/* Contest Rating Chart */}
-              <div className={cn(cardBase, "p-6 flex flex-col h-[240px]")}>
-                <div className="flex items-baseline justify-between mb-3">
+              <div className={cn(cardBase, "p-6 flex flex-col h-[240px] relative overflow-hidden group")}>
+                <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                </div>
+                <div className="flex items-baseline justify-between mb-3 opacity-60">
                   <span className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none">Contest Rating History</span>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-[#10b981] font-semibold bg-[#10b981]/15 px-1.5 py-0.5 rounded leading-none border border-[#10b981]/15">↑ 8.21%</span>
@@ -625,7 +681,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mb-2">
+                <div className="flex items-center gap-4 mb-2 opacity-60">
                   <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center shrink-0">
                     <Trophy className="w-4 h-4" />
                   </div>
@@ -634,7 +690,7 @@ export default function ProfilePage() {
                     <span className="text-[10px] text-text-secondary/70 font-medium mt-1.5 leading-none">Top 12.12%</span>
                   </div>
                 </div>
-                <div className="h-[100px] w-full relative">
+                <div className="h-[100px] w-full relative opacity-60">
                   <ResponsiveContainer width="99%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 2, right: 2, left: -28, bottom: -5 }}>
                       <defs>
@@ -654,27 +710,41 @@ export default function ProfilePage() {
               </div>
 
               {/* Topic Strengths */}
-              <div className={cn(cardBase, "p-6")}>
-                <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-4 leading-none">Topic Strengths</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
-                  {[
-                    { topic: "Dynamic Programming", val: 85 },
-                    { topic: "Greedy Algorithms", val: 78 },
-                    { topic: "Graph & Tree Theory", val: 64 },
-                    { topic: "Arrays & Strings", val: 94 },
-                    { topic: "Sorting & Searching", val: 91 },
-                    { topic: "Math & Geometry", val: 60 },
-                  ].map((t) => (
-                    <div key={t.topic} className="flex flex-col gap-1.5 py-1">
-                      <div className="flex items-center justify-between text-[11px] font-medium text-text-primary">
-                        <span>{t.topic}</span>
-                        <span className="text-brand-orange">{t.val}%</span>
+              <div className={cn(cardBase, "p-6 relative overflow-hidden group")}>
+                <div>
+                  <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-4 leading-none">Topic Strengths</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
+                    {(statsData?.topicStrength && statsData.topicStrength.length > 0) ? (
+                      (() => {
+                        const topTopics = statsData.topicStrength.slice(0, 6);
+                        const totalSolved = statsData.problemsSolved || 1;
+                        return topTopics.map((t: any) => {
+                          const formattedName = t.topic
+                            .split("-")
+                            .join(" ")
+                            .split(" ")
+                            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(" ");
+                          const val = Math.round((t.count / totalSolved) * 100);
+                          return (
+                            <div key={t.topic} className="flex flex-col gap-1.5 py-1">
+                              <div className="flex items-center justify-between text-[11px] font-medium text-text-primary">
+                                <span>{formattedName}</span>
+                                <span className="text-brand-orange">{val}%</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-white/[0.03] rounded-full overflow-hidden">
+                                <div className="h-full bg-brand-orange rounded-full" style={{ width: `${val}%` }} />
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()
+                    ) : (
+                      <div className="col-span-1 md:col-span-2 text-[12px] text-text-secondary italic">
+                        Solve some problems to see your topic strengths!
                       </div>
-                      <div className="w-full h-1.5 bg-white/[0.03] rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-orange rounded-full" style={{ width: `${t.val}%` }} />
-                      </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -719,27 +789,30 @@ export default function ProfilePage() {
               <div className="p-5 flex flex-col gap-3">
                 <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none px-1">Recent Profile Submissions</h3>
                 <div className="flex flex-col border-t border-white/[0.06] mt-1">
-                  {[
-                    { name: "Trapping Rain Water", diff: "Hard", color: "text-[#f43f5e]", status: "Accepted", statBg: "bg-[#10b981]/15 text-[#10b981]", lang: "Python", time: "12ms", memory: "14.2 MB", date: "2 hours ago" },
-                    { name: "Binary Search", diff: "Easy", color: "text-[#10b981]", status: "Accepted", statBg: "bg-[#10b981]/15 text-[#10b981]", lang: "C++", time: "4ms", memory: "6.8 MB", date: "5 hours ago" },
-                    { name: "LRU Cache", diff: "Medium", color: "text-[#ff6a00]", status: "Wrong Answer", statBg: "bg-[#f43f5e]/10 text-[#f43f5e]", lang: "Java", time: "0ms", memory: "18.4 MB", date: "1 day ago" },
-                    { name: "Word Ladder", diff: "Hard", color: "text-[#f43f5e]", status: "Time Limit Exceeded", statBg: "bg-[#8b5cf6]/10 text-[#8b5cf6]", lang: "C++", time: "--", memory: "22.1 MB", date: "2 days ago" },
-                    { name: "Group Anagrams", diff: "Medium", color: "text-[#ff6a00]", status: "Accepted", statBg: "bg-[#10b981]/15 text-[#10b981]", lang: "JavaScript", time: "28ms", memory: "12.8 MB", date: "3 days ago" },
-                  ].map((sub, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200 group cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <span className={cn("text-[9px] font-semibold uppercase w-14 text-center py-0.5 rounded border border-current/20 bg-current/5", sub.color)}>{sub.diff}</span>
-                        <span className="text-[12px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors tracking-tight leading-none">{sub.name}</span>
-                      </div>
-                      <div className="flex items-center gap-10 shrink-0 text-[11px] font-normal text-text-secondary leading-none">
-                        <span className={cn("px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide leading-none", sub.statBg)}>{sub.status}</span>
-                        <span className="w-14 text-left">{sub.lang}</span>
-                        <span className="w-10 text-left">{sub.time}</span>
-                        <span className="w-16 text-left">{sub.memory}</span>
-                        <span className="w-20 text-right text-text-secondary/60 font-normal">{sub.date}</span>
-                      </div>
-                    </div>
-                  ))}
+                  {recentSubmissions && recentSubmissions.length > 0 ? (
+                    recentSubmissions.map((sub, idx) => {
+                      const isAcc = sub.status === "ACCEPTED";
+                      const statBg = isAcc ? "bg-[#10b981]/15 text-[#10b981]" : "bg-[#f43f5e]/10 text-[#f43f5e]";
+                      return (
+                        <div key={idx} onClick={() => router.push(`/problems/${sub.problemExternalId}`)} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200 group cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <span className={cn("text-[9px] font-semibold uppercase w-14 text-center py-0.5 rounded border border-current/20 bg-current/5 text-text-secondary")}>
+                              PROB
+                            </span>
+                            <span className="text-[12px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors tracking-tight leading-none">{sub.problemExternalId}</span>
+                          </div>
+                          <div className="flex items-center gap-8 shrink-0 text-[11px] font-normal text-text-secondary leading-none">
+                            <span className={cn("px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide leading-none", statBg)}>{sub.status}</span>
+                            <span className="w-16">{sub.language}</span>
+                            <span className="w-12">{sub.executionTime ? `${sub.executionTime}ms` : "--"}</span>
+                            <span className="w-20 text-right">{new Date(sub.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-8 text-center text-text-secondary text-[12px]">No recent submissions found.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -753,29 +826,30 @@ export default function ProfilePage() {
               <div className="p-5 flex flex-col gap-3">
                 <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none px-1">Bookmarked Problems</h3>
                 <div className="flex flex-col border-t border-white/[0.06] mt-1">
-                  {[
-                    { name: "Median of Two Sorted Arrays", diff: "Hard", color: "text-[#f43f5e]", rate: "41.2% Acceptance", time: "Last solved 2 days ago" },
-                    { name: "Regular Expression Matching", diff: "Hard", color: "text-[#f43f5e]", rate: "33.8% Acceptance", time: "Attempted 4 days ago" },
-                    { name: "Two Sum", diff: "Easy", color: "text-[#10b981]", rate: "92.5% Acceptance", time: "Last solved 1 week ago" },
-                    { name: "Container With Most Water", diff: "Medium", color: "text-[#ff6a00]", rate: "67.4% Acceptance", time: "Attempted 2 weeks ago" },
-                  ].map((bk, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200 group">
-                      <div className="flex items-center gap-3">
-                        <span className={cn("text-[9px] font-semibold uppercase w-14 text-center py-0.5 rounded border border-current/20 bg-current/5", bk.color)}>{bk.diff}</span>
-                        <span className="text-[12px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors tracking-tight leading-none">{bk.name}</span>
+                  {loadingBookmarks ? (
+                    <div className="py-8 text-center text-text-secondary text-[12px] animate-pulse">Loading bookmarks...</div>
+                  ) : bookmarkedProblems.length > 0 ? (
+                    bookmarkedProblems.map((bk, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200 group">
+                        <div className="flex items-center gap-3">
+                          <span className={cn("text-[9px] font-semibold uppercase w-14 text-center py-0.5 rounded border border-current/20 bg-current/5", bk.color)}>{bk.diff}</span>
+                          <span className="text-[12px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors tracking-tight leading-none">{bk.name}</span>
+                        </div>
+                        <div className="flex items-center gap-5 shrink-0 leading-none">
+                          <span className="text-[11px] text-text-secondary/60 font-normal">{bk.rate}</span>
+                          <span className="text-[11px] text-text-secondary/60 font-normal pr-3">{bk.time}</span>
+                          <button
+                            onClick={() => router.push(`/problems/${bk.slug}`)}
+                            className="border border-white/[0.08] hover:bg-white/[0.04] hover:border-white/[0.12] bg-[#111217]/50 rounded-lg px-3 py-1.5 text-[10px] font-medium text-text-primary shadow-sm transition-all cursor-pointer leading-none"
+                          >
+                            Resume Solving
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-5 shrink-0 leading-none">
-                        <span className="text-[11px] text-text-secondary/60 font-normal">{bk.rate}</span>
-                        <span className="text-[11px] text-text-secondary/60 font-normal pr-3">{bk.time}</span>
-                        <button
-                          onClick={() => showToast("Loading Monaco practice workspace...", "success")}
-                          className="border border-white/[0.08] hover:bg-white/[0.04] hover:border-white/[0.12] bg-[#111217]/50 rounded-lg px-3 py-1.5 text-[10px] font-medium text-text-primary shadow-sm transition-all cursor-pointer leading-none"
-                        >
-                          Resume Solving
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-text-secondary text-[12px]">No bookmarked problems found.</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -839,9 +913,12 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className={cn(cardBase, "p-6 text-left")}>
-                <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-4 leading-none">Linked Account Integrations</h3>
-                <div className="flex flex-col gap-4">
+              <div className={cn(cardBase, "p-6 text-left relative overflow-hidden group")}>
+                <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
+                </div>
+                <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-4 leading-none opacity-60">Linked Account Integrations</h3>
+                <div className="flex flex-col gap-4 opacity-60">
                   {[
                     { label: "LeetCode Live Sync", active: true },
                     { label: "Codeforces Rating Checker", active: true },

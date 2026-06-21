@@ -138,8 +138,14 @@ export default function ContestsPage() {
         </Button>
       </div>
 
-      {/* Reusable Tab Component layout with matching slide underlines */}
-      <div className="flex border-b border-border-card mb-6 gap-6 select-none overflow-x-auto pb-1">
+      <div className="relative group w-full flex flex-col mt-2">
+        <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+          <span className="px-4 py-2 rounded-xl bg-card-bg border border-border-card text-[14px] font-bold text-brand-orange shadow-xl">Coming Soon</span>
+        </div>
+
+        <div className="w-full flex flex-col select-none opacity-60 pointer-events-none">
+          {/* Reusable Tab Component layout with matching slide underlines */}
+          <div className="flex border-b border-border-card mb-6 gap-6 select-none overflow-x-auto pb-1">
         {tabs.map((tab) => {
           const isActive = activeTab === tab;
           return (
@@ -190,142 +196,146 @@ export default function ContestsPage() {
 
       {/* Main contests section layout */}
       <SectionWrapper>
-        {/* Left Column: Contests Catalog */}
-        <div className="flex-1 min-w-0 flex flex-col gap-5">
-          
-          {/* Header search input bar */}
-          <div className="w-full flex items-center bg-white dark:bg-[#11131c] border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-[#ff6a00]/50 transition-all select-none">
-            <Search className="w-4.5 h-4.5 text-[#9ca3af] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search contests..."
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-              className="w-full ml-3 bg-transparent text-text-primary text-[13.5px] font-medium focus:outline-none placeholder-[#9ca3af]/60"
-            />
-          </div>
+        <div className="w-full flex flex-col lg:flex-row gap-6 items-start mt-2">
+            {/* Left Column: Contests Catalog */}
+            <div className="flex-1 min-w-0 flex flex-col gap-5">
+              
+              {/* Header search input bar */}
+              <div className="w-full flex items-center bg-white dark:bg-[#11131c] border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-[#ff6a00]/50 transition-all select-none">
+                <Search className="w-4.5 h-4.5 text-[#9ca3af] shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search contests..."
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  className="w-full ml-3 bg-transparent text-text-primary text-[13.5px] font-medium focus:outline-none placeholder-[#9ca3af]/60"
+                />
+              </div>
 
-          <h2 className="text-[16px] font-bold text-text-primary text-left select-none -mb-1 mt-1">
-            Upcoming Contests
-          </h2>
+              <h2 className="text-[16px] font-bold text-text-primary text-left select-none -mb-1 mt-1">
+                Upcoming Contests
+              </h2>
 
-          {/* Catalog list */}
-          <div className="flex flex-col gap-4">
-            <ErrorBoundary>
-              {filteredContests.length > 0 ? (
-                filteredContests.map((c) => (
-                  <ContestCard
-                    key={c.id}
-                    id={c.id}
-                    title={c.title}
-                    date={c.date}
-                    timeRange={c.timeRange}
-                    duration={c.duration}
-                    tags={c.tags}
-                    initialSecondsLeft={c.initialSecondsLeft}
-                    featured={c.featured}
-                    type={c.type}
-                  />
-                ))
-              ) : (
-                <div className="p-12 text-center text-text-secondary border border-border-card bg-white dark:bg-[#11131c] rounded-[24px]">
-                  No upcoming contests found.
-                </div>
-              )}
-            </ErrorBoundary>
-          </div>
+              {/* Catalog list */}
+              <div className="flex flex-col gap-4">
+                <ErrorBoundary>
+                  {filteredContests.length > 0 ? (
+                    filteredContests.map((c) => (
+                      <ContestCard
+                        key={c.id}
+                        id={c.id}
+                        title={c.title}
+                        date={c.date}
+                        timeRange={c.timeRange}
+                        duration={c.duration}
+                        tags={c.tags}
+                        initialSecondsLeft={c.initialSecondsLeft}
+                        featured={c.featured}
+                        type={c.type}
+                      />
+                    ))
+                  ) : (
+                    <div className="p-12 text-center text-text-secondary border border-border-card bg-white dark:bg-[#11131c] rounded-[24px]">
+                      No upcoming contests found.
+                    </div>
+                  )}
+                </ErrorBoundary>
+              </div>
 
-          {/* Footer View All */}
-          <div className="flex justify-center select-none mt-2">
-            <Button variant="secondary" className="py-2.5 font-bold border border-border-card text-[13px]">
-              <span>View All Contests</span>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+              {/* Footer View All */}
+              <div className="flex justify-center select-none mt-2">
+                <Button variant="secondary" className="py-2.5 font-bold border border-border-card text-[13px]">
+                  <span>View All Contests</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
 
-        </div>
-
-        {/* Right Sidebar Column with strict matching width constraints */}
-        <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
-          
-          {/* Rating chart Card */}
-          <ErrorBoundary>
-            <RatingTrendChart />
-          </ErrorBoundary>
-
-          {/* Recent Performance card matching exact margins and paddings */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[260px] shadow-sm select-none text-left">
-            <div className="flex items-center justify-between mb-3.5">
-              <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
-                Recent Performance
-              </span>
-              <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer">
-                View all
-              </button>
             </div>
 
-            <div className="flex flex-col gap-2.5 mt-0.5">
-              {performance.map((record, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-center justify-between border-b border-border-card/45 pb-2.5 last:border-0 last:pb-0"
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-[12.5px] font-semibold text-text-primary">
-                      {record.name}
-                    </span>
-                    <span className="text-[11px] text-text-secondary font-medium mt-0.5">
-                      Rank {record.rank}
-                    </span>
-                  </div>
-                  <span className={`text-[12px] font-bold ${
-                    record.positive ? "text-[#10b981]" : "text-red-500"
-                  }`}>
-                    {record.diff}
+            {/* Right Sidebar Column with strict matching width constraints */}
+            <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
+              
+              {/* Rating chart Card */}
+              <ErrorBoundary>
+                <RatingTrendChart />
+              </ErrorBoundary>
+
+              {/* Recent Performance card matching exact margins and paddings */}
+              <DashboardCard className="p-5 flex flex-col justify-between h-[260px] shadow-sm select-none text-left">
+                <div className="flex items-center justify-between mb-3.5">
+                  <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em]">
+                    Recent Performance
                   </span>
+                  <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer">
+                    View all
+                  </button>
                 </div>
-              ))}
+
+                <div className="flex flex-col gap-2.5 mt-0.5">
+                  {performance.map((record, idx) => (
+                    <div 
+                      key={idx} 
+                      className="flex items-center justify-between border-b border-border-card/45 pb-2.5 last:border-0 last:pb-0"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[12.5px] font-semibold text-text-primary">
+                          {record.name}
+                        </span>
+                        <span className="text-[11px] text-text-secondary font-medium mt-0.5">
+                          Rank {record.rank}
+                        </span>
+                      </div>
+                      <span className={`text-[12px] font-bold ${
+                        record.positive ? "text-[#10b981]" : "text-red-500"
+                      }`}>
+                        {record.diff}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </DashboardCard>
+
+              {/* Contest Tips Card */}
+              <DashboardCard className="p-5 flex flex-col justify-between h-[250px] shadow-sm select-none text-left">
+                <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em] mb-4">
+                  Contest Tips
+                </span>
+
+                <div className="flex flex-col gap-3.5 mt-0.5">
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-[12.5px] font-semibold text-text-primary leading-none">Read problems carefully</span>
+                      <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Understanding is key to solving</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="w-5 h-5 text-[#10b981] shrink-0 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-[12.5px] font-semibold text-text-primary leading-none">Manage your time well</span>
+                      <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Don&apos;t get stuck on one problem</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="w-5 h-5 text-[#8b5cf6] shrink-0 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-[12.5px] font-semibold text-text-primary leading-none">Practice regularly</span>
+                      <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Consistency leads to improvement</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer self-start mt-4 flex items-center gap-1 group">
+                  <span>View all tips</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </DashboardCard>
+
             </div>
-          </DashboardCard>
-
-          {/* Contest Tips Card */}
-          <DashboardCard className="p-5 flex flex-col justify-between h-[250px] shadow-sm select-none text-left">
-            <span className="text-[13px] font-bold text-text-primary tracking-[-0.01em] mb-4">
-              Contest Tips
-            </span>
-
-            <div className="flex flex-col gap-3.5 mt-0.5">
-              <div className="flex items-start gap-3">
-                <HelpCircle className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
-                <div className="flex flex-col">
-                  <span className="text-[12.5px] font-semibold text-text-primary leading-none">Read problems carefully</span>
-                  <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Understanding is key to solving</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <HelpCircle className="w-5 h-5 text-[#10b981] shrink-0 mt-0.5" />
-                <div className="flex flex-col">
-                  <span className="text-[12.5px] font-semibold text-text-primary leading-none">Manage your time well</span>
-                  <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Don&apos;t get stuck on one problem</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <HelpCircle className="w-5 h-5 text-[#8b5cf6] shrink-0 mt-0.5" />
-                <div className="flex flex-col">
-                  <span className="text-[12.5px] font-semibold text-text-primary leading-none">Practice regularly</span>
-                  <span className="text-[11.5px] text-text-secondary mt-1.5 leading-normal">Consistency leads to improvement</span>
-                </div>
-              </div>
-            </div>
-
-            <button className="text-[11px] font-semibold text-brand-orange hover:text-[#e05d00] transition cursor-pointer self-start mt-4 flex items-center gap-1 group">
-              <span>View all tips</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </DashboardCard>
-
-        </div>
+          </div>
       </SectionWrapper>
+        </div>
+      </div>
     </ContentContainer>
   );
 }

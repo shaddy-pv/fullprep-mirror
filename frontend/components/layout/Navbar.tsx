@@ -27,52 +27,203 @@ function NavbarSearch() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [val, setVal] = useState("");
+  const [results, setResults] = useState<{ id: string; title: string; difficulty: string; cfTags: string[] }[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(-1);
 
+  // Sync search input with URL on page-specific pages
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVal(searchParams.get("search") || "");
-  }, [searchParams]);
+    if (pathname === "/problems" || pathname === "/learning-paths") {
+      setVal(searchParams.get("search") || "");
+    } else {
+      setVal("");
+    }
+  }, [pathname, searchParams]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setVal(value);
-
-    if (pathname === "/learning-paths" || pathname === "/problems") {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("search", value);
-      } else {
-        params.delete("search");
+  // Keyboard shortcut: press "/" to focus search
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        inputRef.current?.focus();
       }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Debounced search fetch
+  useEffect(() => {
+    if (!val.trim() || val.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      return;
+    }
+
+    // On /problems page, just update URL — no dropdown needed
+    if (pathname === "/problems") {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("search", val);
       params.delete("page");
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      return;
+    }
+
+    // On other pages, show dropdown with API results
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/problems-search?q=${encodeURIComponent(val)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.slice(0, 6));
+          setIsOpen(true);
+        }
+      } catch {
+        // fallback: just route to problems page on submit
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [val, pathname]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVal(e.target.value);
+    setSelectedIdx(-1);
+  };
+
+  const handleSubmit = () => {
+    if (!val.trim()) return;
+    setIsOpen(false);
+    inputRef.current?.blur();
+    const params = new URLSearchParams();
+    params.set("search", val.trim());
+    router.push(`/problems?${params.toString()}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      setVal("");
+      inputRef.current?.blur();
+      return;
+    }
+    if (e.key === "Enter") {
+      if (selectedIdx >= 0 && results[selectedIdx]) {
+        router.push(`/problems/${results[selectedIdx].id}`);
+        setIsOpen(false);
+        setVal("");
+      } else {
+        handleSubmit();
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIdx((prev) => Math.min(prev + 1, results.length - 1));
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIdx((prev) => Math.max(prev - 1, -1));
     }
   };
 
+  const difficultyColor = (d: string) =>
+    d === "Easy" ? "text-emerald-500" : d === "Medium" ? "text-yellow-500" : "text-red-500";
+
   const isLearningPaths = pathname === "/learning-paths";
-  const placeholder = isLearningPaths ? "Search learning paths..." : "Search problems, topics, contests...";
+  const placeholder = isLearningPaths
+    ? "Search learning paths..."
+    : "Search problems, topics, contests...";
 
   return (
     <div className="relative w-[380px] hidden sm:block">
+      {/* Input */}
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
         <Search className="h-4.5 w-4.5 text-white/40" />
       </div>
       <input
+        ref={inputRef}
         type="text"
         placeholder={placeholder}
         value={val}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => { if (results.length > 0) setIsOpen(true); }}
         className="w-full h-10 pl-11 pr-10 bg-[#0d0f1a]/82 border border-white/[0.06] rounded-xl text-[13px] text-white placeholder-white/40 outline-none shadow-sm focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange/40 transition-all duration-300 tracking-[-0.01em]"
       />
       <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-        <span className="text-[10px] text-white/40 font-bold bg-white/[0.04] px-1.5 py-0.5 rounded-md border border-white/[0.08] font-mono leading-none">
-          /
-        </span>
+        {loading ? (
+          <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-brand-orange rounded-full animate-spin" />
+        ) : (
+          <span className="text-[10px] text-white/40 font-bold bg-white/[0.04] px-1.5 py-0.5 rounded-md border border-white/[0.08] font-mono leading-none">
+            /
+          </span>
+        )}
       </div>
+
+      {/* Dropdown Results */}
+      {isOpen && results.length > 0 && (
+        <div
+          ref={dropdownRef}
+          className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[#06090f]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] z-[100] overflow-hidden"
+        >
+          {results.map((item, idx) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                router.push(`/problems/${item.id}`);
+                setIsOpen(false);
+                setVal("");
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150 border-b border-white/[0.04] last:border-0 ${
+                idx === selectedIdx ? "bg-brand-orange/10" : "hover:bg-white/[0.04]"
+              }`}
+            >
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-[13px] font-semibold text-white truncate">{item.title}</span>
+                {item.cfTags?.length > 0 && (
+                  <span className="text-[10px] text-white/40 truncate">{item.cfTags.slice(0, 3).join(" · ")}</span>
+                )}
+              </div>
+              <span className={`text-[11px] font-bold shrink-0 ml-3 ${difficultyColor(item.difficulty)}`}>
+                {item.difficulty}
+              </span>
+            </button>
+          ))}
+          <button
+            onClick={handleSubmit}
+            className="w-full flex items-center gap-2 px-4 py-2.5 text-[12px] text-brand-orange font-bold hover:bg-brand-orange/10 transition-colors duration-150"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>See all results for &quot;{val}&quot;</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
+import { NotificationsService } from "@/services/notifications.service";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -84,12 +235,19 @@ export default function Navbar() {
     setIsSidebarCollapsed, 
     isMobileSidebarOpen, 
     setIsMobileSidebarOpen,
-    notificationCount,
-    clearNotifications
   } = useDashboard();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      NotificationsService.getNotifications().then(data => {
+        setUnreadCount(data.filter(n => !n.isRead).length);
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -179,13 +337,12 @@ export default function Navbar() {
         {/* Bell Icon with badge */}
         <button 
           onClick={() => {
-            clearNotifications();
             router.push("/notifications");
           }}
           className="relative w-10 h-10 rounded-full border border-border-card bg-card-bg flex items-center justify-center text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-300 shadow-sm cursor-pointer"
         >
           <Bell className="w-[18px] h-[18px] fill-transparent stroke-[1.8]" />
-          {notificationCount > 0 && (
+          {unreadCount > 0 && (
             <span className="absolute top-[9px] right-[10px] w-2 h-2 bg-brand-orange rounded-full ring-2 ring-white dark:ring-[#0b0f17] shadow-[0_0_6px_rgba(255,106,0,0.5)]" />
           )}
         </button>

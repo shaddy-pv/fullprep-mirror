@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../services";
 
 @theme {
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
@@ -42,6 +43,8 @@ body {
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11"; /* Advanced premium Inter features */
   letter-spacing: -0.015em; /* Premium tight Apple/Linear letter tracking */
+  /* Prevent layout shift when scrollbar appears/disappears (e.g. accordion expand) */
+  scrollbar-gutter: stable;
 }
 
 /* Custom scrollbar to keep layout clean */

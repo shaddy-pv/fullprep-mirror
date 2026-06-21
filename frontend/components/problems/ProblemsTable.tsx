@@ -16,6 +16,7 @@ interface ProblemsTableProps {
   currentPage: number;
   setCurrentPage: (page: number) => void;
   itemsPerPage: number;
+  solvedIds?: string[];
 }
 
 const ENABLED_IDE_PROBLEMS = ["Two Sum", "Binary Search", "Merge Intervals"];
@@ -26,6 +27,7 @@ export default function ProblemsTable({
   currentPage,
   setCurrentPage,
   itemsPerPage,
+  solvedIds = [],
 }: ProblemsTableProps) {
   const router = useRouter();
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
@@ -227,11 +229,17 @@ export default function ProblemsTable({
                         />
                       )}
                       <div className="flex items-center gap-2.5 h-full relative z-20 pointer-events-none">
-                        {problem.status === "completed" ? (
-                          <CheckCircle2 className="w-[17px] h-[17px] text-[#10b981] fill-transparent shrink-0 stroke-[2.2]" />
-                        ) : (
-                          <Circle className="w-[17px] h-[17px] text-[#d1d5db] dark:text-white/[0.12] shrink-0 stroke-[2.2]" />
-                        )}
+                        {(() => {
+                          const externalId = (problem as any).externalId;
+                          const isSolved = externalId
+                            ? solvedIds.includes(externalId)
+                            : problem.status === "completed";
+                          return isSolved ? (
+                            <CheckCircle2 className="w-[17px] h-[17px] text-[#10b981] fill-[#10b981]/10 shrink-0 stroke-[2.2]" />
+                          ) : (
+                            <Circle className="w-[17px] h-[17px] text-[#d1d5db] dark:text-white/[0.12] shrink-0 stroke-[2.2]" />
+                          );
+                        })()}
                         {enabled ? (
                           <span 
                             className="text-[14px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors leading-tight tracking-[-0.01em] group-hover:underline decoration-brand-orange/40 underline-offset-4"

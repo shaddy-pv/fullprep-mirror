@@ -35,17 +35,109 @@ function formatSubmissions(stats: any): string {
   return "1.2K";
 }
 
-function generateStarterCode(name: string) {
-  const cleanName = name.replace(/^\d+_[A-Z]\d*\.\s*/, "");
-  const words = cleanName.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/);
-  const camelName = words.map((w, i) => i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1)).join("");
-
+function getStarterCode(slug: string) {
   return {
-    javascript: `/**\n * @return {void}\n */\nvar ${camelName || "solve"} = function() {\n    // Write your code here\n};`,
-    python: `class Solution:\n    def ${camelName || "solve"}(self) -> None:\n        # Write your code here\n        pass`,
-    java: `class Solution {\n    public void ${camelName || "solve"}() {\n        // Write your code here\n    }\n}`,
-    cpp: `class Solution {\npublic:\n    void ${camelName || "solve"}() {\n        // Write your code here\n    }\n};`
+    javascript: `const fs = require('fs');
+
+function solve() {
+    // Read all standard input
+    const input = fs.readFileSync(0, 'utf-8').trim().split('\\n');
+    if (!input || input.length === 0 || input[0] === "") return;
+    
+    // Write your code here
+    
+}
+
+solve();`,
+    python: `import sys
+
+def solve():
+    # Read all standard input
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    # Write your code here
+    pass
+
+if __name__ == '__main__':
+    solve()`,
+    java: `import java.util.*;
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        // Write your code here
+        
+        scanner.close();
+    }
+}`,
+    cpp: `#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+void solve() {
+    // Write your code here
+    
+}
+
+int main() {
+    // Optimize standard I/O operations for speed
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int t = 1;
+    // cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}`
   };
+}
+
+function formatDescription(raw: string): string {
+  if (!raw) return "";
+
+  const lines = raw.split('\n');
+  const headerStyle = "text-brand-orange text-[13px] font-bold tracking-[0.08em] uppercase border-b border-border-card pb-2 mt-8 mb-4 block w-full";
+
+  let inExamplesSection = false;
+  const resultLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
+
+    if (t === "Example" || t === "Examples") {
+      inExamplesSection = true;
+      continue;
+    }
+
+    if (inExamplesSection) {
+      if (t === "Note") {
+        inExamplesSection = false;
+      } else {
+        continue;
+      }
+    }
+
+    if (t === "Input" || t === "Output" || t === "Note") {
+      resultLines.push(`<div class="${headerStyle}">${t}</div>`);
+    } else if (t) {
+      resultLines.push(`<div class="min-h-[24px]">${line}</div>`);
+    } else {
+      resultLines.push("<div class='h-4'></div>");
+    }
+  }
+
+  return resultLines.join('');
 }
 
 export const ProblemsService = {
@@ -93,7 +185,7 @@ export const ProblemsService = {
         const topic = mapTopic(prob.cfTags);
         const acceptance = calculateAcceptance(prob.stats);
         const submissions = formatSubmissions(prob.stats);
-        const starterCode = generateStarterCode(prob.name);
+        const starterCode = getStarterCode(prob.name);
 
         return {
           slug: prob.externalId,
@@ -101,7 +193,7 @@ export const ProblemsService = {
           difficulty,
           topic,
           tags: prob.cfTags || [],
-          description: prob.description || `<p>${prob.descriptionPreview || ""}</p>`,
+          description: prob.description ? formatDescription(prob.description) : `<p>${prob.descriptionPreview || ""}</p>`,
           examples: (prob.publicTests || []).map((t: any, idx: number) => ({
             input: t.input,
             output: t.output,
