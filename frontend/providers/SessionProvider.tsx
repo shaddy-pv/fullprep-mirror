@@ -101,7 +101,7 @@ function SessionSync({ children }: { children: React.ReactNode }) {
       }
       setUser(null);
       await AuthService.logout();
-      window.location.href = "/auth";
+      window.location.href = "/login";
     };
 
     window.addEventListener("fp-unauthorized", handleUnauthorized);
