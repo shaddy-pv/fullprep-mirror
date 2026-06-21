@@ -9,9 +9,6 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
   },
   
-  // Disable telemetry
-  telemetry: false,
-  
   // Webpack configuration
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   webpack: (config, { isServer }) => {
@@ -24,7 +21,6 @@ const nextConfig = {
   },
   
   // Production optimizations
-  swcMinify: true,
   compress: true,
   
   // Security headers

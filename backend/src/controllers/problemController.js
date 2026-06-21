@@ -15,6 +15,7 @@
  */
 
 import Problem from "../models/Problem.js";
+import SyncJob from "../models/SyncJob.js";
 import * as codnite from "../utils/codniteService.js";
 
 // ── Cache TTL ─────────────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ export const listProblems = async (req, res) => {
   } = req.query;
 
   const pageNum  = Math.max(1, parseInt(page, 10));
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+  const limitNum = Math.min(1000, Math.max(1, parseInt(limit, 10)));
   const skip     = (pageNum - 1) * limitNum;
 
   // ── Build MongoDB filter ─────────────────────────────────
@@ -103,6 +104,7 @@ export const listProblems = async (req, res) => {
     Problem.find(filter)
       .select("-description -publicTests -privateTests -generatedTests -solutions -incorrectSolutions")
       .sort(sort)
+      .allowDiskUse(true)
       .skip(skip)
       .limit(limitNum)
       .lean(),
@@ -162,7 +164,10 @@ export const getProblem = async (req, res) => {
   const { id } = req.params;
 
   // ── 1. Check cache ───────────────────────────────────────
-  let problem = await Problem.findOne({ externalId: id, isActive: true }).select(
+  let problem = await Problem.findOne({
+    $or: [{ externalId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }],
+    isActive: true 
+  }).select(
     "+privateTests +generatedTests +solutions +incorrectSolutions"
   );
 
@@ -445,79 +450,136 @@ export const getStats = async (req, res) => {
 // ── @route   POST /api/problems/sync
 // ── @access  Private / Admin
 export const syncProblems = async (req, res) => {
-  const { forceAll = false } = req.body;
+  const { mode = "ALL" } = req.body;
   const adminId = req.user?._id || null;
-  const adminEmail = req.user?.email || "System/Anonymous";
 
-  console.log(`[Sync] Triggered problem sync by ${adminEmail} (forceAll=${forceAll})`);
-
-  // ── 1. Fetch full problem list from Codnite ──────────────
-  // We paginate through everything (max 282 problems in total)
-  const PAGE_SIZE = 100;
-  let allProblems = [];
-  let page = 1;
-  let hasNext = true;
-
-  while (hasNext) {
-    const data = await codnite.fetchProblems({ page, limit: PAGE_SIZE });
-    allProblems = allProblems.concat(data.problems || []);
-    hasNext = data.has_next;
-    page++;
+  // 1. Check if a job is already running
+  const runningJob = await SyncJob.findOne({ status: "RUNNING" });
+  if (runningJob) {
+    return res.status(400).json({
+      success: false,
+      message: "A sync job is already running.",
+      data: runningJob,
+    });
   }
 
-  console.log(`[Sync] Found ${allProblems.length} problems in Codnite index`);
+  // 2. Create the SyncJob in DB
+  const job = await SyncJob.create({
+    mode,
+    status: "RUNNING",
+    triggeredBy: adminId,
+  });
 
-  // ── 2. For each problem, fetch full details and upsert ───
-  let synced = 0;
-  let skipped = 0;
-  let failed = 0;
-  const errors = [];
+  // 3. Return immediately (Background Processing)
+  res.status(202).json({
+    success: true,
+    message: "Sync job started in the background.",
+    data: job,
+  });
 
-  for (const indexEntry of allProblems) {
+  // 4. Run the actual sync in the background
+  (async () => {
+    const startTime = Date.now();
     try {
-      // Skip if cache is fresh and not forcing re-sync
-      if (!forceAll) {
-        const existing = await Problem.findOne({ externalId: indexEntry.id });
-        if (existing && !isCacheStale(existing)) {
-          skipped++;
-          continue;
+      job.logs.push(`[System] Initializing sync in ${mode} mode...`);
+      await job.save();
+
+      // Fetch index
+      const PAGE_SIZE = 100;
+      let allProblems = [];
+      let page = 1;
+      let hasNext = true;
+
+      while (hasNext) {
+        const data = await codnite.fetchProblems({ page, limit: PAGE_SIZE });
+        allProblems = allProblems.concat(data.problems || []);
+        hasNext = data.has_next;
+        page++;
+      }
+
+      job.totalToSync = allProblems.length;
+      job.logs.push(`[System] Found ${allProblems.length} problems in upstream catalog.`);
+      await job.save();
+
+      // Upsert
+      for (const indexEntry of allProblems) {
+        try {
+          const existing = await Problem.findOne({ externalId: indexEntry.id });
+          const stale = isCacheStale(existing);
+
+          if (mode === "MISSING" && existing) {
+            job.skippedCount++;
+            continue;
+          }
+
+          if (mode === "STALE" && existing && !stale) {
+            job.skippedCount++;
+            continue;
+          }
+
+          const raw = await codnite.fetchProblemById(indexEntry.id);
+          await Problem.findOneAndUpdate(
+            { externalId: indexEntry.id },
+            {
+              $set: {
+                ...codniteToSchema(raw, adminId),
+                isActive: true,
+              },
+            },
+            { upsert: true, new: true, runValidators: true }
+          );
+
+          job.syncedCount++;
+          // Only push log occasionally to avoid massive DB writes, or just let frontend rely on counts
+          if (job.syncedCount % 10 === 0) {
+            job.logs.push(`[Progress] Synced ${job.syncedCount} / ${job.totalToSync}`);
+            await job.save();
+          }
+        } catch (err) {
+          job.failedCount++;
+          job.errors.push({ id: indexEntry.id, error: err.message });
+          job.logs.push(`[Error] Failed on ${indexEntry.id}: ${err.message}`);
         }
       }
 
-      // Fetch full problem details
-      const raw = await codnite.fetchProblemById(indexEntry.id);
-
-      await Problem.findOneAndUpdate(
-        { externalId: indexEntry.id },
-        {
-          $set: {
-            ...codniteToSchema(raw, adminId),
-            isActive: true,
-          },
-        },
-        { upsert: true, new: true, runValidators: true }
-      );
-
-      synced++;
-    } catch (err) {
-      failed++;
-      errors.push({ id: indexEntry.id, error: err.message });
-      console.error(`[Sync] Failed to sync problem ${indexEntry.id}:`, err.message);
+      job.status = "COMPLETED";
+      job.durationMs = Date.now() - startTime;
+      job.logs.push(`[System] Sync completed successfully in ${job.durationMs}ms.`);
+      await job.save();
+    } catch (error) {
+      job.status = "FAILED";
+      job.durationMs = Date.now() - startTime;
+      job.logs.push(`[Fatal] Entire sync process crashed: ${error.message}`);
+      await job.save();
     }
-  }
+  })();
+};
 
-  console.log(`[Sync] Completed: ${synced} synced, ${skipped} skipped, ${failed} failed`);
+// ── @desc    Get the current active sync job status
+// ── @route   GET /api/problems/sync/status
+// ── @access  Private / Admin
+export const getSyncStatus = async (req, res) => {
+  // Return the latest job regardless of status
+  const job = await SyncJob.findOne().sort({ createdAt: -1 });
+  
+  res.status(200).json({
+    success: true,
+    data: job || null,
+  });
+};
+
+// ── @desc    Get paginated sync history
+// ── @route   GET /api/problems/sync/history
+// ── @access  Private / Admin
+export const getSyncHistory = async (req, res) => {
+  const history = await SyncJob.find()
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .populate("triggeredBy", "name email");
 
   res.status(200).json({
     success: true,
-    message: `Sync completed. ${synced} synced, ${skipped} skipped (cache fresh), ${failed} failed.`,
-    data: {
-      total:   allProblems.length,
-      synced,
-      skipped,
-      failed,
-      errors:  errors.slice(0, 10), // Return max 10 errors
-    },
+    data: history,
   });
 };
 
@@ -527,7 +589,10 @@ export const syncProblems = async (req, res) => {
 export const createProblem = async (req, res) => {
   const {
     name, description, difficulty, cfRating, cfTags,
-    timeLimitSeconds, memoryLimitMb, publicTests, source,
+    timeLimitSeconds, memoryLimitMb, publicTests, privateTests, source,
+    inputFormat, outputFormat, constraints, notes, examples, hints,
+    starterCodeTemplates, editorial, judgeConfig, problemCode,
+    problemSlug, originalProblemLink
   } = req.body;
 
   if (!name || !description) {
@@ -551,6 +616,19 @@ export const createProblem = async (req, res) => {
     timeLimitSeconds:  Number(timeLimitSeconds)    || 2,
     memoryLimitMb:     Number(memoryLimitMb)       || 256,
     publicTests:       Array.isArray(publicTests) ? publicTests : [],
+    privateTests:      Array.isArray(privateTests) ? privateTests : [],
+    inputFormat:       inputFormat || "",
+    outputFormat:      outputFormat || "",
+    constraints:       Array.isArray(constraints) ? constraints : [],
+    notes:             notes || "",
+    examples:          Array.isArray(examples) ? examples : [],
+    hints:             Array.isArray(hints) ? hints : [],
+    starterCodeTemplates: Array.isArray(starterCodeTemplates) ? starterCodeTemplates : [],
+    editorial:         editorial || null,
+    judgeConfig:       judgeConfig || {},
+    problemCode:       problemCode || "",
+    problemSlug:       problemSlug || "",
+    originalProblemLink: originalProblemLink || "",
     createdBy:         req.user._id,
     lastSyncedAt:      new Date(),
   });
@@ -571,8 +649,10 @@ export const updateProblem = async (req, res) => {
   // Whitelist updatable fields
   const allowedFields = [
     "name", "description", "difficulty", "cfRating", "cfTags",
-    "timeLimitSeconds", "memoryLimitMb", "publicTests", "isActive",
-    "source",
+    "timeLimitSeconds", "memoryLimitMb", "publicTests", "privateTests", "isActive",
+    "source", "inputFormat", "outputFormat", "constraints", "notes",
+    "examples", "hints", "starterCodeTemplates", "editorial", "judgeConfig",
+    "problemCode", "problemSlug", "originalProblemLink"
   ];
 
   const updates = {};

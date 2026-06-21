@@ -20,6 +20,43 @@ const testCaseSchema = new mongoose.Schema(
   {
     input:  { type: String, default: "" },
     output: { type: String, default: "" },
+    explanation: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const exampleSchema = new mongoose.Schema(
+  {
+    input: { type: String, default: "" },
+    output: { type: String, default: "" },
+    explanation: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const starterCodeSchema = new mongoose.Schema(
+  {
+    language: { type: String, default: "UNKNOWN" },
+    code: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const editorialSchema = new mongoose.Schema(
+  {
+    title: { type: String, default: "" },
+    content: { type: String, default: "" },
+    timeComplexity: { type: String, default: "" },
+    spaceComplexity: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const judgeConfigSchema = new mongoose.Schema(
+  {
+    timeLimit: { type: Number, default: 2 },
+    memoryLimit: { type: Number, default: 256 },
+    outputMatchingStrategy: { type: String, default: "EXACT_MATCH" },
   },
   { _id: false }
 );
@@ -87,7 +124,7 @@ const problemSchema = new mongoose.Schema(
     source: {
       type: String,
       enum: {
-        values: ["CODEFORCES", "CODECHEF", "HACKEREARTH", "CODEJAM", "ATCODER", "UNKNOWN"],
+        values: ["CODEFORCES", "CODECHEF", "HACKEREARTH", "CODEJAM", "ATCODER", "LEETCODE", "FULLPREP", "UNKNOWN"],
         message: "Invalid problem source",
       },
       default: "CODEFORCES",
@@ -116,6 +153,19 @@ const problemSchema = new mongoose.Schema(
       default: [],
       index: true,
     },
+
+    inputFormat: { type: String, default: "" },
+    outputFormat: { type: String, default: "" },
+    constraints: { type: [String], default: [] },
+    notes: { type: String, default: "" },
+    examples: { type: [exampleSchema], default: [] },
+    hints: { type: [String], default: [] },
+    starterCodeTemplates: { type: [starterCodeSchema], default: [] },
+    editorial: { type: editorialSchema, default: null },
+    judgeConfig: { type: judgeConfigSchema, default: () => ({}) },
+    problemCode: { type: String, default: "" },
+    problemSlug: { type: String, default: "" },
+    originalProblemLink: { type: String, default: "" },
 
     // ── Constraints ──────────────────────────────────────────────────
     timeLimitSeconds: {
@@ -228,6 +278,7 @@ problemSchema.methods.toPublicJSON = function () {
   delete obj.__v;
   delete obj.lastSyncedAt;
   delete obj.isCacheStale;
+  if (!obj.editorial) delete obj.editorial;
   return obj;
 };
 

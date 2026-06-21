@@ -241,10 +241,15 @@ export const getSubmissions = async (req, res) => {
   const { page = 1, limit = 20, status, problemExternalId } = req.query;
 
   const pageNum  = Math.max(1, parseInt(page,  10));
-  const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10)));
+  const limitNum = Math.min(1000, Math.max(1, parseInt(limit, 10)));
   const skip     = (pageNum - 1) * limitNum;
 
-  const filter = { user: req.user._id };
+  const filter = {};
+  if (req.user.role !== "admin") {
+    filter.user = req.user._id;
+  } else if (req.query.userId) {
+    filter.user = req.query.userId;
+  }
   if (status)            filter.status            = status.toUpperCase();
   if (problemExternalId) filter.problemExternalId = problemExternalId;
 
@@ -252,6 +257,7 @@ export const getSubmissions = async (req, res) => {
     Submission.find(filter)
       .select("-code") // Exclude code from list view (large payload)
       .populate("problem", "difficulty")
+      .populate("user", "name email avatar")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
@@ -278,10 +284,12 @@ export const getSubmissions = async (req, res) => {
 // ── @route   GET /api/submissions/:id
 // ── @access  Private
 export const getSubmission = async (req, res) => {
-  const submission = await Submission.findOne({
-    _id:  req.params.id,
-    user: req.user._id, // Users can only view their own submissions
-  });
+  const query = { _id: req.params.id };
+  if (req.user.role !== "admin") {
+    query.user = req.user._id;
+  }
+
+  const submission = await Submission.findOne(query).populate("user", "name email avatar");
 
   if (!submission) {
     return res.status(404).json({
@@ -294,5 +302,78 @@ export const getSubmission = async (req, res) => {
     success: true,
     message: "Submission fetched successfully.",
     data:    submission.toPublicJSON(),
+  });
+};
+
+// ── @desc    Rejudge a submission (Admin only)
+// ── @route   POST /api/submissions/:id/rejudge
+// ── @access  Private / Admin
+export const rejudgeSubmission = async (req, res) => {
+  const { id } = req.params;
+
+  let submission = await Submission.findById(id);
+  if (!submission) {
+    return res.status(404).json({ success: false, message: "Submission not found." });
+  }
+
+  // Reset to PENDING
+  submission.status = "PENDING";
+  submission.executionTimeMs = null;
+  submission.memoryUsedMb = null;
+  submission.errorMessage = "";
+  submission.testCasesPassed = 0;
+  await submission.save();
+
+  // Simulate background judging after 1.5 seconds
+  setTimeout(async () => {
+    try {
+      const statuses = ["ACCEPTED", "ACCEPTED", "WRONG_ANSWER", "RUNTIME_ERROR", "TIME_LIMIT"];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      
+      const updateData = {
+        status: randomStatus,
+        executionTimeMs: Math.floor(Math.random() * 120) + 15,
+        memoryUsedMb: Number((Math.random() * 10 + 2).toFixed(1)),
+        testCasesTotal: 50,
+      };
+
+      if (randomStatus === "ACCEPTED") {
+        updateData.testCasesPassed = 50;
+      } else if (randomStatus === "WRONG_ANSWER") {
+        updateData.testCasesPassed = Math.floor(Math.random() * 49);
+        updateData.errorMessage = `Failed on case ${updateData.testCasesPassed + 1}. Expected: "1 2", Got: ""`;
+      } else {
+        updateData.testCasesPassed = Math.floor(Math.random() * 49);
+        updateData.errorMessage = randomStatus === "RUNTIME_ERROR" ? "Segfault" : "Time limit exceeded on test " + (updateData.testCasesPassed + 1);
+      }
+
+      await Submission.findByIdAndUpdate(submission._id, updateData);
+    } catch (err) {
+      console.error("Simulation error during rejudge:", err);
+    }
+  }, 1500);
+
+  res.status(200).json({
+    success: true,
+    message: "Submission queued for rejudging.",
+    data: submission,
+  });
+};
+
+// ── @desc    Delete a submission (Admin only)
+// ── @route   DELETE /api/submissions/:id
+// ── @access  Private / Admin
+export const deleteSubmission = async (req, res) => {
+  const { id } = req.params;
+
+  const submission = await Submission.findByIdAndDelete(id);
+
+  if (!submission) {
+    return res.status(404).json({ success: false, message: "Submission not found." });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Submission deleted successfully.",
   });
 };

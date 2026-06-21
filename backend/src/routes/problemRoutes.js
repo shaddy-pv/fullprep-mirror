@@ -31,6 +31,8 @@ import {
   getTags,
   getStats,
   syncProblems,
+  getSyncStatus,
+  getSyncHistory,
   createProblem,
   updateProblem,
   deleteProblem,
@@ -54,8 +56,10 @@ router.get("/", listProblems);
 
 // ── Admin-only Routes (JWT + role=admin required) ─────────────────────────────
 
-// Bulk sync all problems from Codnite into MongoDB
+// NOTE: Order matters
 router.post("/sync", protect, restrictTo("admin"), syncProblems);
+router.get("/sync/status", protect, restrictTo("admin"), getSyncStatus);
+router.get("/sync/history", protect, restrictTo("admin"), getSyncHistory);
 
 // Create a custom problem manually
 router.post("/", protect, restrictTo("admin"), createProblem);

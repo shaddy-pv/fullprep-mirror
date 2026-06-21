@@ -14,8 +14,10 @@ import {
   submitCode,
   getSubmissions,
   getSubmission,
+  rejudgeSubmission,
+  deleteSubmission,
 } from "../controllers/submissionController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -25,5 +27,7 @@ router.use(protect);
 router.post("/",    submitCode);
 router.get("/",     getSubmissions);
 router.get("/:id",  getSubmission);
+router.post("/:id/rejudge", restrictTo('admin'), rejudgeSubmission);
+router.delete("/:id", restrictTo('admin'), deleteSubmission);
 
 export default router;

@@ -19,6 +19,8 @@ import authRoutes       from "./routes/authRoutes.js";
 import healthRoutes    from "./routes/healthRoutes.js";
 import problemRoutes   from "./routes/problemRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
+import userRoutes       from "./routes/userRoutes.js";
+import settingsRoutes   from "./routes/settingsRoutes.js";
 
 const app = express();
 
@@ -105,8 +107,10 @@ app.get("/health", (_req, res) => {
 
 app.use("/api",          healthRoutes);
 app.use("/api/auth",     authRoutes);
+app.use("/api/users",    userRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
+app.use("/api/settings",    settingsRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 
