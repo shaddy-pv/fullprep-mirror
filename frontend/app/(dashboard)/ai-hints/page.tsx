@@ -125,7 +125,7 @@ export default function AIHintsPage() {
 
     // Block if free limit reached
     if (hintsRemaining === 0) {
-      showToast("Daily AI Hint limit reached! Upgrade to Pro for more.", "error");
+      showToast("Daily AI Hint limit reached! Upgrade to Pro for more.", "info");
       return;
     }
 
@@ -155,14 +155,14 @@ export default function AIHintsPage() {
       // Check for limit-reached (403) using our custom ApiError's statusCode
       if (error.statusCode === 403 || error.message?.includes("daily limit")) {
         setHintsRemaining(0);
-        showToast("You've reached your daily AI Hint limit!", "error");
+        showToast("You've reached your daily AI Hint limit!", "info");
         setMessages((prev) => [...prev, {
           _id: Date.now().toString(),
           sender: "assistant",
           text: "⚠️ You've reached your **daily limit** of 5 free AI hints. Your limit resets every 24 hours.\n\nUpgrade to **Pro** for 100 hints per day and unlock advanced features!",
         }]);
       } else {
-        showToast("Error connecting to AI Assistant. Please try again.", "error");
+        showToast("Error connecting to AI Assistant. Please try again.", "info");
       }
     } finally {
       setIsLoading(false);
