@@ -27,7 +27,11 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string>("home");
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    // Disable lint rule because setting mounted state inside effect is the standard Next.js hydration fix
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   // G3: useCallback prevents new function reference on every render,
   // allowing correct cleanup in the scroll listener effect.
