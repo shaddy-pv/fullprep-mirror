@@ -18,7 +18,7 @@ import {
 import DashboardCard from "@/components/ui/DashboardCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Badge from "@/components/ui/Badge";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, getCurrentStreak } from "@/store/authStore";
 import { ProblemsService } from "@/services/problems.service";
 import { AuthService } from "@/services/auth.service";
 
@@ -26,6 +26,7 @@ export default function AnalyticsSidebar() {
   const { theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const user = useAuthStore((state) => state.user);
+  const currentStreak = getCurrentStreak(user);
   const [userStats, setUserStats] = useState<any>(null);
   const [dbStats, setDbStats] = useState<any>(null);
   const [tagsList, setTagsList] = useState<any[]>([]);
@@ -147,10 +148,10 @@ export default function AnalyticsSidebar() {
             <span>Current Streak</span>
           </div>
           <div className="text-xl font-bold text-brand-orange flex items-baseline gap-1 tracking-[-0.02em]">
-            {user?.streak || 0} Days
+            {currentStreak} Days
           </div>
           <span className="text-[10px] text-brand-orange/80 font-bold tracking-[-0.01em]">
-            {(user?.streak || 0) > 0 ? "Keep it up!" : "Solve today to start a streak!"}
+            {currentStreak > 0 ? "Keep it up!" : "Solve today to start a streak!"}
           </span>
         </div>
 

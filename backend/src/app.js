@@ -22,6 +22,7 @@ import submissionRoutes from "./routes/submissionRoutes.js";
 import userRoutes         from "./routes/userRoutes.js";
 import settingsRoutes     from "./routes/settingsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 
@@ -127,6 +128,7 @@ app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/settings",      settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

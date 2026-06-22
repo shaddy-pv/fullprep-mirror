@@ -105,6 +105,22 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    subscriptionTier: {
+      type: String,
+      enum: ["free", "pro"],
+      default: "free",
+    },
+
+    aiHintsUsed: {
+      type: Number,
+      default: 0,
+    },
+
+    aiHintsLastReset: {
+      type: Date,
+      default: Date.now,
+    },
+
     isEmailVerified: {
       type: Boolean,
       default: false,

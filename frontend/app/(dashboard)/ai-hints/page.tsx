@@ -30,20 +30,7 @@ import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { useNotificationStore } from "@/store/notificationStore";
-
-interface Message {
-  id: string;
-  sender: "user" | "assistant";
-  text: string;
-  timestamp: string;
-  code?: string;
-  language?: string;
-  approach?: string[];
-  complexity?: {
-    time: string;
-    space: string;
-  };
-}
+import { aiService, AiMessage } from "@/services/ai.service";
 
 export default function AIHintsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
@@ -58,39 +45,39 @@ export default function AIHintsPage() {
   const [visualizeActive, setVisualizeActive] = useState(false);
 
   // Chat message logs state
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      sender: "user",
-      text: "How can I solve Two Sum problem in an optimal way?",
-      timestamp: "10:24 AM",
-    },
-    {
-      id: "2",
-      sender: "assistant",
-      text: "Great question! Two Sum can be solved optimally using a Hash Map to achieve O(n) time complexity.",
-      timestamp: "10:24 AM",
-      approach: [
-        "Iterate through the array.",
-        "For each number, check if its complement (target - current) exists in the hash map.",
-        "If yes, return the current index and the complement's index.",
-        "Otherwise, store the current number and its index in the hash map.",
-      ],
-      code: `def twoSum(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []`,
-      language: "Python",
-      complexity: {
-        time: "O(n)",
-        space: "O(n)",
-      },
-    },
-  ]);
+  const [messages, setMessages] = useState<AiMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hintsRemaining, setHintsRemaining] = useState<number | "Unlimited">(5);
+  const [selectedLanguage, setSelectedLanguage] = useState("C++");
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  // Fetch history on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      const result: any = await aiService.getChatHistory("general");
+      // getChatHistory returns the full response including hintsRemaining
+      if (result?.hintsRemaining !== undefined) {
+        setHintsRemaining(result.hintsRemaining);
+      }
+      const history = result?.messages ? result : result?.data;
+      if (history?.messages && history.messages.length > 0) {
+        setMessages(history.messages);
+      } else {
+        setMessages([
+          {
+            _id: "1",
+            sender: "assistant",
+            text: "Hello! I am your AI coding assistant. Ask me anything about Data Structures, Algorithms, or code optimization!",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          }
+        ]);
+      }
+      setIsLoading(false);
+    };
+    fetchHistory();
+  }, []);
+
 
   // Scroll to bottom
   useEffect(() => {
@@ -133,11 +120,17 @@ export default function AIHintsPage() {
   };
 
   // Submit User Message
-  const handleSendMessage = (textToSend: string) => {
-    if (!textToSend.trim()) return;
+  const handleSendMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || isLoading) return;
 
-    const userMsg: Message = {
-      id: String(messages.length + 1),
+    // Block if free limit reached
+    if (hintsRemaining === 0) {
+      showToast("Daily AI Hint limit reached! Upgrade to Pro for more.", "error");
+      return;
+    }
+
+    const userMsg: AiMessage = {
+      _id: Date.now().toString(),
       sender: "user",
       text: textToSend,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -147,69 +140,33 @@ export default function AIHintsPage() {
     setInputVal("");
     setDryRunOutput(null);
     setVisualizeActive(false);
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      let aiText = "I'm analyzing your query...";
-      let aiCode = "";
-      let aiApproach: string[] = [];
-      let aiComplexity = { time: "O(1)", space: "O(1)" };
-
-      if (textToSend.toLowerCase().includes("binary search")) {
-        aiText = "Binary Search is a highly efficient searching algorithm that operates in O(log n) time complexity by repeatedly dividing the search interval in half.";
-        aiApproach = [
-          "Find the middle element of the array.",
-          "If target matches middle, return the index.",
-          "If target is smaller than middle, search the left half.",
-          "If target is larger than middle, search the right half.",
-          "Repeat until target is found or interval is empty.",
-        ];
-        aiCode = `def binarySearch(arr, target):
-    low, high = 0, len(arr) - 1
-    while low <= high:
-        mid = (low + high) // 2
-        if arr[mid] == target:
-            return mid
-        elif arr[mid] < target:
-            low = mid + 1
-        else:
-            high = mid - 1
-    return -1`;
-        aiComplexity = { time: "O(log n)", space: "O(1)" };
-      } else if (textToSend.toLowerCase().includes("dfs")) {
-        aiText = "Depth-First Search (DFS) is a graph traversal algorithm that explores nodes as deep as possible along each branch before backtracking.";
-        aiApproach = [
-          "Start at a root/source node and mark it as visited.",
-          "Recursively visit all unvisited neighbor nodes.",
-          "Backtrack if no unvisited neighbors are left.",
-        ];
-        aiCode = `def dfs(graph, start, visited=None):
-    if visited is None:
-        visited = set()
-    visited.add(start)
-    for next_node in graph[start] - visited:
-        dfs(graph, next_node, visited)
-    return visited`;
-        aiComplexity = { time: "O(V + E)", space: "O(V)" };
+    try {
+      const response = await aiService.sendChatMessage("general", {
+        text: textToSend,
+        language: selectedLanguage,
+      });
+      
+      setMessages((prev) => [...prev, response.message]);
+      setHintsRemaining(response.hintsRemaining);
+      
+    } catch (error: any) {
+      // Check for limit-reached (403) using our custom ApiError's statusCode
+      if (error.statusCode === 403 || error.message?.includes("daily limit")) {
+        setHintsRemaining(0);
+        showToast("You've reached your daily AI Hint limit!", "error");
+        setMessages((prev) => [...prev, {
+          _id: Date.now().toString(),
+          sender: "assistant",
+          text: "⚠️ You've reached your **daily limit** of 5 free AI hints. Your limit resets every 24 hours.\n\nUpgrade to **Pro** for 100 hints per day and unlock advanced features!",
+        }]);
       } else {
-        aiText = `Here's an approach to solve your query about "${textToSend}". Let's optimize it using a clean algorithm.`;
-        aiApproach = ["Understand constraints", "Design optimal complexity", "Write robust edge cases"];
-        aiComplexity = { time: "O(n)", space: "O(1)" };
+        showToast("Error connecting to AI Assistant. Please try again.", "error");
       }
-
-      const aiMsg: Message = {
-        id: String(messages.length + 2),
-        sender: "assistant",
-        text: aiText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        approach: aiApproach.length > 0 ? aiApproach : undefined,
-        code: aiCode || undefined,
-        language: "Python",
-        complexity: aiComplexity,
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -234,7 +191,7 @@ export default function AIHintsPage() {
           onClick={() => {
             setMessages([
               {
-                id: "1",
+                _id: "1",
                 sender: "assistant",
                 text: "Hello! I am your AI coding assistant. Ask me anything about Data Structures, Algorithms, or code optimization!",
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -284,11 +241,11 @@ export default function AIHintsPage() {
           
           {/* Chat scroll box (min-h-0 and flex-1 creates isolated scrollable container) */}
           <div className="flex-1 overflow-y-auto p-5 md:p-6 flex flex-col gap-6 scrollbar min-h-0">
-            {messages.map((msg) => {
+            {messages.map((msg, idx) => {
               const isUser = msg.sender === "user";
               return (
                 <div 
-                  key={msg.id}
+                  key={msg._id || idx}
                   className={`flex gap-4 max-w-[85%] text-left ${
                     isUser ? "self-end flex-row-reverse" : "self-start"
                   }`}
@@ -517,19 +474,49 @@ export default function AIHintsPage() {
             
             {/* Unified Input Container */}
             <div className="relative w-full flex items-center bg-white dark:bg-[#0f1118]/80 border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-[#ff6a00]/50 transition-all">
+              
+              {/* Custom Language Dropdown */}
+              <div className="relative mr-3 shrink-0">
+                <button
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#f3f4f6] dark:bg-white/[0.06] border border-border-card hover:border-brand-orange/50 text-[11px] font-bold text-text-secondary hover:text-brand-orange transition-all cursor-pointer select-none"
+                >
+                  <Code2 className="w-3 h-3" />
+                  <span>{selectedLanguage}</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isLangOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isLangOpen && (
+                  <div className="absolute bottom-full mb-2 left-0 min-w-[110px] bg-[#11131c] border border-border-card rounded-xl shadow-xl overflow-hidden z-50">
+                    {["C++", "Python", "Java", "JavaScript"].map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => { setSelectedLanguage(lang); setIsLangOpen(false); }}
+                        className={`w-full text-left px-3 py-2 text-[12px] font-semibold transition-colors cursor-pointer ${
+                          selectedLanguage === lang
+                            ? "bg-brand-orange/10 text-brand-orange"
+                            : "text-text-secondary hover:bg-white/[0.04] hover:text-text-primary"
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <textarea
                 placeholder="Ask anything about DSA, algorithms, code..."
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 onKeyDown={handleKeyPress}
                 rows={1}
-                className="w-full pr-12 bg-transparent text-text-primary text-[13.5px] font-semibold tracking-[-0.015em] focus:outline-none placeholder-[#9ca3af]/60 resize-none font-sans"
+                className="flex-1 pr-12 bg-transparent text-text-primary text-[13.5px] font-semibold tracking-[-0.015em] focus:outline-none placeholder-[#9ca3af]/60 resize-none font-sans"
               />
               <button
                 onClick={() => handleSendMessage(inputVal)}
-                disabled={!inputVal.trim()}
+                disabled={!inputVal.trim() || isLoading}
                 className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                  inputVal.trim() 
+                  inputVal.trim() && !isLoading 
                     ? "bg-brand-orange text-white hover:bg-[#e05d00] cursor-pointer" 
                     : "bg-[#f3f4f6] dark:bg-white/[0.04] text-[#9ca3af] cursor-not-allowed"
                 }`}
@@ -568,7 +555,7 @@ export default function AIHintsPage() {
               
               <button className="flex items-center gap-1 bg-card-bg border border-border-card px-2.5 py-1 rounded-lg text-[10px] font-bold text-text-primary shadow-sm hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer">
                 <span className="px-1 py-0.5 rounded bg-[#fff5eb] text-brand-orange font-bold text-[8.5px] uppercase dark:bg-[#ff6a00]/10">
-                  GPT-4o
+                  {hintsRemaining === "Unlimited" ? "PRO" : `${hintsRemaining} HINTS LEFT`}
                 </span>
                 <ChevronDown className="w-3 h-3 text-text-secondary" />
               </button>

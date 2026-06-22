@@ -206,7 +206,19 @@ export const getUserStats = async (req, res) => {
       // ── Profile ──────────────────────────────────────────────
       xp:    user?.xp    ?? 0,
       level: user?.level ?? 1,
-      streak: user?.streak ?? 0,
+      // currentStreak = 0 if they missed a day, otherwise the stored streak value
+      streak: (() => {
+        if (!user?.lastSolvedDate || !user?.streak) return 0;
+        const now = new Date();
+        const last = new Date(user.lastSolvedDate);
+        const todayStr = now.toISOString().slice(0, 10);
+        const lastStr = last.toISOString().slice(0, 10);
+        const yesterdayStr = new Date(now - 86400000).toISOString().slice(0, 10);
+        // Streak is alive only if last solve was today or yesterday
+        if (lastStr === todayStr || lastStr === yesterdayStr) return user.streak;
+        return 0;
+      })(),
+      longestStreak: user?.streak ?? 0,
 
       // ── Key Stats ─────────────────────────────────────────────
       problemsSolved,

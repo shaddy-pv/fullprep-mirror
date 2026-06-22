@@ -10,7 +10,7 @@ import { SIDEBAR_MENU_ITEMS } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/store/DashboardContext";
 import { useNotificationStore } from "@/store/notificationStore";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, getCurrentStreak } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
 
 export default function Sidebar() {
@@ -19,6 +19,7 @@ export default function Sidebar() {
   const showToast = useNotificationStore((state) => state.showToast);
   const { isSidebarCollapsed, setIsMobileSidebarOpen } = useDashboard();
   const user = useAuthStore((state) => state.user);
+  const currentStreak = getCurrentStreak(user);
 
   const [showMiniPanel, setShowMiniPanel] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -195,7 +196,7 @@ export default function Sidebar() {
               Current Streak
             </div>
             <div className="text-2xl font-bold text-brand-orange flex items-baseline gap-1.5 mb-1.5 tracking-[-0.02em]">
-              {user?.streak || 0} Days
+              {currentStreak} Days
             </div>
             <p className="text-[11px] text-[#9ca3af]/90 font-normal leading-normal mb-4 tracking-[-0.01em]">
               Keep solving to maintain your coding streak.
@@ -265,7 +266,7 @@ export default function Sidebar() {
               <div className="grid grid-cols-3 gap-1 border-y border-white/[0.04] py-3 my-3 text-center leading-none">
                 <div className="flex flex-col gap-1 items-center justify-center leading-none">
                   <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Streak</span>
-                  <span className="text-[13px] font-extrabold text-brand-orange leading-none mt-1.5 font-sans select-none">{user?.streak || 0}d</span>
+                  <span className="text-[13px] font-extrabold text-brand-orange leading-none mt-1.5 font-sans select-none">{currentStreak}d</span>
                 </div>
                 <div className="flex flex-col gap-1 items-center justify-center leading-none border-x border-white/[0.04]">
                   <span className="text-[9px] text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">Level</span>

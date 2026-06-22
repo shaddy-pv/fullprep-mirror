@@ -143,16 +143,27 @@ function formatDescription(raw: string): string {
 export const ProblemsService = {
   async getProblems(): Promise<ExtendedProblemItem[]> {
     try {
-      const response = await api.get<{ data: any[] }>(`${BASE_URL}/problems?limit=100`);
+      const response = await api.get<{ data: any[] }>(`${BASE_URL}/problems?limit=500`);
       if (response && Array.isArray(response.data)) {
-        return response.data.map((prob: any) => {
+        // Deduplicate by title (keep first occurrence)
+        const seen = new Set<string>();
+        const unique = response.data.filter((prob: any) => {
+          const key = (prob.name || "").toLowerCase().trim();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        return unique.map((prob: any, index: number) => {
           const difficulty = mapDifficulty(prob.difficulty);
           const topic = mapTopic(prob.cfTags);
           const acceptance = calculateAcceptance(prob.stats);
           const submissions = formatSubmissions(prob.stats);
 
           return {
-            id: prob.serialNo || 1,
+            // Use index+1 as the display number; use _id string as the unique React key base
+            id: index + 1,
+            _mongoId: prob._id || prob.id || `prob-${index}`,
             title: prob.name,
             status: "pending",
             difficulty,
@@ -162,7 +173,6 @@ export const ProblemsService = {
             frequency: Math.min(10, Math.max(1, Math.round((prob.cfRating || 800) / 250))),
             submissions,
             time: "1 day ago",
-            // Keep the backend ID in custom fields so slug pages can reference it
             externalId: prob.externalId,
           } as any;
         });
