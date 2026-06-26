@@ -1,9 +1,9 @@
 name: FullPrep CI/CD Pipeline
 
-# =============================================
-# Automated CI/CD Pipeline
-# Triggers: Push to main/develop, Pull Requests
-# =============================================
+# ==============================================================================
+# Production-Ready CI/CD Pipeline
+# Triggers: Push to main/develop, Pull Requests to main/develop
+# ==============================================================================
 
 on:
   push:
@@ -18,11 +18,11 @@ env:
   IMAGE_NAME_BACKEND: ${{ github.repository }}/fullprep-backend
 
 jobs:
-  # =============================================
-  # Job 1: Lint and Code Quality
-  # =============================================
-  lint:
-    name: Code Quality Check
+  # ==============================================================================
+  # Job 1: Security & Dependency Vulnerability Scans
+  # ==============================================================================
+  security-scan:
+    name: Security & Dependency Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -32,58 +32,226 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
 
+      - name: Run Trivy FS Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1' # Fail the build on high/critical vulns
+
+      - name: Run npm audit (Frontend)
+        run: |
+          npm ci
+          npm audit --audit-level=high
+        working-directory: ./frontend
+
+      - name: Run npm audit (Backend)
+        run: |
+          npm ci
+          npm audit --audit-level=high
+        working-directory: ./backend
+
+  # ==============================================================================
+  # Job 2: Code Quality (Lint & Type-Check)
+  # ==============================================================================
+  code-quality:
+    name: Code Quality (Lint & Type-Check)
+    runs-on: ubuntu-latest
+    needs: [security-scan]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # --- Frontend Checks ---
       - name: Install Frontend Dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./frontend
 
       - name: Run Frontend Linter
         run: npm run lint
         working-directory: ./frontend
 
+      - name: Run Frontend TypeScript Compiler Check
+        run: npm run type-check
+        working-directory: ./frontend
+
+      # --- Backend Checks ---
       - name: Install Backend Dependencies
-        run: npm install
+        run: npm ci
         working-directory: ./backend
 
-  # =============================================
-  # Job 2: Security Scan
-  # =============================================
-  security:
-    name: Security Vulnerability Scan
+      - name: Run Backend Linter
+        run: npm run lint
+        working-directory: ./backend
+
+  # ==============================================================================
+  # Job 3: Unit Tests
+  # ==============================================================================
+  unit-test:
+    name: Run Unit Tests
     runs-on: ubuntu-latest
+    needs: [code-quality]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
 
-      # - name: Upload Trivy results to GitHub Security
-      #   uses: github/codeql-action/upload-sarif@v3
-      #   if: always()
-      #   with:
-      #     sarif_file: 'trivy-results.sarif'
-
-      - name: Run npm audit (Frontend)
-        run: npm audit --audit-level=high
-        working-directory: ./frontend
-
-      - name: Run npm audit (Backend)
-        run: npm audit --audit-level=high
+      # --- Backend Unit Tests ---
+      - name: Install Backend Dependencies
+        run: npm ci
         working-directory: ./backend
 
-  # =============================================
-  # Job 3: Build Frontend Docker Image
-  # =============================================
-  build-frontend:
-    name: Build Frontend Docker Image
+      - name: Run Backend Unit Tests (Native Test Runner)
+        run: npm run test
+        working-directory: ./backend
+
+  # ==============================================================================
+  # Job 4: Build Validation
+  # ==============================================================================
+  build-validation:
+    name: Build Validation
     runs-on: ubuntu-latest
-    needs: [lint, security]
+    needs: [unit-test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # --- Frontend Build check ---
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Build Frontend Application
+        run: npm run build
+        working-directory: ./frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:5000/api
+          # Sentry DSN and other build vars can be mocked here
+          NEXT_PUBLIC_SENTRY_DSN: https://mock@mock.ingest.sentry.io/mock
+
+  # ==============================================================================
+  # Job 5: E2E Integration (Playwright Tests)
+  # ==============================================================================
+  e2e-integration:
+    name: Playwright E2E & Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-validation]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Create Test Environment Configuration
+        run: |
+          cat > .env << EOF
+          MONGO_ROOT_USERNAME=test_admin
+          MONGO_ROOT_PASSWORD=test_admin_pass_123
+          NODE_ENV=test
+          JWT_SECRET=super_secret_jwt_key_for_testing_purposes_only_123
+          ALLOWED_ORIGINS=http://localhost:3000
+          NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+          EOF
+
+      - name: Start Compose Cluster (MongoDB, Redis, Backend, Frontend)
+        run: docker-compose up -d --build
+
+      - name: Wait for Services to Be Healthy
+        run: |
+          echo "Waiting for services to initialize..."
+          for i in {1..30}; do
+            FRONTEND_STATUS=$(docker inspect --format='{{json .State.Health.Status}}' fullprep-frontend || echo "unknown")
+            BACKEND_STATUS=$(docker inspect --format='{{json .State.Health.Status}}' fullprep-backend || echo "unknown")
+            echo "[Attempt $i] Frontend: $FRONTEND_STATUS, Backend: $BACKEND_STATUS"
+            if [ "$FRONTEND_STATUS" = "\"healthy\"" ] && [ "$BACKEND_STATUS" = "\"healthy\"" ]; then
+              echo "✅ Services are healthy!"
+              break
+            fi
+            sleep 5
+          done
+          docker-compose ps
+          # Fail fast if services did not launch properly
+          if [ "$(docker inspect --format='{{json .State.Health.Status}}' fullprep-frontend)" != "\"healthy\"" ] || \
+             [ "$(docker inspect --format='{{json .State.Health.Status}}' fullprep-backend)" != "\"healthy\"" ]; then
+            echo "❌ Services failed to start or report healthy."
+            docker-compose logs
+            exit 1
+          fi
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Install Playwright Browsers and System Dependencies
+        run: npx playwright install --with-deps
+        working-directory: ./frontend
+
+      - name: Run Playwright E2E Integration Suite
+        run: npm run test:e2e
+        working-directory: ./frontend
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: Stop Services & Cleanup Volumes
+        if: always()
+        run: docker-compose down -v
+
+      - name: Upload Playwright Reports on Test Failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-reports
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 30
+
+  # ==============================================================================
+  # Job 6: Docker Images Build & Push
+  # ==============================================================================
+  docker-publish:
+    name: Build & Push Production Docker Images
+    runs-on: ubuntu-latest
+    needs: [e2e-integration]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && github.event_name == 'push'
     permissions:
       contents: read
       packages: write
@@ -101,139 +269,67 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
+      # --- Frontend Image Metadata & Push ---
+      - name: Extract Frontend Metadata
+        id: meta-frontend
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ${{ meta-frontend.outputs.tags }}
+          labels: ${{ meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-  # =============================================
-  # Job 4: Build Backend Docker Image
-  # =============================================
-  build-backend:
-    name: Build Backend Docker Image
-    runs-on: ubuntu-latest
-    needs: [lint, security]
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
+      # --- Backend Image Metadata & Push ---
+      - name: Extract Backend Metadata
+        id: meta-backend
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           file: ./backend/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ${{ meta-backend.outputs.tags }}
+          labels: ${{ meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-  # =============================================
-  # Job 5: Integration Tests
-  # =============================================
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create test environment file
-        run: |
-          cat > .env << EOF
-          MONGO_ROOT_USERNAME=test_user
-          MONGO_ROOT_PASSWORD=test_pass
-          NODE_ENV=test
-          JWT_SECRET=test_secret_key_for_ci
-          ALLOWED_ORIGINS=http://localhost:3000
-          NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
-          EOF
-
-      - name: Start services with Docker Compose
-        run: docker-compose up -d
-        env:
-          COMPOSE_FILE: docker-compose.yml
-
-      - name: Wait for services to be healthy
-        run: |
-          echo "Waiting for services to start..."
-          sleep 30
-          docker-compose ps
-
-      - name: Check service health
-        run: |
-          curl --fail http://localhost:3000 || exit 1
-          curl --fail http://localhost:5000/api/health || exit 1
-
-      - name: Stop services
-        if: always()
-        run: docker-compose down -v
-
-  # =============================================
-  # Job 6: Deploy to Production (AWS)
-  # =============================================
+  # ==============================================================================
+  # Job 7: Deploy to Production
+  # ==============================================================================
   deploy:
-    name: Deploy to AWS
+    name: Deploy to Production Environments
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.AWS_ENABLED == 'true'
-    environment:
-      name: production
-      url: https://fullprep.example.com
+    needs: [docker-publish]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
+      # --- Deploy Backend to AWS ECS (if AWS_ENABLED) ---
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
+        if: secrets.AWS_ACCESS_KEY_ID != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -241,95 +337,61 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        if: secrets.AWS_ACCESS_KEY_ID != ''
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Pull images from GitHub Registry
+      - name: Push Images to Amazon ECR & Deploy ECS Service
+        if: secrets.AWS_ACCESS_KEY_ID != ''
         run: |
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:latest
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest
-
-      - name: Tag images for ECR
-        run: |
-          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}:latest ${{ steps.login-ecr.outputs.registry }}/fullprep-frontend:latest
           docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest ${{ steps.login-ecr.outputs.registry }}/fullprep-backend:latest
-
-      - name: Push images to Amazon ECR
-        run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/fullprep-frontend:latest
           docker push ${{ steps.login-ecr.outputs.registry }}/fullprep-backend:latest
-
-      - name: Deploy to ECS
-        run: |
-          aws ecs update-service --cluster fullprep-cluster --service fullprep-frontend --force-new-deployment
           aws ecs update-service --cluster fullprep-cluster --service fullprep-backend --force-new-deployment
+          # Wait for backend service stability
+          aws ecs wait services-stable --cluster fullprep-cluster --services fullprep-backend
 
-      - name: Wait for deployment to complete
-        run: |
-          aws ecs wait services-stable --cluster fullprep-cluster --services fullprep-frontend fullprep-backend
-
-  # =============================================
-  # Job 7: Deploy Frontend to Vercel
-  # =============================================
-  deploy-vercel:
-    name: Deploy Frontend to Vercel
-    runs-on: ubuntu-latest
-    needs: [lint]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      # --- Deploy Frontend to Vercel ---
       - name: Setup Node.js
+        if: secrets.VERCEL_TOKEN != ''
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Vercel CLI
+        if: secrets.VERCEL_TOKEN != ''
         run: npm install -g vercel@latest
 
-      - name: Pull Vercel environment info
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy Frontend Production Build to Vercel
+        if: secrets.VERCEL_TOKEN != ''
         working-directory: ./frontend
-
-      - name: Build project artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        working-directory: ./frontend
-
-      - name: Deploy to Vercel
-        id: deploy
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$URL" >> $GITHUB_OUTPUT
-        working-directory: ./frontend
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Comment deployment URL on commit
-        run: |
-          echo "✅ Frontend deployed to: ${{ steps.deploy.outputs.url }}"
-
-  # =============================================
-  # Job 8: Notification
-  # =============================================
+  # ==============================================================================
+  # Job 8: Notification (Slack)
+  # ==============================================================================
   notify:
-    name: Send Deployment Notification
+    name: Send Build Notifications
     runs-on: ubuntu-latest
-    needs: [deploy-vercel]
+    needs: [deploy]
     if: always()
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
-      - name: Send Slack notification
-        if: env.SLACK_WEBHOOK_URL != ''
+      - name: Send Status Update to Slack
+        if: secrets.SLACK_WEBHOOK_URL != ''
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
           text: |
-            FullPrep Deployment ${{ job.status }}
+            FullPrep CI/CD Build Result: ${{ job.status }}
+            Repository: ${{ github.repository }}
             Branch: ${{ github.ref }}
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
         env:
-          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

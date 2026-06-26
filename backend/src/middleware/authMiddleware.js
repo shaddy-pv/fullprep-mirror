@@ -8,6 +8,10 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Session from "../models/Session.js";
 
+// Simple in-memory cache for token verification to prevent cloud database query flooding under concurrent load
+const tokenCache = new Map();
+const TOKEN_CACHE_TTL = 30000; // 30 seconds cache TTL
+
 // ── Protect Middleware ────────────────────────────────────────────────────────
 
 /**
@@ -35,6 +39,17 @@ export const protect = async (req, res, next) => {
     });
   }
 
+  // Check in-memory token cache first
+  const now = Date.now();
+  if (tokenCache.has(token)) {
+    const cached = tokenCache.get(token);
+    if (now - cached.timestamp < TOKEN_CACHE_TTL) {
+      req.user = cached.user;
+      req.sessionId = cached.sessionId;
+      return next();
+    }
+  }
+
   // ── 2. Verify token ─────────────────────────────────────────
   let decoded;
   try {
@@ -55,9 +70,18 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // ── 3. Fetch user from DB ───────────────────────────────────
-  // We re-fetch on every request to catch deactivated / deleted accounts.
-  const user = await User.findById(decoded.id).select("-password");
+  // ── 3. Fetch user and Session from DB in parallel ────────────
+  if (!decoded.sessionId) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token format. Session ID missing. Please log in again.",
+    });
+  }
+
+  const [user, session] = await Promise.all([
+    User.findById(decoded.id).select("-password"),
+    Session.findById(decoded.sessionId)
+  ]);
 
   if (!user) {
     return res.status(401).json({
@@ -73,15 +97,6 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // ── 3.5 Fetch Session from DB ────────────────────────────────
-  if (!decoded.sessionId) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token format. Session ID missing. Please log in again.",
-    });
-  }
-
-  const session = await Session.findById(decoded.sessionId);
   if (!session) {
     return res.status(401).json({
       success: false,
@@ -89,9 +104,19 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // Update last active on the session
-  session.lastActive = new Date();
-  await session.save().catch(() => {});
+  // Update last active on the session (throttled to max once per minute, non-blocking)
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  if (!session.lastActive || session.lastActive < oneMinuteAgo) {
+    session.lastActive = new Date();
+    session.save().catch(() => {}); // Non-blocking background save
+  }
+
+  // Cache token verification result
+  tokenCache.set(token, {
+    user,
+    sessionId: decoded.sessionId,
+    timestamp: now,
+  });
 
   // ── 4. Attach user & session to request ───────────────────────
   req.user = user;
@@ -121,4 +146,103 @@ export const restrictTo = (...roles) => {
   };
 };
 
-export default { protect, restrictTo };
+// ── Optional Protect Middleware ───────────────────────────────────────────────
+
+/**
+ * Optionally verifies the JWT and attaches req.user / req.sessionId if present.
+ * Does NOT throw a 401 error if the token is missing or invalid.
+ */
+export const optionalProtect = async (req, res, next) => {
+  let token;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  // Check in-memory token cache first
+  const now = Date.now();
+  if (tokenCache.has(token)) {
+    const cached = tokenCache.get(token);
+    if (now - cached.timestamp < TOKEN_CACHE_TTL) {
+      req.user = cached.user;
+      req.sessionId = cached.sessionId;
+      return next();
+    }
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: "fullprep.io",
+      audience: "fullprep-client",
+    });
+
+    if (decoded.sessionId) {
+      const [user, session] = await Promise.all([
+        User.findById(decoded.id).select("-password"),
+        Session.findById(decoded.sessionId)
+      ]);
+
+      if (user && user.isActive && session) {
+        // Update last active on the session (throttled, non-blocking)
+        const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+        if (!session.lastActive || session.lastActive < oneMinuteAgo) {
+          session.lastActive = new Date();
+          session.save().catch(() => {});
+        }
+
+        // Cache token verification result
+        tokenCache.set(token, {
+          user,
+          sessionId: decoded.sessionId,
+          timestamp: now,
+        });
+
+        req.user = user;
+        req.sessionId = decoded.sessionId;
+      }
+    }
+  } catch (err) {
+    // Ignore verification errors for optional protect — user remains anonymous guest
+  }
+
+  next();
+};
+
+// ── Invalidation Helpers ──────────────────────────────────────────────────────
+
+/**
+ * Invalidates cached tokens for a specific session ID.
+ * @param {string} sessionId
+ */
+export const invalidateTokenCache = (sessionId) => {
+  if (!sessionId) return;
+  const targetId = sessionId.toString();
+  for (const [token, cached] of tokenCache.entries()) {
+    if (cached.sessionId?.toString() === targetId) {
+      tokenCache.delete(token);
+    }
+  }
+};
+
+/**
+ * Invalidates all cached tokens for a specific user ID.
+ * @param {string} userId
+ */
+export const invalidateUserTokenCache = (userId) => {
+  if (!userId) return;
+  const targetId = userId.toString();
+  for (const [token, cached] of tokenCache.entries()) {
+    if (cached.user?._id?.toString() === targetId) {
+      tokenCache.delete(token);
+    }
+  }
+};
+
+export default { protect, restrictTo, optionalProtect, invalidateTokenCache, invalidateUserTokenCache };

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronRight, X, Sparkles, User, Settings, LogOut } from "lucide-react";
+import { ChevronRight, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Badge from "@/components/ui/Badge";
 import { SIDEBAR_MENU_ITEMS } from "@/constants/navigation";
@@ -49,7 +49,7 @@ export default function Sidebar() {
     setShowMiniPanel(false);
     showToast("Signed out successfully.", "success");
     await AuthService.logout();
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   const [userStats, setUserStats] = useState<any>(null);
@@ -252,9 +252,17 @@ export default function Sidebar() {
             >
               {/* Profile Card Header details */}
               <div className="flex items-center gap-3 select-none leading-none mb-3.5">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
-                  {user?.name?.charAt(0).toUpperCase() || "U"}
-                </div>
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt={user?.name || "User"} 
+                    className="w-10 h-10 rounded-full object-cover border border-white/[0.1] shadow-md shadow-black/5 shrink-0" 
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
+                    {user?.name?.charAt(0).toUpperCase() || "U"}
+                  </div>
+                )}
                 <div className="flex flex-col text-left leading-none min-w-0">
                   <span className="text-[13.5px] font-extrabold text-white truncate leading-none">{user?.name || "User"}</span>
                   <span className="text-[10px] text-[#9ca3af]/70 font-bold mt-1.5 select-text font-sans truncate leading-none">@{user?.name?.toLowerCase() || "user"}</span>
@@ -316,9 +324,17 @@ export default function Sidebar() {
           )}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-inner shrink-0 select-none font-mono">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </div>
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user?.name || "User"} 
+                className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-inner shrink-0 select-none" 
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-inner shrink-0 select-none font-mono">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
             <div 
               className={cn(
                 "flex flex-col text-left transition-all duration-300 min-w-0 overflow-hidden",

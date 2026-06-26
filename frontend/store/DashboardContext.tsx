@@ -19,27 +19,33 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
-  const sidebar = useSidebarStore();
+  
+  const isSidebarCollapsed = useSidebarStore((state) => state.isSidebarCollapsed);
+  const isMobileSidebarOpen = useSidebarStore((state) => state.isMobileSidebarOpen);
+  const notificationCount = useSidebarStore((state) => state.notificationCount);
+  const setIsSidebarCollapsed = useSidebarStore((state) => state.setIsSidebarCollapsed);
+  const setIsMobileSidebarOpen = useSidebarStore((state) => state.setIsMobileSidebarOpen);
+  const clearNotifications = useSidebarStore((state) => state.clearNotifications);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("sidebar-collapsed") === "true";
       if (saved) {
-        sidebar.setIsSidebarCollapsed(true);
+        setIsSidebarCollapsed(true);
       }
     }
-  }, []);
+  }, [setIsSidebarCollapsed]);
 
   return (
     <DashboardContext.Provider value={{
       theme: theme || "light",
       setTheme: (t: string) => setTheme(t),
-      isSidebarCollapsed: sidebar.isSidebarCollapsed,
-      setIsSidebarCollapsed: sidebar.setIsSidebarCollapsed,
-      isMobileSidebarOpen: sidebar.isMobileSidebarOpen,
-      setIsMobileSidebarOpen: sidebar.setIsMobileSidebarOpen,
-      notificationCount: sidebar.notificationCount,
-      clearNotifications: sidebar.clearNotifications,
+      isSidebarCollapsed,
+      setIsSidebarCollapsed,
+      isMobileSidebarOpen,
+      setIsMobileSidebarOpen,
+      notificationCount,
+      clearNotifications,
     }}>
       {children}
     </DashboardContext.Provider>

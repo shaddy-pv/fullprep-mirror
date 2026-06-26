@@ -94,6 +94,75 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const isScrollingRef = useRef(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const compressImage = (
+    file: File,
+    maxWidth: number,
+    maxHeight: number,
+    quality: number
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          // Maintain aspect ratio
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Failed to get canvas context."));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get compressed Base64 data URL
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      showToast("Compressing and uploading avatar...", "info");
+      // Compress to maximum 200x200 pixels at 75% JPEG quality
+      const compressedBase64 = await compressImage(file, 200, 200, 0.75);
+      
+      await AuthService.updateProfile({ avatar: compressedBase64 });
+      showToast("Avatar updated successfully!", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast(err.message || "Failed to update avatar.", "info");
+    }
+  };
 
   // Profile Form States
   const [displayName, setDisplayName] = useState("");
@@ -496,14 +565,25 @@ export default function SettingsPage() {
               <div className="flex flex-col md:flex-row gap-8 items-center w-full">
                 {/* Avatar Picker & Indicator */}
                 <div className="flex flex-col items-center gap-3.5 shrink-0 mx-auto md:mx-0">
+                  <input
+                    type="file"
+                    ref={avatarInputRef}
+                    onChange={handleAvatarChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                   <div className="relative group">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
-                      <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>
-                    </div>
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user?.name || "User"} className="w-24 h-24 rounded-full object-cover shadow-lg shrink-0 border border-slate-900/[0.08] dark:border-white/[0.08]" />
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
+                        <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
                     <span className="w-4 h-4 rounded-full bg-[#10b981] border-2 border-white dark:border-[#0d0e19] absolute bottom-1 right-1 shadow-md shadow-[#10b981]/30 animate-pulse" />
                   </div>
                   <button
-                    onClick={() => showToast("Opening file avatar uploader...", "info")}
+                    onClick={() => avatarInputRef.current?.click()}
                     className="flex items-center justify-center gap-1.5 border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/5 dark:bg-white/[0.04] hover:bg-slate-900/10 dark:hover:bg-white/[0.08] text-[#111827] dark:text-white px-3.5 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer h-[28px] leading-none"
                   >
                     <Upload className="w-3 h-3 text-slate-400 dark:text-[#9ca3af]" />

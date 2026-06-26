@@ -142,7 +142,12 @@ export const api = {
     await request(`/problems/${id}`, { method: "DELETE" });
   },
 
-  async listSubmissions(params?: { userId?: string; problemExternalId?: string; status?: string; limit?: number }) {
+  async listSubmissions(params?: {
+    userId?: string;
+    problemExternalId?: string;
+    status?: string;
+    limit?: number;
+  }) {
     const p = new URLSearchParams({ limit: (params?.limit || 1000).toString() });
     if (params?.userId) p.append("userId", params.userId);
     if (params?.problemExternalId) p.append("problemExternalId", params.problemExternalId);
@@ -161,15 +166,17 @@ export const api = {
   },
 
   async rejudgeSubmission(id: string) {
-    const r = await request<{ data: AdminSubmission }>(`/submissions/${id}/rejudge`, { method: "POST" });
+    const r = await request<{ data: AdminSubmission }>(`/submissions/${id}/rejudge`, {
+      method: "POST",
+    });
     return r.data;
   },
 
   async syncProblems(mode: "ALL" | "STALE" | "MISSING" = "ALL") {
-    const r = await request<{ success: boolean; data: any }>(
-      "/problems/sync",
-      { method: "POST", body: JSON.stringify({ mode }) },
-    );
+    const r = await request<{ success: boolean; data: any }>("/problems/sync", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    });
     return r;
   },
 

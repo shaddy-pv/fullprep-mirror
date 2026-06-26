@@ -54,5 +54,8 @@ const syncJobSchema = new mongoose.Schema(
   }
 );
 
+syncJobSchema.index({ createdAt: -1 });
+
 const SyncJob = mongoose.model("SyncJob", syncJobSchema);
+
 export default SyncJob;

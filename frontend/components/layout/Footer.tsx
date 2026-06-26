@@ -9,7 +9,6 @@ import {
   Activity,
   Mail
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 // Premium Custom Brand SVG Icons (Zero dependency warnings)
 const GithubIcon = ({ className = "w-4 h-4" }: { className?: string }) => (

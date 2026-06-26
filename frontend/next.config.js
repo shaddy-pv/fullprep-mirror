@@ -2,6 +2,7 @@
 const nextConfig = {
   // Enable standalone output for Docker
   output: 'standalone',
+  allowedDevOrigins: ['192.168.31.240'],
   
   // Optimize images
   images: {

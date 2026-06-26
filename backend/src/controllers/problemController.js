@@ -18,6 +18,7 @@ import Problem from "../models/Problem.js";
 import SyncJob from "../models/SyncJob.js";
 import User from "../models/User.js";
 import * as codnite from "../utils/codniteService.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
 // ── Cache TTL ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +84,14 @@ export const listProblems = async (req, res) => {
     search,
   } = req.query;
 
+  // Check cache first
+  const cacheParams = { page, limit, difficulty, tag, source, minRating, maxRating, sortBy, sortOrder, search };
+  const cacheKey = `prob_list:${JSON.stringify(cacheParams)}`;
+  const cachedData = await cacheManager.get(cacheKey);
+  if (cachedData) {
+    return res.status(200).json(cachedData);
+  }
+
   const pageNum  = Math.max(1, parseInt(page, 10));
   const limitNum = Math.min(1000, Math.max(1, parseInt(limit, 10)));
   const skip     = (pageNum - 1) * limitNum;
@@ -126,7 +135,7 @@ export const listProblems = async (req, res) => {
       sortOrder,
     });
 
-    return res.status(200).json({
+    const codniteResponse = {
       success:    true,
       message:    "Problems fetched from Codnite API (cache empty).",
       source:     "codnite",
@@ -139,10 +148,12 @@ export const listProblems = async (req, res) => {
         hasPrev:    codniteData.has_prev,
       },
       data: codniteData.problems,
-    });
+    };
+
+    return res.status(200).json(codniteResponse);
   }
 
-  res.status(200).json({
+  const responseData = {
     success:    true,
     message:    "Problems fetched successfully.",
     source:     "cache",
@@ -155,7 +166,12 @@ export const listProblems = async (req, res) => {
       hasPrev:    pageNum > 1,
     },
     data: problems,
-  });
+  };
+
+  // Cache list response
+  await cacheManager.set(cacheKey, responseData, 30); // 30 seconds TTL
+
+  res.status(200).json(responseData);
 };
 
 // ── @desc    Get full problem detail by ID (with MongoDB caching)
@@ -163,8 +179,19 @@ export const listProblems = async (req, res) => {
 // ── @access  Public
 export const getProblem = async (req, res) => {
   const { id } = req.params;
+  const cacheKey = `prob_single:${id}`;
 
-  // ── 1. Check cache ───────────────────────────────────────
+  const cachedData = await cacheManager.get(cacheKey);
+  if (cachedData) {
+    return res.status(200).json({
+      success: true,
+      message: "Problem fetched successfully (cached).",
+      source:  "cache",
+      data:    cachedData,
+    });
+  }
+
+  // ── 1. Check database ───────────────────────────────────────
   let problem = await Problem.findOne({
     $or: [{ externalId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }],
     isActive: true 
@@ -172,21 +199,12 @@ export const getProblem = async (req, res) => {
     "+privateTests +generatedTests +solutions +incorrectSolutions"
   );
 
-  // ── 2. Fetch from Codnite if stale or missing ────────────
-  if (!problem || isCacheStale(problem)) {
+  // ── 2. Fetch from Codnite only if missing in database ────
+  if (!problem) {
     let rawProblem;
     try {
       rawProblem = await codnite.fetchProblemById(id);
     } catch (err) {
-      // If Codnite is down but we have a stale cache, return it anyway
-      if (problem) {
-        return res.status(200).json({
-          success: true,
-          message: "Problem fetched from cache (Codnite API unavailable).",
-          source:  "stale-cache",
-          data:    problem.toPublicJSON(),
-        });
-      }
       throw err; // Let global error handler deal with it
     }
 
@@ -198,11 +216,16 @@ export const getProblem = async (req, res) => {
     );
   }
 
+  const publicData = problem.toPublicJSON();
+
+  // Cache single problem
+  await cacheManager.set(cacheKey, publicData, 30); // 30 seconds TTL
+
   res.status(200).json({
     success: true,
     message: "Problem fetched successfully.",
-    source:  isCacheStale(problem) ? "codnite" : "cache",
-    data:    problem.toPublicJSON(),
+    source:  "cache",
+    data:    publicData,
   });
 };
 
@@ -213,13 +236,13 @@ export const getProblemTests = async (req, res) => {
   const { id }        = req.params;
   const { test_type } = req.query;
 
+  // Determine access level once — used in both the cache and Codnite branches
+  const isAdmin = req.user?.role === "admin";
+
   // ── 1. Try cache first ───────────────────────────────────
   const problem = await Problem.findOne({ externalId: id, isActive: true });
 
-  if (problem && !isCacheStale(problem)) {
-    // Only return public tests to non-admin users
-    const isAdmin = req.user?.role === "admin";
-
+  if (problem) {
     const result = {
       problemId:   id,
       problemName: problem.name,
@@ -242,7 +265,6 @@ export const getProblemTests = async (req, res) => {
   }
 
   // ── 2. Fetch from Codnite ────────────────────────────────
-  const isAdmin    = req.user?.role === "admin";
   const testType   = isAdmin ? (test_type || "all") : "public";
   const codniteData = await codnite.fetchProblemTests(id, testType);
 
@@ -482,6 +504,7 @@ export const syncProblems = async (req, res) => {
   (async () => {
     const startTime = Date.now();
     try {
+      await cacheManager.clear();
       job.logs.push(`[System] Initializing sync in ${mode} mode...`);
       await job.save();
 
@@ -502,10 +525,23 @@ export const syncProblems = async (req, res) => {
       job.logs.push(`[System] Found ${allProblems.length} problems in upstream catalog.`);
       await job.save();
 
+      // Fetch all existing problems in bulk to prevent N+1 query loop
+      const existingProblems = await Problem.find({
+        externalId: { $in: allProblems.map((p) => p.id) },
+      })
+        .select("externalId lastSyncedAt")
+        .lean();
+
+      // Create a map for O(1) in-memory lookups
+      const existingMap = new Map();
+      existingProblems.forEach((p) => {
+        existingMap.set(p.externalId, p);
+      });
+
       // Upsert
       for (const indexEntry of allProblems) {
         try {
-          const existing = await Problem.findOne({ externalId: indexEntry.id });
+          const existing = existingMap.get(indexEntry.id);
           const stale = isCacheStale(existing);
 
           if (mode === "MISSING" && existing) {
@@ -543,6 +579,7 @@ export const syncProblems = async (req, res) => {
         }
       }
 
+      await cacheManager.clear();
       job.status = "COMPLETED";
       job.durationMs = Date.now() - startTime;
       job.logs.push(`[System] Sync completed successfully in ${job.durationMs}ms.`);
@@ -634,6 +671,7 @@ export const createProblem = async (req, res) => {
     lastSyncedAt:      new Date(),
   });
 
+  await cacheManager.clear();
   res.status(201).json({
     success: true,
     message: "Problem created successfully.",
@@ -684,6 +722,7 @@ export const updateProblem = async (req, res) => {
     });
   }
 
+  await cacheManager.clear();
   res.status(200).json({
     success: true,
     message: "Problem updated successfully.",
@@ -710,6 +749,7 @@ export const deleteProblem = async (req, res) => {
     });
   }
 
+  await cacheManager.clear();
   res.status(200).json({
     success: true,
     message: `Problem "${problem.name}" has been deactivated.`,

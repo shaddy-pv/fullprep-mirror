@@ -39,7 +39,7 @@ import {
   toggleBookmark,
   getBookmarkedProblems,
 } from "../controllers/problemController.js";
-import { protect, restrictTo } from "../middleware/authMiddleware.js";
+import { protect, restrictTo, optionalProtect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -72,13 +72,13 @@ router.post("/", protect, restrictTo("admin"), createProblem);
 router.get("/bookmarks", protect, getBookmarkedProblems);
 
 // Full problem detail (public, but auth user gets enriched response in future)
-router.get("/:id", getProblem);
+router.get("/:id", optionalProtect, getProblem);
 
 // Toggle bookmark on a problem (Private)
 router.post("/:id/bookmark", protect, toggleBookmark);
 
 // Public tests for a problem (optional auth — admins get private tests too)
-router.get("/:id/tests", getProblemTests);
+router.get("/:id/tests", optionalProtect, getProblemTests);
 
 // Update a problem (Admin only)
 router.patch("/:id", protect, restrictTo("admin"), updateProblem);

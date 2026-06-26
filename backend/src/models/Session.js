@@ -23,6 +23,8 @@ const sessionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+sessionSchema.index({ user: 1, lastActive: -1 });
+
 const Session = mongoose.model("Session", sessionSchema);
 
 export default Session;

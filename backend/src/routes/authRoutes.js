@@ -31,8 +31,8 @@ import {
   revokeSession,
   exportData,
 } from "../controllers/authController.js";
-import { getUserStats } from "../controllers/submissionController.js";
-import { protect, restrictTo } from "../middleware/authMiddleware.js";
+import { getUserStats } from "../controllers/statsController.js";
+import { protect, restrictTo, optionalProtect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -40,7 +40,7 @@ const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
-router.post("/logout", logout);
+router.post("/logout", optionalProtect, logout);
 router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);

@@ -210,6 +210,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ role: 1 });
 userSchema.index({ xp: -1 }); // Leaderboard queries
+userSchema.index({ isActive: 1, xp: -1 }); // leaderboard query with filter
 
 // ── Pre-save Hook: Hash Password ──────────────────────────────────────────────
 
@@ -217,7 +218,8 @@ userSchema.pre("save", async function (next) {
   // Only hash when password field is new or modified, AND actually exists (OAuth users have no password)
   if (!this.isModified("password") || !this.password) return next();
 
-  const salt = await bcrypt.genSalt(12); // Cost factor 12 — good security/perf balance
+  const rounds = (process.env.NODE_ENV === "test" || process.env.FAST_BCRYPT === "true") ? 1 : 12;
+  const salt = await bcrypt.genSalt(rounds);
   this.password = await bcrypt.hash(this.password, salt);
 
   // Record password change time (skip on first save)

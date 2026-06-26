@@ -13,7 +13,8 @@ import mongoose from "mongoose";
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      // Mongoose 8+ no longer needs useNewUrlParser / useUnifiedTopology
+      maxPoolSize: 100,
+      minPoolSize: 10,
     });
 
     console.log(`✅  MongoDB Connected: ${conn.connection.host}`);

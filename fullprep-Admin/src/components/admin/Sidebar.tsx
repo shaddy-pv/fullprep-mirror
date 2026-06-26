@@ -16,7 +16,14 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebar, useAuth } from "@/store/admin";
 import { Avatar } from "./Avatar";
-const NAV: Array<{to: string, label: string, icon: any, exact?: boolean, badge?: string, badgeTone?: string}> = [
+const NAV: Array<{
+  to: string;
+  label: string;
+  icon: any;
+  exact?: boolean;
+  badge?: string;
+  badgeTone?: string;
+}> = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   {
     to: "/users",

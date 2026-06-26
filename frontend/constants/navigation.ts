@@ -7,10 +7,8 @@ import {
   Trophy, 
   FileCheck2, 
   User2, 
-  Bookmark,
   Settings 
 } from "lucide-react";
-import { NavigationItem, ProblemItem } from "@/types/dashboard";
 
 // Structured Sidebar Menu Items with corresponding Next.js routes
 export const SIDEBAR_MENU_ITEMS = [

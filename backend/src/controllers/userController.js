@@ -5,32 +5,32 @@
 
 import User from "../models/User.js";
 import Submission from "../models/Submission.js";
+import Session from "../models/Session.js";
+import { invalidateUserTokenCache } from "../middleware/authMiddleware.js";
 
 // ── @desc    Update admin profile
 // ── @route   PUT /api/users/profile
 // ── @access  Private / Admin
 export const updateProfile = async (req, res) => {
-  const { name, bio } = req.body;
+  const { name } = req.body;
   const user = await User.findById(req.user._id);
 
-  if (user) {
-    user.name = name || user.name;
-    // user.bio = bio || user.bio; // Ensure bio is handled if schema supports it
-    const updatedUser = await user.save();
-    
-    res.json({
-      success: true,
-      data: {
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-      },
-    });
-  } else {
-    res.status(404);
-    throw new Error("User not found");
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found." });
   }
+
+  user.name = name || user.name;
+  const updatedUser = await user.save();
+
+  res.json({
+    success: true,
+    data: {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+    },
+  });
 };
 
 // ── @desc    Get all users (paginated)
@@ -166,23 +166,18 @@ export const getAdminUserStats = async (req, res) => {
     totalSubmissions,
     acceptedSubmissions,
     solvedProblems,
-    globalRank,
-    dailyActivity,
-    languageBreakdown,
-    difficultyBreakdown,
   ] = await Promise.all([
     User.findById(userId),
     Submission.countDocuments({ user: userId }),
     Submission.countDocuments({ user: userId, status: "ACCEPTED" }),
     Submission.distinct("problemExternalId", { user: userId, status: "ACCEPTED" }),
-    User.countDocuments({ xp: { $gt: 0 } }), // We'll just approximate or calculate it right below
   ]);
 
   if (!user) {
     return res.status(404).json({ success: false, message: "User not found" });
   }
 
-  const realGlobalRank = await User.countDocuments({ xp: { $gt: user.xp ?? 0 } });
+  const realGlobalRank = await User.countDocuments({ isActive: true, xp: { $gt: user.xp ?? 0 } });
 
   // 6. Daily submission activity for the last 7 days
   const dailyActivityReal = await Submission.aggregate([
@@ -254,6 +249,9 @@ export const deleteUser = async (req, res) => {
 
   // Delete all submissions
   await Submission.deleteMany({ user: user._id });
+  // Delete all sessions & invalidate cache
+  await Session.deleteMany({ user: user._id });
+  invalidateUserTokenCache(user._id);
   // Delete user
   await user.deleteOne();
 
@@ -269,6 +267,12 @@ export const updateUserStatus = async (req, res) => {
   const user = await User.findByIdAndUpdate(req.params.id, { isActive }, { new: true }).select("-password -__v");
   if (!user) {
     return res.status(404).json({ success: false, message: "User not found" });
+  }
+
+  if (!isActive) {
+    // Force logout: delete all active sessions and clear token cache
+    await Session.deleteMany({ user: user._id });
+    invalidateUserTokenCache(user._id);
   }
 
   res.status(200).json({ success: true, message: `User account ${isActive ? 'activated' : 'suspended'}.`, data: user });

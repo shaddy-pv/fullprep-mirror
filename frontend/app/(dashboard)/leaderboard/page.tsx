@@ -356,7 +356,7 @@ export default function LeaderboardPage() {
                 <tbody className="divide-y divide-border-card/50 text-[13.5px]">
                   {leaderboardUsers.map((user) => (
                     <tr 
-                      key={user.rank}
+                      key={`${user.username}-${user.rank}`}
                       className={`group transition-all duration-150 align-middle ${
                         user.isCurrentUser 
                           ? "bg-[#ff6a00]/5 dark:bg-[#ff6a00]/5 border-y border-brand-orange/30 font-semibold text-text-primary" 

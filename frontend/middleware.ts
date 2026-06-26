@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 
 // All routes that require the user to be logged in
 const PROTECTED_ROUTES = [
-  "/",
   "/problems",
   "/leaderboard",
   "/learning-paths",

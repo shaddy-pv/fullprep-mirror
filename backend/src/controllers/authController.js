@@ -11,6 +11,8 @@ import firebaseAdmin from "../config/firebase.js";
 import { sendEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 import Submission from "../models/Submission.js";
+import { invalidateTokenCache, invalidateUserTokenCache } from "../middleware/authMiddleware.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -69,10 +71,13 @@ export const register = async (req, res) => {
   const verifyToken = crypto.randomBytes(32).toString("hex");
   const hashedVerifyToken = crypto.createHash("sha256").update(verifyToken).digest("hex");
 
+  const isDevOrTest = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+
   const user = await User.create({
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password,
+    isEmailVerified: isDevOrTest,
     emailVerificationToken: hashedVerifyToken,
     emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
   });
@@ -197,6 +202,7 @@ export const logout = async (req, res) => {
   // If the user has a valid token, remove the session from the DB
   if (req.user && req.sessionId) {
     await Session.findByIdAndDelete(req.sessionId);
+    invalidateTokenCache(req.sessionId);
   }
 
   res.cookie("token", "loggedout", {
@@ -251,6 +257,7 @@ export const revokeSession = async (req, res) => {
   }
 
   await Session.findByIdAndDelete(session._id);
+  invalidateTokenCache(session._id);
 
   res.status(200).json({
     success: true,
@@ -262,18 +269,8 @@ export const revokeSession = async (req, res) => {
 // ── @route   GET /api/auth/me
 // ── @access  Private
 export const getMe = async (req, res) => {
-  // req.user is already attached by the protect middleware
-  // We re-fetch to ensure the latest data (e.g. XP updates)
-  const user = await User.findById(req.user._id);
-
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: "User not found.",
-    });
-  }
-
-  const publicUser = user.toPublicJSON();
+  // Use the pre-fetched user from the protect middleware to avoid redundant database calls
+  const publicUser = req.user.toPublicJSON ? req.user.toPublicJSON() : req.user;
 
   res.status(200).json({
     success: true,
@@ -355,6 +352,11 @@ export const updatePassword = async (req, res) => {
 
   user.password = newPassword;
   await user.save();
+
+  // Revoke all other sessions of this user for security
+  const otherSessions = await Session.find({ user: user._id, _id: { $ne: req.sessionId } });
+  await Session.deleteMany({ user: user._id, _id: { $ne: req.sessionId } });
+  otherSessions.forEach(s => invalidateTokenCache(s._id));
 
   res.status(200).json({
     success: true,
@@ -618,6 +620,10 @@ export const resetPassword = async (req, res) => {
 
   await user.save();
 
+  // Revoke ALL active sessions for this user on password reset
+  await Session.deleteMany({ user: user._id });
+  invalidateUserTokenCache(user._id);
+
   res.status(200).json({
     success: true,
     message: "Password reset successful! You can now log in.",
@@ -629,6 +635,15 @@ export const resetPassword = async (req, res) => {
 // ── @access  Private
 export const getLeaderboard = async (req, res) => {
   try {
+    const cachedData = await cacheManager.get("leaderboard");
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        message: "Leaderboard fetched successfully (cached).",
+        data: cachedData,
+      });
+    }
+
     const users = await User.find({ isActive: true })
       .sort({ xp: -1 })
       .limit(50);
@@ -659,6 +674,8 @@ export const getLeaderboard = async (req, res) => {
       };
     });
 
+    await cacheManager.set("leaderboard", leaderboard, 10); // 10 seconds TTL
+
     res.status(200).json({
       success: true,
       message: "Leaderboard fetched successfully.",
@@ -679,13 +696,13 @@ export const exportData = async (req, res) => {
     const user = await User.findById(req.user._id).select('-password -__v');
     const submissions = await Submission.find({ user: req.user._id }).select('-__v');
     
-    const exportData = {
+    const exportPayload = {
       profile: user,
-      submissions: submissions,
+      submissions,
       exportedAt: new Date().toISOString()
     };
     
-    res.json({ success: true, data: exportData });
+    res.json({ success: true, data: exportPayload });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server Error', error: err.message });
   }

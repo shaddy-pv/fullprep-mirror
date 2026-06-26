@@ -252,6 +252,7 @@ const problemSchema = new mongoose.Schema(
 problemSchema.index({ difficulty: 1, cfRating: 1 }); // filter + sort
 problemSchema.index({ cfTags: 1, difficulty: 1 });     // tag filter
 problemSchema.index({ name: "text", descriptionPreview: "text" }); // text search
+problemSchema.index({ isActive: 1, serialNo: 1 }); // default list sort
 
 // ── Virtual: isCacheStale ─────────────────────────────────────────────────────
 

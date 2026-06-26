@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { CheckCircle2, Circle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardCard from "@/components/ui/DashboardCard";
 import FrequencyBar from "./FrequencyBar";
@@ -19,8 +19,6 @@ interface ProblemsTableProps {
   solvedIds?: string[];
 }
 
-const ENABLED_IDE_PROBLEMS = ["Two Sum", "Binary Search", "Merge Intervals"];
-
 export default function ProblemsTable({
   problems,
   totalProblemsCount,
@@ -29,7 +27,6 @@ export default function ProblemsTable({
   itemsPerPage,
   solvedIds = [],
 }: ProblemsTableProps) {
-  const router = useRouter();
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +52,7 @@ export default function ProblemsTable({
     }
   };
 
-  const isIdeEnabled = (title: string) => {
+  const isIdeEnabled = () => {
     return true; // Enable IDE for all loaded problems
   };
 
@@ -187,7 +184,7 @@ export default function ProblemsTable({
             {problems.length > 0 ? (
               problems.map((problem) => {
                 const isSelected = selectedRows.includes(problem.id);
-                const enabled = isIdeEnabled(problem.title);
+                const enabled = isIdeEnabled();
                 const slug = getSlug(problem);
                 const ideUrl = `/problems/${slug}`;
 

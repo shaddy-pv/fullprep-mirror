@@ -69,7 +69,7 @@ function UsersPage() {
       cell: (u) => (
         <div className="flex items-center gap-2">
           <RoleBadge role={u.role} />
-          <select 
+          <select
             value={u.role}
             onChange={(e) => roleMutation.mutate({ id: u._id, role: e.target.value })}
             className="text-[10px] bg-surface border border-border-card rounded px-1 py-0.5 outline-none cursor-pointer hover:border-brand-primary transition-colors"
@@ -124,8 +124,12 @@ function UsersPage() {
     {
       key: "lastLogin",
       header: "Last login",
-      cell: (u) => <span className="text-text-secondary">{u.lastLoginAt ? formatRelativeTime(u.lastLoginAt) : "Never"}</span>,
-      sortValue: (u) => u.lastLoginAt ? new Date(u.lastLoginAt).getTime() : 0,
+      cell: (u) => (
+        <span className="text-text-secondary">
+          {u.lastLoginAt ? formatRelativeTime(u.lastLoginAt) : "Never"}
+        </span>
+      ),
+      sortValue: (u) => (u.lastLoginAt ? new Date(u.lastLoginAt).getTime() : 0),
     },
   ];
 
@@ -139,7 +143,7 @@ function UsersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:brightness-110 transition-all"
           >
@@ -227,7 +231,7 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
     },
     onError: (err: any) => {
       alert("Failed to create admin: " + (err.response?.data?.message || err.message));
-    }
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -240,28 +244,67 @@ function CreateAdminModal({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-md rounded-2xl border border-border-card bg-surface p-6 shadow-xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-text-primary">Create Admin User</h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-text-muted hover:bg-background/50">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-text-muted hover:bg-background/50"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Full Name</label>
-            <input required value={name} onChange={e => setName(e.target.value)} className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none" placeholder="John Doe" />
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              Full Name
+            </label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none"
+              placeholder="John Doe"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Email Address</label>
-            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none" placeholder="john@fullprep.com" />
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              Email Address
+            </label>
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none"
+              placeholder="john@fullprep.com"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Initial Password</label>
-            <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none" placeholder="••••••••" />
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
+              Initial Password
+            </label>
+            <input
+              required
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:border-brand-primary outline-none"
+              placeholder="••••••••"
+            />
           </div>
-          
+
           <div className="flex justify-end gap-3 pt-4 border-t border-border-card mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-text-secondary hover:bg-background/50 border border-border-card">Cancel</button>
-            <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 rounded-lg text-sm font-semibold text-primary-foreground bg-brand-primary hover:brightness-110 disabled:opacity-50">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm text-text-secondary hover:bg-background/50 border border-border-card"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-primary-foreground bg-brand-primary hover:brightness-110 disabled:opacity-50"
+            >
               {createMutation.isPending ? "Creating..." : "Create Admin"}
             </button>
           </div>

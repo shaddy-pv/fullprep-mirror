@@ -2,10 +2,11 @@ import Submission from '../models/Submission.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { judgeTestCase } from '../utils/judgeService.js';
+import { logger } from '../utils/logger.js';
 
 // No BullMQ worker needed — submissions run inline via Judge0
 export const startSubmissionWorker = () => {
-  console.log('✅ Judge0 inline executor ready (no Redis/BullMQ required)');
+  logger.info('Judge0 inline executor ready (no Redis/BullMQ required)');
   return null;
 };
 
@@ -131,17 +132,17 @@ export async function runJudge({ submissionId, language, code, testCases, proble
           type: "SUCCESS"
         });
 
-        console.log(`[Judge] User ${userId} solved ${problemExternalId} — +${xpInc} XP, streak updated`);
+        logger.info(`[Judge] User ${userId} solved ${problemExternalId} — +${xpInc} XP, streak updated`);
       } else {
         // Already solved — just update streak (no duplicate XP)
         await User.findByIdAndUpdate(userId, streakUpdate);
-        console.log(`[Judge] User ${userId} re-submitted ${problemExternalId} — streak updated`);
+        logger.info(`[Judge] User ${userId} re-submitted ${problemExternalId} — streak updated`);
       }
     }
 
-    console.log(`[Judge] Submission ${submissionId} → ${finalStatus} (${testCasesPassed}/${testCases.length})`);
+    logger.info(`[Judge] Submission ${submissionId} → ${finalStatus} (${testCasesPassed}/${testCases.length})`);
   } catch (err) {
-    console.error(`[Judge] Fatal error judging ${submissionId}:`, err);
+    logger.error(`[Judge] Fatal error judging ${submissionId}`, { error: err.message, stack: err.stack });
     await Submission.findByIdAndUpdate(submissionId, {
       status:       'RUNTIME_ERROR',
       errorMessage: 'Internal judge error: ' + err.message,

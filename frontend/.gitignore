@@ -43,5 +43,8 @@ next-env.d.ts
 
 .vercel
 
-# Vercel
-.vercel
+# Playwright
+/playwright-report
+/test-results
+/eslint_log.txt
+/eslint_log_utf8.txt

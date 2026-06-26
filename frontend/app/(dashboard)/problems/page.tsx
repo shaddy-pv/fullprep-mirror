@@ -9,7 +9,7 @@ import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import FilterBar from "@/components/problems/FilterBar";
 import ProblemsTable from "@/components/problems/ProblemsTable";
 import AnalyticsSidebar from "@/components/problems/AnalyticsSidebar";
-import { ExtendedProblemItem } from "@/constants/navigation";
+import type { ExtendedProblemItem } from "@/constants/navigation";
 import { ProblemsService } from "@/services/problems.service";
 import { AuthService } from "@/services/auth.service";
 
@@ -52,7 +52,6 @@ function ProblemsContent() {
   }, []);
 
   // Sync search input with URL param changes (e.g. browser back/forward navigation)
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const t = setTimeout(() => setInputSearchVal(searchParam), 0);
     return () => clearTimeout(t);
@@ -77,7 +76,6 @@ function ProblemsContent() {
   };
 
   // Debounced search param updates (300ms)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timer = setTimeout(() => {
       if (inputSearchVal !== searchParam) {
@@ -85,7 +83,7 @@ function ProblemsContent() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [inputSearchVal, searchParam]);
+  }, [inputSearchVal, searchParam, updateQueryParams]);
 
   const handleResetFilters = () => {
     setInputSearchVal("");

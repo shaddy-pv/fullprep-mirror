@@ -35,7 +35,7 @@ function formatSubmissions(stats: any): string {
   return "1.2K";
 }
 
-function getStarterCode(slug: string) {
+function getStarterCode() {
   return {
     javascript: `const fs = require('fs');
 
@@ -145,14 +145,14 @@ export const ProblemsService = {
     try {
       const response = await api.get<{ data: any[] }>(`${BASE_URL}/problems?limit=100`);
       if (response && Array.isArray(response.data)) {
-        return response.data.map((prob: any) => {
+        return response.data.map((prob: any, idx: number) => {
           const difficulty = mapDifficulty(prob.difficulty);
           const topic = mapTopic(prob.cfTags);
           const acceptance = calculateAcceptance(prob.stats);
           const submissions = formatSubmissions(prob.stats);
 
           return {
-            id: prob.serialNo || 1,
+            id: idx + 1,
             title: prob.name,
             status: "pending",
             difficulty,
@@ -185,7 +185,7 @@ export const ProblemsService = {
         const topic = mapTopic(prob.cfTags);
         const acceptance = calculateAcceptance(prob.stats);
         const submissions = formatSubmissions(prob.stats);
-        const starterCode = getStarterCode(prob.name);
+        const starterCode = getStarterCode();
 
         return {
           slug: prob.externalId,

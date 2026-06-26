@@ -14,6 +14,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
 
 import authRoutes       from "./routes/authRoutes.js";
 import healthRoutes    from "./routes/healthRoutes.js";
@@ -22,6 +23,8 @@ import submissionRoutes from "./routes/submissionRoutes.js";
 import userRoutes         from "./routes/userRoutes.js";
 import settingsRoutes     from "./routes/settingsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import { requestTracker } from "./middleware/requestTracker.js";
+import { logger }         from "./utils/logger.js";
 
 const app = express();
 
@@ -31,8 +34,12 @@ app.set("trust proxy", true);
 // Sentry request handler must be the first middleware
 Sentry.setupExpressErrorHandler(app);
 
+// Request tracking middleware must be applied early to trace execution duration
+app.use(requestTracker);
+
 // ── Security Headers ──────────────────────────────────────────────────────────
 
+app.use(compression());
 app.use(helmet()); // Sets secure HTTP response headers
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
@@ -144,12 +151,12 @@ app.use(Sentry.expressErrorHandler());
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  // Log full error in development, minimal info in production
-  if (process.env.NODE_ENV !== "production") {
-    console.error("❌  Error:", err);
-  } else {
-    console.error(`❌  ${err.name}: ${err.message}`);
-  }
+  // Log error using structured logger
+  logger.error(err.message || "Internal Server Error", {
+    name: err.name,
+    stack: err.stack,
+    statusCode: err.statusCode || 500,
+  });
 
   // Mongoose validation error
   if (err.name === "ValidationError") {

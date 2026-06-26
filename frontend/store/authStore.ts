@@ -5,6 +5,7 @@ interface UserProfile {
   name: string;
   email: string;
   role?: string;
+  avatar?: string;
   avatarUrl?: string;
   streak?: number;
   lastSolvedDate?: string;

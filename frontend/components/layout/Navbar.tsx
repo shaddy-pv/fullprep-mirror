@@ -10,8 +10,6 @@ import {
   Menu, 
   User, 
   Settings, 
-  Palette, 
-  HelpCircle, 
   LogOut,
   CreditCard
 } from "lucide-react";
@@ -353,9 +351,17 @@ export default function Navbar() {
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center justify-center gap-2.5 cursor-pointer group select-none py-1.5 px-2 rounded-xl border border-transparent hover:bg-white/[0.04] hover:border-white/[0.05] transition-all duration-300 shadow-sm"
           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-md shadow-black/5 select-none font-mono">
-              {user?.name?.charAt(0).toUpperCase() || "U"}
-            </div>
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user?.name || "User"} 
+                className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-md shadow-black/5 select-none shrink-0" 
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-md shadow-black/5 select-none font-mono">
+                {user?.name?.charAt(0).toUpperCase() || "U"}
+              </div>
+            )}
             <ChevronDown className={cn("w-4 h-4 text-text-secondary group-hover:text-text-primary transition-all duration-300 shrink-0", isDropdownOpen && "rotate-180")} />
           </div>
 

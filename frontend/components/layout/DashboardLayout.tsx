@@ -17,7 +17,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAuthenticated } = useAuthStore();
   const { 
     isSidebarCollapsed, 
-    setIsSidebarCollapsed, 
     isMobileSidebarOpen, 
     setIsMobileSidebarOpen 
   } = useDashboard();

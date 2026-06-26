@@ -47,7 +47,10 @@ function DashboardPage() {
     queryKey: ["problems"],
     queryFn: api.listProblems,
   });
-  const { data: subs = [] } = useQuery({ queryKey: ["submissions"], queryFn: () => api.listSubmissions() });
+  const { data: subs = [] } = useQuery({
+    queryKey: ["submissions"],
+    queryFn: () => api.listSubmissions(),
+  });
 
   const activeProblems = problems.filter((p) => p.isActive).length;
   const accepted = subs.filter((s) => s.status === "ACCEPTED").length;
