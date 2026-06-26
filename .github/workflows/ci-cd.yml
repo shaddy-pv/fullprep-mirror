@@ -193,7 +193,7 @@ jobs:
           EOF
 
       - name: Start Compose Cluster (MongoDB, Redis, Backend, Frontend)
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
 
       - name: Wait for Services to Be Healthy
         run: |
@@ -208,12 +208,12 @@ jobs:
             fi
             sleep 5
           done
-          docker-compose ps
+          docker compose ps
           # Fail fast if services did not launch properly
           if [ "$(docker inspect --format='{{json .State.Health.Status}}' fullprep-frontend)" != "\"healthy\"" ] || \
              [ "$(docker inspect --format='{{json .State.Health.Status}}' fullprep-backend)" != "\"healthy\"" ]; then
             echo "❌ Services failed to start or report healthy."
-            docker-compose logs
+            docker compose logs
             exit 1
           fi
 
@@ -233,7 +233,7 @@ jobs:
 
       - name: Stop Services & Cleanup Volumes
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
       - name: Upload Playwright Reports on Test Failure
         uses: actions/upload-artifact@v4
