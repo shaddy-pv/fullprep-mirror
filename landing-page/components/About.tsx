@@ -137,7 +137,7 @@ export default function About() {
 
                 {/* Syntax-highlighted code body */}
                 <div className="font-mono text-[10.5px] leading-relaxed text-slate-600 dark:text-slate-300 flex-grow select-none">
-                  <div className="flex"><span className="w-5 text-slate-400 dark:text-slate-600 text-right pr-2">1</span><span className="text-emerald-700 dark:text-emerald-500 font-medium">// Write clean, optimized code</span></div>
+                  <div className="flex"><span className="w-5 text-slate-400 dark:text-slate-600 text-right pr-2">1</span><span className="text-emerald-700 dark:text-emerald-500 font-medium">{"// Write clean, optimized code"}</span></div>
                   <div className="flex"><span className="w-5 text-slate-400 dark:text-slate-600 text-right pr-2">2</span><span><span className="text-[#8250DF] dark:text-[#569CD6]">function</span>{" "}<span className="text-[#0550AE] dark:text-[#DCDCAA]">solve</span>(arr, target) {`{`}</span></div>
                   <div className="flex"><span className="w-5 text-slate-400 dark:text-slate-600 text-right pr-2">3</span><span>&nbsp;&nbsp;<span className="text-[#8250DF] dark:text-[#569CD6]">const</span> map ={" "}<span className="text-[#8250DF] dark:text-[#569CD6]">new</span>{" "}<span className="text-[#0550AE] dark:text-[#4EC9B0]">Map</span>();</span></div>
                   <div className="flex"><span className="w-5 text-slate-400 dark:text-slate-600 text-right pr-2">4</span><span>&nbsp;&nbsp;<span className="text-[#8250DF] dark:text-[#C586C0]">for</span> (<span className="text-[#8250DF] dark:text-[#569CD6]">let</span> i = <span className="text-emerald-600 dark:text-[#B5CEA8]">0</span>; i &lt; arr.length; i++) {`{`}</span></div>

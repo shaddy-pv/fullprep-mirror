@@ -203,6 +203,13 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 26, 2026) — Session 7: NextAuth Session Cookie Size Tuning (HTTP 431 Fix)
+
+#### Frontend: `auth.ts`
+- **Mitigated Cookie Bloat (HTTP 431 Fix)**: Stripped the base64 `avatar` data string, `solvedProblems` array, and `bookmarks` array from the NextAuth JWT token during Google/GitHub sign-in. This keeps the NextAuth session cookie extremely small (under 150 bytes), preventing HTTP 431 (Request Header Fields Too Large) errors on Next.js/Node.js servers while the client-side Zustand store (`useAuthStore`) continues to fetch full profile metadata dynamically from the `/auth/me` API.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
@@ -211,5 +218,6 @@ Under high load, the following optimizations maintain response times below **300
 - [x] Audit database schemas, queries, and performance indexes, resolving N+1 queries and creating critical compound indexes.
 - [x] Deep review remaining files: `submissionWorker.js`, `judgeService.js`, frontend `store/` files.
 - [x] Add production scaling steps (dockerize backend, set up PM2 node clustering, prepare external Redis cache integration for multi-instance environments).
+- [x] Resolve HTTP 431 Request Header Fields Too Large website crash by stripping base64 avatars and arrays from NextAuth JWT.
 - [x] Archive completed GSD architectural milestones (N/A - planning directories do not exist in workspace).
 

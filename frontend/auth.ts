@@ -68,7 +68,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const data = await res.json();
             // Store our own backend JWT inside the NextAuth JWT token
             token.backendToken = data.token;
-            token.backendUser = data.user;
+            
+            // Strip large fields (base64 avatar, solved problems list, bookmarks)
+            // to keep the NextAuth session cookie small and prevent HTTP 431 (Header Too Large)
+            const safeUser = { ...data.user };
+            if (safeUser.avatar && safeUser.avatar.startsWith("data:image")) {
+              safeUser.avatar = "";
+            }
+            if (safeUser.solvedProblems) {
+              safeUser.solvedProblems = [];
+            }
+            if (safeUser.bookmarks) {
+              safeUser.bookmarks = [];
+            }
+            token.backendUser = safeUser;
           }
         } catch (err) {
           console.error("[NextAuth] Failed to sync OAuth user with backend:", err);

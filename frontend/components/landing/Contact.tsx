@@ -292,6 +292,26 @@ export default function Contact() {
                 </defs>
 
                 <style>{`
+                  :root {
+                    --doc-stop-1: #ffffff;
+                    --doc-stop-2: #f8fafc;
+                    --doc-border-start: #e2e8f0;
+                    --doc-border-end: #cbd5e1;
+                    --doc-top-highlight: #ffffff;
+                    --doc-line: #64748b;
+                    --envelope-shadow: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
+                    --plane-shadow: drop-shadow(0 6px 12px rgba(255,107,0,0.2));
+                  }
+                  .dark, :host-context(.dark), :global(.dark) {
+                    --doc-stop-1: #ffffff;
+                    --doc-stop-2: #f1f5f9;
+                    --doc-border-start: #cbd5e1;
+                    --doc-border-end: #94a3b8;
+                    --doc-top-highlight: #ffffff;
+                    --doc-line: #475569;
+                    --envelope-shadow: drop-shadow(0 15px 30px rgba(0,0,0,0.55));
+                    --plane-shadow: drop-shadow(0 8px 16px rgba(255,107,0,0.3));
+                  }
                   @keyframes pathDraw { to { stroke-dashoffset: -20; } }
                   .animate-dashed-path { stroke-dasharray: 4, 6; animation: pathDraw 1.5s linear infinite; }
                 `}</style>

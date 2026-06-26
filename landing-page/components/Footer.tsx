@@ -173,11 +173,7 @@ export default function Footer() {
           <div>
             &copy; {CURRENT_YEAR} FullPrep. All rights reserved.
           </div>
-          <div className="flex items-center space-x-1">
-            <span>Made with</span>
-            <Heart size={12} className="text-[#FF6B00] fill-[#FF6B00]" />
-            <span>for developers</span>
-          </div>
+
         </div>
 
       </div>

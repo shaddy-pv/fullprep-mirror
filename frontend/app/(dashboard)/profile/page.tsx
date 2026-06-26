@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore, getCurrentStreak } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
 import { ProblemsService } from "@/services/problems.service";
 import { BookmarksService } from "@/services/bookmarks.service";
@@ -254,7 +254,7 @@ export default function ProfilePage() {
   const rank = statsData?.globalRank ?? "-";
   const xp = user?.xp ?? 0;
   const level = user?.level ?? 1;
-  const streak = user?.streak ?? 0;
+  const streak = getCurrentStreak(user);
 
   const statMetrics = [
     { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-white", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },

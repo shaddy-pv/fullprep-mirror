@@ -190,7 +190,7 @@ export default function ProblemsTable({
 
                 return (
                   <tr
-                    key={problem.id}
+                    key={(problem as any)._mongoId || `prob-${problem.id}`}
                     className={cn(
                       "group transition-colors duration-150 border-transparent border-l-2 relative",
                       enabled 

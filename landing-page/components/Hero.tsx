@@ -355,7 +355,7 @@ export default function Hero() {
                     <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-[#8250DF] dark:text-[#569CD6]">int</span>[]{" "}<span className="text-slate-700 dark:text-[#9CDCFE]">nums</span>,</div>
                     <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-[#8250DF] dark:text-[#569CD6]">int</span>{" "}<span className="text-slate-700 dark:text-[#9CDCFE]">target</span></div>
                     <div>&nbsp;&nbsp;) {`{`}</div>
-                    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-700 dark:text-[#6A9955] font-medium">// Write clean code</span></div>
+                    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-700 dark:text-[#6A9955] font-medium">{"// Write clean code"}</span></div>
                     <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-[#0550AE] dark:text-[#4EC9B0]">Map</span>&lt;<span className="text-[#0550AE] dark:text-[#4EC9B0]">Integer</span>, <span className="text-[#0550AE] dark:text-[#4EC9B0]">Integer</span>&gt;{" "}<span className="text-slate-700 dark:text-[#9CDCFE]">map</span> =</div>
                     <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-[#8250DF] dark:text-[#569CD6]">new</span>{" "}<span className="text-[#0550AE] dark:text-[#4EC9B0]">HashMap</span>&lt;&gt;();</div>
                     <div>&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-slate-400">...</span></div>

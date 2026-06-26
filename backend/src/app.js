@@ -25,6 +25,7 @@ import settingsRoutes     from "./routes/settingsRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import { requestTracker } from "./middleware/requestTracker.js";
 import { logger }         from "./utils/logger.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 
@@ -98,8 +99,8 @@ const authLimiter = rateLimit({
 
 // ── Request Parsing ───────────────────────────────────────────────────────────
 
-app.use(express.json({ limit: "10kb" }));          // JSON body, max 10 KB
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "10mb" }));          // JSON body, max 10 MB
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());                           // Parse signed cookies
 
 // ── HTTP Request Logging ──────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/settings",      settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 
