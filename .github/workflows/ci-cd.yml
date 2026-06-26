@@ -287,8 +287,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ meta-frontend.outputs.tags }}
-          labels: ${{ meta-frontend.outputs.labels }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -310,8 +310,8 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ meta-backend.outputs.tags }}
-          labels: ${{ meta-backend.outputs.labels }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
