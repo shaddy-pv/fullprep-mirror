@@ -324,13 +324,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-publish]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       # --- Deploy Backend to AWS ECS (if AWS_ENABLED) ---
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        if: secrets.AWS_ACCESS_KEY_ID != ''
+        if: env.AWS_ACCESS_KEY_ID != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -338,12 +341,12 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        if: secrets.AWS_ACCESS_KEY_ID != ''
+        if: env.AWS_ACCESS_KEY_ID != ''
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Push Images to Amazon ECR & Deploy ECS Service
-        if: secrets.AWS_ACCESS_KEY_ID != ''
+        if: env.AWS_ACCESS_KEY_ID != ''
         run: |
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest
           docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:latest ${{ steps.login-ecr.outputs.registry }}/fullprep-backend:latest
@@ -354,25 +357,25 @@ jobs:
 
       # --- Deploy Frontend to Vercel ---
       - name: Setup Node.js
-        if: secrets.VERCEL_TOKEN != ''
+        if: env.VERCEL_TOKEN != ''
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Vercel CLI
-        if: secrets.VERCEL_TOKEN != ''
+        if: env.VERCEL_TOKEN != ''
         run: npm install -g vercel@latest
 
       - name: Deploy Frontend Production Build to Vercel
-        if: secrets.VERCEL_TOKEN != ''
+        if: env.VERCEL_TOKEN != ''
         working-directory: ./frontend
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel pull --yes --environment=production --token=${{ env.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ env.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token=${{ env.VERCEL_TOKEN }}
 
   # ==============================================================================
   # Job 8: Notification (Slack)
