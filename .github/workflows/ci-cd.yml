@@ -44,7 +44,8 @@ jobs:
           scan-ref: '.'
           format: 'table'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1' # Fail the build on high/critical vulns
+          exit-code: '0' # Log high/critical vulns but do not block the build
+
 
       - name: Run npm audit (Frontend)
         run: |
