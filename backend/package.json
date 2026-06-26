@@ -5,8 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node --import ./instrument.js server.js",
-    "dev": "nodemon --import ./instrument.js server.js",
+    "start": "node --max-http-header-size=256000 --import ./instrument.js server.js",
+    "dev": "nodemon --exec \"node --max-http-header-size=256000\" --import ./instrument.js server.js",
     "seed": "node seed.js",
     "test": "node --test src/tests/**/*.test.js",
     "lint": "eslint ."
