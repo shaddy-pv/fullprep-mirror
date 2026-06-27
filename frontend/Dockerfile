@@ -24,6 +24,7 @@ RUN npm install --ignore-scripts
 
 # Stage 3: Builder
 FROM base AS builder
+ARG NEXT_PUBLIC_API_BASE_URL
 WORKDIR /app
 
 # Copy dependencies
@@ -35,6 +36,7 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 
 # Build Next.js application
 RUN npm run build
