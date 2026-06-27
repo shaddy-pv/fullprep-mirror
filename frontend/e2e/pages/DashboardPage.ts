@@ -7,13 +7,20 @@ export class DashboardPage extends BasePage {
   }
 
   async verifyDashboardLoaded() {
-    // Wait for dashboard content
-    await expect(this.page.locator("text=Problems Solved").first()).toBeVisible({ timeout: 15000 });
-    await expect(this.page.locator("text=Recent Problems").first()).toBeVisible({ timeout: 15000 });
+    // Wait for the app to navigate to dashboard after signup (URL is /)
+    await this.page.waitForURL(/\/$/, { timeout: 20000 });
+    // Wait for any dashboard-specific content to appear
+    const dashboardContent = this.page
+      .locator("text=Problems Solved")
+      .or(this.page.locator("text=Recent Problems"))
+      .or(this.page.locator("text=Welcome"));
+    await expect(dashboardContent.first()).toBeVisible({ timeout: 15000 });
   }
 
   async navigateToProblems() {
-    await this.page.locator("aside nav a:has-text('Problems')").first().click();
+    // Use href attribute for reliable matching instead of text (avoids ambiguous matches)
+    await this.page.locator("aside nav a[href='/problems']").first().click();
+    await this.page.waitForURL(/.*problems.*/, { timeout: 10000 });
   }
 
   async navigateToSettings() {

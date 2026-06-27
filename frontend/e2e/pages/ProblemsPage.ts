@@ -22,7 +22,8 @@ export class ProblemsPage extends BasePage {
     const optionButton = this.page.locator(`role=option[name='${difficulty}']`);
     await expect(optionButton).toBeVisible();
     await optionButton.click();
-    await this.page.waitForTimeout(200);
+    // Wait for URL update + re-render
+    await this.page.waitForTimeout(600);
   }
 
   async selectTopic(topic: string) {
@@ -33,7 +34,7 @@ export class ProblemsPage extends BasePage {
     const optionButton = this.page.locator(`role=option[name='${topic}']`);
     await expect(optionButton).toBeVisible();
     await optionButton.click();
-    await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(600);
   }
 
   async selectStatus(statusLabel: string) {

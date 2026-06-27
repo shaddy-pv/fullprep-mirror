@@ -123,9 +123,10 @@ export const listProblems = async (req, res) => {
 
   // ── If MongoDB has no problems yet, fetch from Codnite ───
   if (total === 0) {
+    const codniteLimit = Math.min(limitNum, 100);
     const codniteData = await codnite.fetchProblems({
       page: pageNum,
-      limit: limitNum,
+      limit: codniteLimit,
       difficulty,
       tag,
       source,
