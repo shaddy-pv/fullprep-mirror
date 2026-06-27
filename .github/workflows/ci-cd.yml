@@ -195,8 +195,12 @@ jobs:
       - name: Start Compose Cluster (MongoDB, Redis, Backend, Frontend)
         run: |
           docker compose up -d --build || {
-            echo "❌ Docker Compose failed to start services. Printing container logs..."
-            docker compose logs
+            echo "=== DOCKER CONTAINERS STATUS ==="
+            docker compose ps
+            echo "=== BACKEND LOGS ==="
+            docker compose logs backend
+            echo "=== FRONTEND LOGS ==="
+            docker compose logs frontend
             exit 1
           }
 
