@@ -261,6 +261,7 @@ export default function ProfilePage() {
     { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
     { label: "PROBLEMS SOLVED", value: solved.toString(), sub: "Verified solutions", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
     { label: "GLOBAL RANK", value: rank !== "-" ? `#${rank}` : "-", sub: "On the leaderboard", color: "text-[#06b6d4]", glow: "hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]" },
+    { label: "CONTEST RATING", value: user?.contestRating?.toString() || "1200", sub: "Global Rating", color: "text-[#8b5cf6]", glow: "hover:shadow-[0_0_15px_rgba(139,92,246,0.08)]" },
   ];
 
   const topLanguages = statsData?.languageBreakdown && statsData.languageBreakdown.length > 0

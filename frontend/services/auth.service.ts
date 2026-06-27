@@ -225,6 +225,21 @@ export const AuthService = {
     }
   },
 
+  async getPublicProfile(idOrName: string) {
+    try {
+      const response = await api.get<{ success: boolean; data: any }>(
+        `${BASE_URL}/auth/public/${idOrName}`
+      );
+      if (response && response.success) {
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch public profile:", error);
+      throw error;
+    }
+  },
+
   async exportData(): Promise<any> {
     try {
       const response = await api.get<{ success: boolean; data: any }>(`${BASE_URL}/auth/export`);

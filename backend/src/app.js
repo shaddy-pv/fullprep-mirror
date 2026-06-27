@@ -27,6 +27,7 @@ import { requestTracker } from "./middleware/requestTracker.js";
 import { logger }         from "./utils/logger.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import learningPathRoutes from "./routes/learningPathRoutes.js";
+import contestRoutes from "./routes/contestRoutes.js";
 
 const app = express();
 
@@ -125,6 +126,7 @@ app.use("/api/settings",     settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai",           aiRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
+app.use("/api/contests", contestRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

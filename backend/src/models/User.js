@@ -102,6 +102,23 @@ const userSchema = new mongoose.Schema(
       min: [1, "Level starts at 1"],
     },
 
+    // ── Contests ─────────────────────────────────────────────
+    contestRating: {
+      type: Number,
+      default: 1200,
+      min: [0, "Rating cannot be negative"],
+    },
+
+    contestsParticipated: {
+      type: Number,
+      default: 0,
+    },
+
+    highestRank: {
+      type: Number,
+      default: 0,
+    },
+
     // ── Access Control ───────────────────────────────────────
     role: {
       type: String,

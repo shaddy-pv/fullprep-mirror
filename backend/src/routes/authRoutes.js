@@ -30,6 +30,7 @@ import {
   getSessions,
   revokeSession,
   exportData,
+  getPublicProfile,
 } from "../controllers/authController.js";
 import { getUserStats, getSidebarStats } from "../controllers/statsController.js";
 import { protect, restrictTo, optionalProtect } from "../middleware/authMiddleware.js";
@@ -45,6 +46,7 @@ router.post("/oauth", oauthSignIn);  // Called by NextAuth to upsert OAuth users
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/verify-email", verifyEmail);  // Email verification link handler
+router.get("/public/:id", getPublicProfile); // Public profile fetcher
 
 // ── Private Routes ────────────────────────────────────────────────────────────
 

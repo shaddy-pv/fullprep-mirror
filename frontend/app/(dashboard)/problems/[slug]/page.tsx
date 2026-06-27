@@ -2,7 +2,7 @@
 
 import React, { use, useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import { 
   CheckCircle2, 
@@ -17,6 +17,7 @@ import { ProblemsService } from "@/services/problems.service";
 import { BookmarksService } from "@/services/bookmarks.service";
 import { SubmissionsService, type RunTestResult } from "@/services/submissions.service";
 import { AuthService } from "@/services/auth.service";
+import { ContestsService } from "@/services/contests.service";
 import { useAuthStore } from "@/store/authStore";
 import DashboardCard from "@/components/ui/DashboardCard";
 import Button from "@/components/ui/Button";
@@ -40,6 +41,29 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const { slug } = use(params);
   const { theme } = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode");
+  const isContestMode = mode === "contest";
+
+  // Contest timer state
+  const [contestSeconds, setContestSeconds] = useState(0);
+  const [contestTimerActive, setContestTimerActive] = useState(isContestMode);
+
+  useEffect(() => {
+    let interval: any;
+    if (contestTimerActive) {
+      interval = setInterval(() => {
+        setContestSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [contestTimerActive]);
+
+  const formatContestTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
 
   const [problem, setProblem] = useState<any>(null);
   const [loadingProblem, setLoadingProblem] = useState(true);
@@ -425,6 +449,23 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                   showToast("Solution Accepted! 🎉 +10 XP", "success");
                   // Refresh user data (like Streak & XP) live
                   AuthService.getCurrentUser();
+                  
+                  if (isContestMode) {
+                    try {
+                      const res = await ContestsService.submitContestResult(
+                        "daily-contest", // mock contest id for now
+                        "daily", // mock type for now
+                        contestSeconds * 1000,
+                        true
+                      );
+                      if (res) {
+                        showToast(`Contest completed! +${res.pointsEarned} Rating`, "success");
+                        setContestTimerActive(false);
+                      }
+                    } catch (e) {
+                      console.error("Contest rating update failed:", e);
+                    }
+                  }
                 } else if (status === "WRONG_ANSWER") {
                   setTestResultState("wrong_answer");
                   showToast("Wrong Answer on testcase.", "info");
@@ -569,6 +610,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                 isFullscreen={editorStore.isFullscreen}
                 setIsFullscreen={editorStore.setIsFullscreen}
                 setIsSettingsOpen={setIsSettingsOpen}
+                contestTime={isContestMode ? formatContestTime(contestSeconds) : undefined}
               />
 
               {/* Editor Workspace Canvas */}

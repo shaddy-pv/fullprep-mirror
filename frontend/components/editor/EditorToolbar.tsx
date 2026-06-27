@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronDown, Check, Settings, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronDown, Check, Settings, Maximize2, Minimize2, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { EditorSettings } from "@/store/editorStore";
@@ -16,6 +16,7 @@ interface EditorToolbarProps {
   isFullscreen: boolean;
   setIsFullscreen: (full: boolean) => void;
   setIsSettingsOpen: (open: boolean) => void;
+  contestTime?: string;
 }
 
 export default function EditorToolbar({
@@ -27,7 +28,8 @@ export default function EditorToolbar({
   setOpenDropdown,
   isFullscreen,
   setIsFullscreen,
-  setIsSettingsOpen
+  setIsSettingsOpen,
+  contestTime
 }: EditorToolbarProps) {
   const handleDropdownToggle = (type: "language" | "editorTheme") => {
     setOpenDropdown(openDropdown === type ? null : type);
@@ -115,6 +117,14 @@ export default function EditorToolbar({
           )}
         </div>
       </div>
+
+      {/* Middle/Right: Contest Timer */}
+      {contestTime && (
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-1.5 bg-brand-orange/10 border border-brand-orange/20 rounded-full text-brand-orange font-bold text-[14px]">
+          <Timer className="w-4 h-4 animate-pulse" />
+          <span>{contestTime}</span>
+        </div>
+      )}
 
       {/* Right side controls */}
       <div className="flex items-center gap-1">

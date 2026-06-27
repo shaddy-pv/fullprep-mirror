@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Trophy, TrendingUp, Zap, Award, Info, ChevronDown, ChevronRight, Flame, Search, ChevronLeft, Calendar, Clock, Globe, Code, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ContentContainer from "@/components/layout/ContentContainer";
@@ -372,7 +373,7 @@ export default function LeaderboardPage() {
 
                       {/* Username details */}
                       <td className="py-2 px-4 align-middle text-left">
-                        <div className="flex items-center gap-3">
+                        <Link href={`/user/${user.username}`} className="flex items-center gap-3 group-hover:opacity-80 transition-opacity">
                           {user.avatarUrl ? (
                             <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" />
                           ) : (
@@ -383,7 +384,7 @@ export default function LeaderboardPage() {
                             </div>
                           )}
                           <span className={`text-[14px] font-semibold leading-none tracking-[-0.01em] flex items-center ${
-                            user.isCurrentUser ? "text-[#10b981]" : "text-text-primary"
+                            user.isCurrentUser ? "text-[#10b981]" : "text-text-primary group-hover:text-brand-orange transition-colors"
                           }`}>
                             {user.username}
                             {user.isCurrentUser && (
@@ -392,7 +393,7 @@ export default function LeaderboardPage() {
                               </span>
                             )}
                           </span>
-                        </div>
+                        </Link>
                       </td>
 
                       {/* Rating */}
@@ -558,16 +559,18 @@ export default function LeaderboardPage() {
                     <span className="text-[12.5px] font-bold text-[#10b981]">
                       #{gainer.rank}
                     </span>
-                    {gainer.avatarUrl ? (
-                      <img src={gainer.avatarUrl} alt={gainer.username} className="w-7 h-7 rounded-full object-cover shadow-sm shrink-0" />
-                    ) : (
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-inner shrink-0 ${gainer.avatarBg}`}>
-                        {gainer.avatarChar}
-                      </div>
-                    )}
-                    <span className="text-[12.5px] font-semibold text-text-primary truncate max-w-[140px] tracking-[-0.01em]">
-                      {gainer.username}
-                    </span>
+                    <Link href={`/user/${gainer.username}`} className="flex items-center gap-3">
+                      {gainer.avatarUrl ? (
+                        <img src={gainer.avatarUrl} alt={gainer.username} className="w-7 h-7 rounded-full object-cover shadow-sm shrink-0" />
+                      ) : (
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-inner shrink-0 ${gainer.avatarBg}`}>
+                          {gainer.avatarChar}
+                        </div>
+                      )}
+                      <span className="text-[12.5px] font-semibold text-text-primary truncate max-w-[140px] tracking-[-0.01em]">
+                        {gainer.username}
+                      </span>
+                    </Link>
                   </div>
                   <span className="text-[11.5px] font-extrabold text-brand-orange flex items-center gap-0.5">
                     {gainer.diff} <Flame className="w-3 h-3 fill-brand-orange text-brand-orange" />

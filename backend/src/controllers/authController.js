@@ -6,6 +6,7 @@
 
 import User from "../models/User.js";
 import Session from "../models/Session.js";
+import mongoose from "mongoose";
 import { sendTokenResponse } from "../utils/generateToken.js";
 import firebaseAdmin from "../config/firebase.js";
 import { sendEmail } from "../utils/emailService.js";
@@ -692,19 +693,65 @@ export const getLeaderboard = async (req, res) => {
 // -- @route   GET /api/auth/export
 // -- @access  Private
 export const exportData = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('-password -__v');
-    const submissions = await Submission.find({ user: req.user._id }).select('-__v');
-    
-    const exportPayload = {
-      profile: user,
-      submissions,
-      exportedAt: new Date().toISOString()
-    };
-    
-    res.json({ success: true, data: exportPayload });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server Error', error: err.message });
-  }
+  // ── 1. Gather all user data ─────────────────────────────────
+  const user = await User.findById(req.user.id).lean();
+  const sessions = await Session.find({ user: req.user.id }).lean();
+  const submissions = await Submission.find({ user: req.user.id }).lean();
+
+  // ── 2. Format export ──────────────────────────────────────
+  const exportBlob = {
+    generatedAt: new Date().toISOString(),
+    account: user,
+    sessions,
+    activity: submissions,
+  };
+
+  res.status(200).json({
+    success: true,
+    data: exportBlob,
+  });
 };
 
+// ── @desc    Get public profile by ID or username
+// ── @route   GET /api/auth/public/:id
+// ── @access  Public
+export const getPublicProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Support finding by MongoDB ID or username/name match
+    let query = mongoose.isValidObjectId(id) ? { _id: id } : { name: new RegExp(`^${id}$`, "i") };
+    
+    const user = await User.findOne(query).select("name avatar bio socialLinks xp level streak contestRating contestsParticipated highestRank activityMap lastSolvedDate createdAt").lean();
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    
+    // Calculate solved problems count for this user
+    const solvedCount = await Submission.countDocuments({ user: user._id, status: "Accepted" });
+    
+    // Return sanitized public info
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+        socialLinks: user.socialLinks,
+        xp: user.xp,
+        level: user.level,
+        streak: user.streak,
+        contestRating: user.contestRating,
+        contestsParticipated: user.contestsParticipated,
+        highestRank: user.highestRank,
+        joinedAt: user.createdAt,
+        solvedCount,
+        activityMap: user.activityMap || {}
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

@@ -8,7 +8,8 @@ export class DashboardPage extends BasePage {
 
   async verifyDashboardLoaded() {
     // Wait for the app to navigate to dashboard after signup (URL is /)
-    await this.page.waitForURL(/\/$/, { timeout: 20000 });
+    // We don't strictly require end of string in case of query params or hashes
+    await this.page.waitForURL(/.*localhost:3000\/?(\?.*)?(#.*)?$/, { timeout: 20000 });
     // Wait for any dashboard-specific content to appear
     const dashboardContent = this.page
       .locator("text=Problems Solved")
@@ -24,11 +25,11 @@ export class DashboardPage extends BasePage {
   }
 
   async navigateToSettings() {
-    await this.page.locator("aside nav a:has-text('Settings')").first().click();
+    await this.page.locator("aside nav a[href='/settings']").first().click();
   }
 
   async navigateToProfile() {
-    await this.page.locator("aside nav a:has-text('Profile')").first().click();
+    await this.page.locator("aside nav a[href='/profile']").first().click();
   }
 
   async logout() {

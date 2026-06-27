@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Calendar, Clock, Bell, ExternalLink, CalendarDays } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useNotificationStore } from "@/store/notificationStore";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
@@ -16,6 +17,7 @@ interface ContestCardProps {
   initialSecondsLeft: number;
   featured?: boolean;
   type?: "Rated" | "Practice";
+  slug?: string;
 }
 
 export default function ContestCard({
@@ -28,7 +30,9 @@ export default function ContestCard({
   initialSecondsLeft,
   featured = false,
   type = "Rated",
+  slug,
 }: ContestCardProps) {
+  const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
   const [secondsLeft, setSecondsLeft] = useState(initialSecondsLeft);
   const [isReminderSet, setIsReminderSet] = useState(false);
@@ -161,7 +165,13 @@ export default function ContestCard({
         <Button
           variant="primary"
           className="py-2.5 text-center justify-center font-bold w-full"
-          onClick={() => showToast(`Entering lobby for ${title}!`, "success")}
+          onClick={() => {
+            if (slug) {
+              router.push(`/problems/${slug}?mode=contest`);
+            } else {
+              showToast(`Entering lobby for ${title}!`, "success");
+            }
+          }}
         >
           <span>Join Contest</span>
           <ExternalLink className="w-3.5 h-3.5" />

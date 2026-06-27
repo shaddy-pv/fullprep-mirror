@@ -152,7 +152,8 @@ export const enrollInLearningPath = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id);
-    if (!user.enrolledPaths.includes(path._id)) {
+    const alreadyEnrolled = user.enrolledPaths.some(id => id.equals(path._id) || id.toString() === path._id.toString());
+    if (!alreadyEnrolled) {
       user.enrolledPaths.push(path._id);
       await user.save();
     }
