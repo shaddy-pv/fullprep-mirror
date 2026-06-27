@@ -25,25 +25,23 @@ const generateWithRetry = async (prompt, maxRetries = 3) => {
 };
 
 // Helper to check and increment usage limits
-const checkLimit = async (user) => {
-  if (user.role === "admin") return true;
+// Always fetches fresh user from DB to bypass the 30-second auth middleware token cache
+const checkLimit = async (userId) => {
+  const freshUser = await User.findById(userId).select("role subscriptionTier aiHintsUsed aiHintsLastReset");
+  if (!freshUser) return false;
+  if (freshUser.role === "admin") return true;
 
   const now = new Date();
-  const lastReset = new Date(user.aiHintsLastReset || 0);
+  const lastReset = new Date(freshUser.aiHintsLastReset || 0);
 
   // Reset limits daily
   if (now.getTime() - lastReset.getTime() > 24 * 60 * 60 * 1000) {
-    user.aiHintsUsed = 0;
-    user.aiHintsLastReset = now;
-    await user.save({ validateBeforeSave: false });
+    await User.findByIdAndUpdate(userId, { aiHintsUsed: 0, aiHintsLastReset: now });
+    return true; // reset means full limit available
   }
 
-  const limit = user.subscriptionTier === "pro" ? 100 : 5;
-  if (user.aiHintsUsed >= limit) {
-    return false;
-  }
-
-  return true;
+  const limit = freshUser.subscriptionTier === "pro" ? 100 : 5;
+  return freshUser.aiHintsUsed < limit;
 };
 
 const incrementLimit = async (userId) => {
@@ -59,15 +57,22 @@ export const getChatHistory = async (req, res) => {
   const { problemId } = req.params;
   const chat = await AiChat.findOne({ user: req.user._id, problemExternalId: problemId });
 
-  // Calculate current hints remaining
-  const FREE_LIMIT = 5;
-  const PRO_LIMIT = 100;
-  const limit = req.user.subscriptionTier === "pro" ? PRO_LIMIT : FREE_LIMIT;
-  const now = new Date();
-  const lastReset = new Date(req.user.aiHintsLastReset || 0);
-  const usedToday = now.getTime() - lastReset.getTime() > 24 * 60 * 60 * 1000 ? 0 : (req.user.aiHintsUsed || 0);
-  const hintsRemaining = req.user.subscriptionTier === "pro" ? "Unlimited" : Math.max(0, limit - usedToday);
-  
+  // Fetch fresh user to get accurate hints state (bypasses 30s auth cache)
+  const freshUserForHistory = await User.findById(req.user._id).select("role subscriptionTier aiHintsUsed aiHintsLastReset");
+  const isAdmin = freshUserForHistory?.role === "admin";
+  const FREE_LIMIT_H = 5;
+  const PRO_LIMIT_H = 100;
+  let hintsRemaining;
+  if (isAdmin || freshUserForHistory?.subscriptionTier === "pro") {
+    hintsRemaining = "Unlimited";
+  } else {
+    const limit = FREE_LIMIT_H;
+    const now = new Date();
+    const lastReset = new Date(freshUserForHistory?.aiHintsLastReset || 0);
+    const usedToday = now.getTime() - lastReset.getTime() > 24 * 60 * 60 * 1000 ? 0 : (freshUserForHistory?.aiHintsUsed || 0);
+    hintsRemaining = Math.max(0, limit - usedToday);
+  }
+
   if (!chat) {
     return res.status(200).json({ success: true, data: { messages: [] }, hintsRemaining });
   }
@@ -88,8 +93,18 @@ export const sendChatMessage = async (req, res) => {
     return res.status(400).json({ success: false, message: "Message text is required" });
   }
 
-  // Check limits
-  const canProceed = await checkLimit(req.user);
+  // Check limits (fresh DB fetch to bypass auth token cache)
+  const debugUser = await User.findById(req.user._id).select("aiHintsUsed aiHintsLastReset subscriptionTier role");
+  console.log("[AI DEBUG] Before checkLimit - DB state:", {
+    aiHintsUsed: debugUser?.aiHintsUsed,
+    aiHintsLastReset: debugUser?.aiHintsLastReset,
+    msSinceReset: debugUser ? (Date.now() - new Date(debugUser.aiHintsLastReset || 0).getTime()) : null,
+    hoursSinceReset: debugUser ? ((Date.now() - new Date(debugUser.aiHintsLastReset || 0).getTime()) / 3600000).toFixed(1) : null,
+    subscriptionTier: debugUser?.subscriptionTier,
+    role: debugUser?.role,
+  });
+  const canProceed = await checkLimit(req.user._id);
+  console.log("[AI DEBUG] checkLimit returned:", canProceed);
   if (!canProceed) {
     return res.status(403).json({
       success: false,
@@ -152,12 +167,26 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
     const result = await generateWithRetry(systemPrompt);
     let responseText = result.response.text().trim();
     
-    // Sometimes Gemini wraps JSON in markdown block despite instructions
-    if (responseText.startsWith("\`\`\`json")) {
-      responseText = responseText.replace(/^\`\`\`json\n/, "").replace(/\n\`\`\`$/, "");
-    }
+    // Strip all markdown code fences (```json ... ``` or ``` ... ```)
+    responseText = responseText
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
 
-    const aiData = JSON.parse(responseText);
+    let aiData;
+    try {
+      aiData = JSON.parse(responseText);
+    } catch (_parseErr) {
+      // If JSON parse fails, treat the whole response as plain text
+      aiData = {
+        text: responseText || "I encountered an issue formatting my response. Please try again.",
+        approach: [],
+        code: "",
+        language: "",
+        complexity: { time: "", space: "" },
+      };
+    }
 
     // Add assistant message to DB
     const assistantMsg = {
@@ -173,14 +202,31 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
     await chat.save();
 
     // Increment usage limit and get updated count
-    await incrementLimit(req.user._id);
-    const freshUser = await User.findById(req.user._id).select("aiHintsUsed subscriptionTier");
+    // Increment usage limit only for non-admin users
+    const freshUser = await User.findById(req.user._id).select("aiHintsUsed subscriptionTier role");
+    const isAdminUser = freshUser?.role === "admin";
+    const isProUser = freshUser?.subscriptionTier === "pro";
+
+    if (!isAdminUser) {
+      await incrementLimit(req.user._id);
+    }
+
+    const updatedUser = isAdminUser ? freshUser : await User.findById(req.user._id).select("aiHintsUsed subscriptionTier");
     const FREE_LIMIT = 5;
     const PRO_LIMIT = 100;
-    const limit = freshUser.subscriptionTier === "pro" ? PRO_LIMIT : FREE_LIMIT;
-    const hintsRemaining = freshUser.subscriptionTier === "pro"
-      ? "Unlimited"
-      : Math.max(0, limit - freshUser.aiHintsUsed);
+    let hintsRemaining;
+    if (isAdminUser || isProUser) {
+      hintsRemaining = "Unlimited";
+    } else {
+      const limit = FREE_LIMIT;
+      hintsRemaining = Math.max(0, limit - (updatedUser?.aiHintsUsed || 0));
+    }
+    console.log("[AI DEBUG] After increment - DB state:", {
+      aiHintsUsed: updatedUser?.aiHintsUsed,
+      isAdminUser,
+      isProUser,
+      hintsRemaining,
+    });
 
     res.status(200).json({
       success: true,

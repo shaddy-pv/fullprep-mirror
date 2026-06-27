@@ -29,11 +29,14 @@ export interface AiChatResponse {
 }
 
 export const aiService = {
-  getChatHistory: async (problemId: string): Promise<any | null> => {
+  getChatHistory: async (problemId: string): Promise<{ messages: AiMessage[]; hintsRemaining: number | "Unlimited" } | null> => {
     try {
       const response: any = await api.get(`${BASE_URL}/ai/chat/${problemId}`);
-      // Return the full response so the page can access hintsRemaining
-      return response;
+      // Backend returns: { success, data: { messages: [...] }, hintsRemaining }
+      const messages: AiMessage[] = response?.data?.messages || response?.messages || [];
+      // Use ?? so hintsRemaining=0 is respected (not treated as falsy)
+      const hintsRemaining = response?.hintsRemaining ?? 5;
+      return { messages, hintsRemaining };
     } catch (error) {
       console.error("Error fetching AI chat history:", error);
       return null;
@@ -45,10 +48,10 @@ export const aiService = {
     payload: { text: string; userCode?: string; language?: string; problemContext?: string }
   ): Promise<AiChatResponse> => {
     const response: any = await api.post(`${BASE_URL}/ai/chat/${problemId}`, payload);
-    // api.post returns the JSON directly: { success: true, message: {...}, hintsRemaining: ... }
+    // Use ?? (nullish coalescing) so hintsRemaining=0 is NOT treated as falsy
     return { 
-      message: response?.message || response?.data?.message, 
-      hintsRemaining: response?.hintsRemaining || response?.data?.hintsRemaining 
+      message: response?.message ?? response?.data?.message, 
+      hintsRemaining: response?.hintsRemaining ?? response?.data?.hintsRemaining ?? 0
     };
   },
 };

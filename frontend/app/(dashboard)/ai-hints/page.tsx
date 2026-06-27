@@ -47,7 +47,7 @@ export default function AIHintsPage() {
   // Chat message logs state
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hintsRemaining, setHintsRemaining] = useState<number | "Unlimited">(5);
+  const [hintsRemaining, setHintsRemaining] = useState<number | "Unlimited" | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("C++");
   const [isLangOpen, setIsLangOpen] = useState(false);
 
@@ -55,20 +55,30 @@ export default function AIHintsPage() {
   useEffect(() => {
     const fetchHistory = async () => {
       setIsLoading(true);
-      const result: any = await aiService.getChatHistory("general");
-      // getChatHistory returns the full response including hintsRemaining
-      if (result?.hintsRemaining !== undefined) {
+      const result = await aiService.getChatHistory("general");
+      // result is now { messages: [...], hintsRemaining: number | "Unlimited" }
+      if (result !== null) {
         setHintsRemaining(result.hintsRemaining);
-      }
-      const history = result?.messages ? result : result?.data;
-      if (history?.messages && history.messages.length > 0) {
-        setMessages(history.messages);
+        if (result.messages && result.messages.length > 0) {
+          setMessages(result.messages);
+        } else {
+          setMessages([
+            {
+              _id: "1",
+              sender: "assistant",
+              text: "Hi there! I'm FullPrep AI, your coding mentor. Please share the problem description, and any code you've written so far, or just tell me what you're thinking about!",
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            }
+          ]);
+        }
       } else {
+        // API failed, show default state with fallback limit
+        setHintsRemaining(5);
         setMessages([
           {
             _id: "1",
             sender: "assistant",
-            text: "Hello! I am your AI coding assistant. Ask me anything about Data Structures, Algorithms, or code optimization!",
+            text: "Hi there! I'm FullPrep AI, your coding mentor. Please share the problem description, and any code you've written so far, or just tell me what you're thinking about!",
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
         ]);
@@ -124,7 +134,7 @@ export default function AIHintsPage() {
     if (!textToSend.trim() || isLoading) return;
 
     // Block if free limit reached
-    if (hintsRemaining === 0) {
+    if (hintsRemaining !== null && hintsRemaining !== "Unlimited" && hintsRemaining <= 0) {
       showToast("Daily AI Hint limit reached! Upgrade to Pro for more.", "info");
       return;
     }
@@ -555,7 +565,11 @@ export default function AIHintsPage() {
               
               <button className="flex items-center gap-1 bg-card-bg border border-border-card px-2.5 py-1 rounded-lg text-[10px] font-bold text-text-primary shadow-sm hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer">
                 <span className="px-1 py-0.5 rounded bg-[#fff5eb] text-brand-orange font-bold text-[8.5px] uppercase dark:bg-[#ff6a00]/10">
-                  {hintsRemaining === "Unlimited" ? "PRO" : `${hintsRemaining} HINTS LEFT`}
+                  {hintsRemaining === null
+                    ? "LOADING..."
+                    : hintsRemaining === "Unlimited"
+                    ? "PRO"
+                    : `${hintsRemaining} HINTS LEFT`}
                 </span>
                 <ChevronDown className="w-3 h-3 text-text-secondary" />
               </button>
