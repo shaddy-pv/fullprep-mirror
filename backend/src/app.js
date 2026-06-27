@@ -69,8 +69,6 @@ app.use(
 // Skip rate limiting in development — hot reloads burn through limits fast.
 // Only enforce in production where real abuse is possible.
 
-const isDev = process.env.NODE_ENV !== "production";
-
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10), // 15 min
   max: 5000,                                             // Bump limit extremely high
@@ -85,17 +83,6 @@ const limiter = rateLimit({
 
 // Apply rate limit to all /api routes
 app.use("/api", limiter);
-
-// Stricter limit on auth endpoints to mitigate brute-force
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000,
-  skip: () => true,    // DISABLED FOR NOW
-  message: {
-    success: false,
-    message: "Too many authentication attempts. Please try again after 15 minutes.",
-  },
-});
 
 // ── Request Parsing ───────────────────────────────────────────────────────────
 

@@ -94,8 +94,6 @@ export async function executeCodeInSandbox(language, code, stdin, timeoutMs = 50
     const volumeMount = `${tmpDir}:/app`;
 
     const startTime = Date.now();
-    let isCompileError = false;
-
     // 1. Compile if needed
     if (config.getCompileCommand) {
       const compileCmd = config.getCompileCommand(config.filename, 'solution');

@@ -10,7 +10,6 @@
  */
 
 import Submission from "../models/Submission.js";
-import User from "../models/User.js";
 import { judgeTestCase } from "../utils/judgeService.js";
 import { runJudge } from "../workers/submissionWorker.js";
 import fs from "fs/promises";
@@ -22,7 +21,7 @@ const getLocalProblemData = async (externalId) => {
     const filePath = path.resolve(process.cwd(), "..", "codnite_problem", "data", "problems", `${externalId}.json`);
     const content = await fs.readFile(filePath, "utf-8");
     return JSON.parse(content);
-  } catch (err) {
+  } catch {
     return null;
   }
 };

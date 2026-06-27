@@ -14,7 +14,7 @@ export const submissionWorker = new Worker(
   'CodeSubmissions',
   async (job) => {
     console.log(`[Worker] Processing submission job ${job.id}`);
-    const { submissionId, code, language, problemId } = job.data;
+    const { language } = job.data;
     
     // Here we would typically call Judge0 or evaluate the code
     console.log(`[Worker] Executing code for ${language}...`);

@@ -208,7 +208,7 @@ export const optionalProtect = async (req, res, next) => {
         req.sessionId = decoded.sessionId;
       }
     }
-  } catch (err) {
+  } catch {
     // Ignore verification errors for optional protect — user remains anonymous guest
   }
 
