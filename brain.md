@@ -220,6 +220,17 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 27, 2026) — Session 9: CI/CD Pipeline Optimization & Container Portability Fixes
+
+#### DevOps & CI/CD Pipeline
+- **Fixed GitHub Actions Secrets Context Restriction**: Resolved syntax validation error by mapping `SLACK_WEBHOOK_URL` to job-level environment variables in the `notify` job, allowing safe step-level `if` evaluations via `env.SLACK_WEBHOOK_URL`.
+- **Replaced Deprecated Docker Compose Command**: Updated `docker-compose` commands to `docker compose` across the E2E integration workflow jobs to support the native Docker CLI plugin on modern Actions runners.
+- **Removed Proprietary Logging Drivers**: Deleted `logging.driver: awslogs` from [docker-compose.yml](file:///d:/Projects/fullprep-frontend-mirror/docker-compose.yml) backend and frontend configurations, preventing runtime errors in environments without AWS CloudWatch configurations.
+- **Optimized Container Health Checks**: Switched backend container healthchecks to use the database-free `/health` endpoint instead of `/api/health`, preventing cascading startup timeouts during database warmups.
+- **Added Diagnostics Fallbacks**: Added command-level fallbacks in [.github/workflows/ci-cd.yml](file:///d:/Projects/fullprep-frontend-mirror/.github/workflows/ci-cd.yml) to automatically output `docker compose logs` in the CI console if container clusters fail to initialize.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
