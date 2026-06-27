@@ -3,22 +3,20 @@
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import {
-  MapPin,
   Calendar,
-  ChevronDown,
+  Crown,
+  Code2,
+  Zap,
   Trophy,
   Award,
-  Zap,
-  Code2,
   Activity,
-  Crown
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
 import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
+
 
 // Inline icons
 const GithubIcon = ({ className = "w-4 h-4 shrink-0" }: { className?: string }) => (
@@ -60,7 +58,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
           showToast("User not found", "error");
           router.push("/leaderboard");
         }
-      } catch (err) {
+      } catch {
         showToast("Error loading profile", "error");
         router.push("/leaderboard");
       } finally {
@@ -122,6 +120,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
           <div className="flex items-center gap-6 md:w-1/3">
             <div className="relative">
               {profile.avatar ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={profile.avatar} alt={profile.name} className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-card-bg shadow-lg" />
               ) : (
                 <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-br from-brand-orange to-amber-500 flex items-center justify-center text-white text-3xl lg:text-4xl font-bold shadow-lg">

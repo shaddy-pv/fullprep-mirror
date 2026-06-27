@@ -1,23 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Trophy, 
-  TrendingUp, 
-  Zap, 
-  Award, 
-  Info, 
-  ChevronDown, 
-  ChevronRight, 
-  Flame, 
-  Search, 
-  ChevronLeft, 
-  Calendar, 
-  Clock, 
-  Globe, 
-  Code,
-  RefreshCw,
-  SlidersHorizontal
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
@@ -25,9 +12,7 @@ import ContentContainer from "@/components/layout/ContentContainer";
 import PageHeader from "@/components/layout/PageHeader";
 import SectionWrapper from "@/components/layout/SectionWrapper";
 import DashboardCard from "@/components/ui/DashboardCard";
-import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import DifficultyBadge from "@/components/ui/DifficultyBadge";
-import { useNotificationStore } from "@/store/notificationStore";
 import { SubmissionsService } from "@/services/submissions.service";
 import { AuthService } from "@/services/auth.service";
 import { cn } from "@/lib/utils";
@@ -64,19 +49,7 @@ const JavaScriptIcon = () => (
   </svg>
 );
 
-interface SubmissionItem {
-  id: number;
-  problemName: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  status: "Accepted" | "Wrong Answer" | "Time Limit Exceeded" | "Runtime Error" | "Compilation Error";
-  language: "Python 3" | "C++" | "Java" | "JavaScript";
-  runtime: string;
-  memory: string;
-  submittedAt: string;
-}
-
 export default function SubmissionsPage() {
-  const showToast = useNotificationStore((state) => state.showToast);
 
   const [activeMainTab, setActiveMainTab] = useState("All Submissions");
   const [activeLanguage, setActiveLanguage] = useState("All Languages");
@@ -92,7 +65,6 @@ export default function SubmissionsPage() {
   const [statsData, setStatsData] = useState<any>(null);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 

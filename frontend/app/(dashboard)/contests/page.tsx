@@ -14,6 +14,8 @@ import RatingTrendChart from "@/components/contests/RatingTrendChart";
 import { ContestsService, ContestData } from "@/services/contests.service";
 import { useAuthStore } from "@/store/authStore";
 
+
+
 export default function ContestsPage() {
   const [activeTab, setActiveTab] = useState("All Contests");
   const [searchVal, setSearchVal] = useState("");
@@ -34,8 +36,8 @@ export default function ContestsPage() {
         ]);
         setDailyContest(daily);
         setWeeklyContest(weekly);
-      } catch (err) {
-        console.error("Failed to load contests:", err);
+      } catch (_err) {
+        console.error("Failed to load contests:", _err);
       } finally {
         setLoading(false);
       }
@@ -284,7 +286,7 @@ export default function ContestsPage() {
                         <Clock className="w-3.5 h-3.5 text-brand-orange" />
                       </div>
                       <p className="text-[12px] text-text-secondary leading-relaxed">
-                        Don't get stuck. If you spend &gt;30 mins on a bug, move to the next problem.
+                        Don&apos;t get stuck. If you spend &gt;30 mins on a bug, move to the next problem.
                       </p>
                     </div>
                   </div>

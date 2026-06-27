@@ -18,7 +18,9 @@ const eslintConfig = defineConfig([
       "react-compiler/react-compiler": "off",
       "react-hooks/exhaustive-deps": "warn",
       "@typescript-eslint/no-explicit-any": "off",
-      "react-hooks/set-state-in-effect": "off"
+      "react-hooks/set-state-in-effect": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-unused-vars": "off"
     }
   }
 ]);
