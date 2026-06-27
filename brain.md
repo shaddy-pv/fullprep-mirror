@@ -246,6 +246,13 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 27, 2026) — Session 12: Next.js Build-Time Environment Variable Inlining Fix
+
+#### DevOps & CI/CD Pipeline
+- **Fixed Next.js Build-Time Environment Variable Inlining**: Configured `docker-compose.yml` to pass `NEXT_PUBLIC_API_BASE_URL` as a build argument (`args`) to the frontend service, and declared the matching `ARG` and `ENV` in `frontend/Dockerfile`. This ensures Next.js correctly inlines the local backend API URL (`http://localhost:5000/api`) during compilation on GHA, rather than falling back to the hardcoded production Render URL, preventing cross-environment E2E test failures.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
