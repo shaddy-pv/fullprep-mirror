@@ -231,6 +231,14 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 27, 2026) — Session 10: E2E Test Suite Optimization & Portability
+
+#### DevOps & E2E Testing
+- **Fixed Hardcoded E2E File System Path**: Resolved file upload path vulnerability in `profile-settings.spec.ts` that hardcoded a Windows `d:/` absolute path. Replaced with workspace-relative resolving (`path.resolve("..", "photos", "...")`) to guarantee execution safety on Linux CI/CD environments.
+- **Audited Playwright Selector Health**: Audited all 13 E2E test cases, page objects, and assertions. Confirmed 100% alignment with current frontend/backend dev server interfaces with **13 / 13 tests fully passing**.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
