@@ -249,10 +249,12 @@ export const getSubmissions = async (req, res) => {
   const skip     = (pageNum - 1) * limitNum;
 
   const filter = {};
-  if (req.user.role !== "admin") {
-    filter.user = req.user._id;
-  } else if (req.query.userId) {
+  // Always default to current user's submissions.
+  // Admins can view any user's submissions by passing ?userId=xxx (for admin dashboard).
+  if (req.user.role === "admin" && req.query.userId) {
     filter.user = req.query.userId;
+  } else {
+    filter.user = req.user._id;
   }
   
   if (status) {
@@ -307,7 +309,9 @@ export const getSubmission = async (req, res) => {
     query.user = req.user._id;
   }
 
-  const submission = await Submission.findOne(query).populate("user", "name email avatar");
+  const submission = await Submission.findOne(query)
+    .populate("user", "name email avatar")
+    .populate("problem", "difficulty title");
 
   if (!submission) {
     return res.status(404).json({
@@ -316,10 +320,14 @@ export const getSubmission = async (req, res) => {
     });
   }
 
+  // Return full object WITH code (toPublicJSON strips code — only use that for list views)
+  const obj = submission.toObject({ virtuals: true });
+  delete obj.__v;
+
   res.status(200).json({
     success: true,
     message: "Submission fetched successfully.",
-    data:    submission.toPublicJSON(),
+    data: obj,
   });
 };
 

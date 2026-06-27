@@ -6,6 +6,7 @@
 
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
+import LearningPath from "../models/LearningPath.js";
 import { cacheManager } from "../utils/cacheManager.js";
 
 // ── @desc    Get aggregated stats for the logged-in user
@@ -228,4 +229,112 @@ export const getUserStats = async (req, res) => {
 
   await cacheManager.set(`stats:${cacheKey}`, responseData, 10); // 10 seconds TTL
   res.status(200).json(responseData);
+};
+
+// ── @desc    Get stats for the dashboard sidebar (Weekly Goal, Achievements, Next)
+// ── @route   GET /api/auth/sidebar-stats
+// ── @access  Private
+export const getSidebarStats = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("enrolledPaths").lean();
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // 1. Weekly Goal Logic (Monday to Sunday)
+    const now = new Date();
+    // Get Monday of current week
+    const currentDay = now.getDay();
+    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // adjust when day is sunday
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+
+    const weeklyActivity = [];
+    let weekTotal = 0;
+    const activityMap = user.activityMap || {};
+
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(monday);
+      dayDate.setDate(monday.getDate() + i);
+      const dateStr = dayDate.toISOString().slice(0, 10);
+      const done = (activityMap[dateStr] && activityMap[dateStr] > 0) ? true : false;
+      if (done) weekTotal += activityMap[dateStr];
+      weeklyActivity.push({ done, dateStr });
+    }
+
+    // 2. Achievements Logic
+    const achievements = [];
+    const solvedCount = user.solvedProblems?.length || 0;
+    
+    if (solvedCount >= 100) {
+      achievements.push({ id: "problem_solver", title: "Problem Solver", desc: "Solved 100 problems", type: "success" });
+    } else if (solvedCount >= 50) {
+      achievements.push({ id: "halfway", title: "Half Century", desc: "Solved 50 problems", type: "success" });
+    } else if (solvedCount >= 10) {
+      achievements.push({ id: "getting_started", title: "Getting Started", desc: "Solved 10 problems", type: "success" });
+    }
+
+    if (user.streak >= 10) {
+      achievements.push({ id: "streak_master", title: "Streak Master", desc: "Maintain a 10 day streak", type: "warning" });
+    } else if (user.streak >= 3) {
+      achievements.push({ id: "on_fire", title: "On Fire", desc: "Maintain a 3 day streak", type: "warning" });
+    }
+
+    // Add dummy explorer if nothing else to ensure something shows
+    if (achievements.length === 0) {
+       achievements.push({ id: "novice", title: "Novice", desc: "Began your journey", type: "info" });
+    }
+
+    // 3. Recommended Next Logic
+    let recommendedNext = null;
+    const enrolledPaths = user.enrolledPaths || [];
+    
+    // Find first enrolled path where user progress < 100%
+    for (const path of enrolledPaths) {
+      if (!path.modules) continue;
+      
+      let pathFinished = true;
+      let nextModule = null;
+      
+      for (const mod of path.modules) {
+        // Count how many problems in this mod are solved
+        const modTotal = mod.problems.length;
+        let modSolved = 0;
+        for (const probId of mod.problems) {
+          if (user.solvedProblems?.includes(probId)) {
+            modSolved++;
+          }
+        }
+        if (modSolved < modTotal) {
+          nextModule = {
+            title: mod.title,
+            problemsLeft: modTotal - modSolved,
+            pathId: path.id
+          };
+          pathFinished = false;
+          break; // Found the next module to recommend
+        }
+      }
+
+      if (!pathFinished && nextModule) {
+        recommendedNext = nextModule;
+        break;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        weeklyGoal: {
+          activity: weeklyActivity,
+          totalSolvedThisWeek: weekTotal,
+          target: 10 // target 10 problems a week
+        },
+        achievements,
+        recommendedNext
+      }
+    });
+
+  } catch (error) {
+    console.error("Error in getSidebarStats:", error);
+    res.status(500).json({ success: false, message: "Server error fetching sidebar stats" });
+  }
 };

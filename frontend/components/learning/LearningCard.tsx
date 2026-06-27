@@ -2,16 +2,19 @@
 
 import React from "react";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import DashboardCard from "../ui/DashboardCard";
 import ProgressRing from "./ProgressRing";
 import { LearningPath } from "@/types/learning";
+import * as Icons from "lucide-react";
 
 interface LearningCardProps {
   path: LearningPath;
 }
 
 export default function LearningCard({ path }: LearningCardProps) {
-  const IconComponent = path.icon;
+  // Map icon string to Lucide component
+  const IconComponent = (typeof path.icon === "string" ? (Icons as any)[path.icon] : path.icon) || Icons.BookOpen;
 
   return (
     <DashboardCard 
@@ -81,12 +84,14 @@ export default function LearningCard({ path }: LearningCardProps) {
         </div>
 
         {/* Outlined Continue button */}
-        <button
-          className="w-full h-10 border border-[#e7e5df] dark:border-white/[0.06] rounded-xl text-[12.5px] font-bold text-text-primary hover:text-brand-orange hover:border-brand-orange/40 hover:bg-brand-orange/[0.02] flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer shadow-sm focus:outline-none"
-        >
-          <span>Continue Learning</span>
-          <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 duration-300" />
-        </button>
+        <Link href={`/learning-paths/${path.id}`} className="w-full">
+          <button
+            className="w-full h-10 border border-[#e7e5df] dark:border-white/[0.06] rounded-xl text-[12.5px] font-bold text-text-primary hover:text-brand-orange hover:border-brand-orange/40 hover:bg-brand-orange/[0.02] flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer shadow-sm focus:outline-none"
+          >
+            <span>{path.progress > 0 ? "Continue Learning" : "Start Learning"}</span>
+            <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 duration-300" />
+          </button>
+        </Link>
       </div>
     </DashboardCard>
   );

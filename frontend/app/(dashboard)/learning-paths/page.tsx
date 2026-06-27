@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useTransition, Suspense } from "react";
+import React, { useState, useTransition, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { LearningPathsService } from "@/services/learning-paths.service";
+import { StatsService, SidebarStatsResponse } from "@/services/stats.service";
 import ContentContainer from "@/components/layout/ContentContainer";
 import PageHeader from "@/components/layout/PageHeader";
 import DashboardCard from "@/components/ui/DashboardCard";
@@ -32,123 +34,8 @@ import Achievements from "@/components/learning/Achievements";
 import { LearningPath } from "@/types/learning";
 
 // ----------------------------------------------------
-// Interfaces and Mocks
+// Interfaces and Constants
 // ----------------------------------------------------
-
-const LEARNING_PATHS_MOCK: LearningPath[] = [
-  {
-    id: "dsa-mastery",
-    title: "DSA Mastery",
-    description: "Master Data Structures and Algorithms step by step.",
-    level: "Intermediate",
-    progress: 72,
-    problemsCount: 152,
-    topicsCount: 24,
-    estimatedTime: "45h",
-    color: "#10b981", // Green
-    icon: Code2,
-    popularity: 98,
-    updatedAt: 1716800000000,
-  },
-  {
-    id: "dynamic-programming",
-    title: "Dynamic Programming",
-    description: "Learn DP concepts with patterns and practice.",
-    level: "Advanced",
-    progress: 48,
-    problemsCount: 98,
-    topicsCount: 18,
-    estimatedTime: "32h",
-    color: "#8b5cf6", // Purple
-    icon: Cpu,
-    popularity: 92,
-    updatedAt: 1716700000000,
-  },
-  {
-    id: "graph-algorithms",
-    title: "Graph Algorithms",
-    description: "Explore graphs, traversals, shortest paths and more.",
-    level: "Advanced",
-    progress: 36,
-    problemsCount: 76,
-    topicsCount: 14,
-    estimatedTime: "28h",
-    color: "#3b82f6", // Blue
-    icon: Network,
-    popularity: 88,
-    updatedAt: 1716600000000,
-  },
-  {
-    id: "frontend-developer",
-    title: "Frontend Developer",
-    description: "HTML, CSS, JavaScript and modern frameworks.",
-    level: "Beginner",
-    progress: 62,
-    problemsCount: 120,
-    topicsCount: 20,
-    estimatedTime: "40h",
-    color: "#ff6a00", // Brand Orange
-    icon: Monitor,
-    popularity: 95,
-    updatedAt: 1716500000000,
-  },
-  {
-    id: "backend-developer",
-    title: "Backend Developer",
-    description: "Learn server-side development, APIs and databases.",
-    level: "Intermediate",
-    progress: 30,
-    problemsCount: 110,
-    topicsCount: 22,
-    estimatedTime: "38h",
-    color: "#14b8a6", // Teal
-    icon: Server,
-    popularity: 89,
-    updatedAt: 1716400000000,
-  },
-  {
-    id: "system-design",
-    title: "System Design",
-    description: "Design scalable systems and prepare for high-level rounds.",
-    level: "Advanced",
-    progress: 18,
-    problemsCount: 64,
-    topicsCount: 12,
-    estimatedTime: "26h",
-    color: "#f43f5e", // Crimson/Rose
-    icon: Layers,
-    popularity: 96,
-    updatedAt: 1716300000000,
-  },
-  {
-    id: "python-for-interviews",
-    title: "Python for Interviews",
-    description: "Essential Python concepts for coding interviews.",
-    level: "Beginner",
-    progress: 55,
-    problemsCount: 86,
-    topicsCount: 16,
-    estimatedTime: "24h",
-    color: "#2563eb", // Python Indigo/Blue
-    icon: Code2,
-    popularity: 85,
-    updatedAt: 1716200000000,
-  },
-  {
-    id: "cracking-the-coding-interview",
-    title: "Cracking the Coding Interview",
-    description: "Top interview problems asked by FAANG companies.",
-    level: "Intermediate",
-    progress: 41,
-    problemsCount: 105,
-    topicsCount: 20,
-    estimatedTime: "35h",
-    color: "#eab308", // Yellow/Gold
-    icon: BookOpen,
-    popularity: 97,
-    updatedAt: 1716100000000,
-  },
-];
 
 const CATEGORIES = ["All", "Beginner", "Intermediate", "Advanced"] as const;
 const SORT_OPTIONS = [
@@ -157,8 +44,6 @@ const SORT_OPTIONS = [
   { label: "Recently Updated", value: "recent" },
 ] as const;
 
-// ----------------------------------------------------
-// Page Content Component
 // ----------------------------------------------------
 
 function LearningPathsContent() {
@@ -174,6 +59,42 @@ function LearningPathsContent() {
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [, startTransition] = useTransition();
 
+  const [paths, setPaths] = useState<LearningPath[]>([]);
+  const [sidebarStats, setSidebarStats] = useState<SidebarStatsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch stats and paths on mount
+  useEffect(() => {
+    const fetchPathsAndStats = async () => {
+      setLoading(true);
+      try {
+        const [res, statsRes] = await Promise.all([
+          LearningPathsService.getPaths({
+            category: activeCategory !== "All" ? activeCategory : undefined,
+            sort: activeSort,
+            search: searchVal || undefined
+          }),
+          StatsService.getSidebarStats().catch(err => {
+             console.error("Stats error", err);
+             return null;
+          })
+        ]);
+        
+        if (res.success) {
+          setPaths(res.data);
+        }
+        if (statsRes) {
+          setSidebarStats(statsRes);
+        }
+      } catch (err) {
+        console.error("Error fetching learning paths:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPathsAndStats();
+  }, [activeCategory, activeSort, searchVal]);
+
   const updateUrlParam = (key: string, value: string) => {
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString());
@@ -186,33 +107,8 @@ function LearningPathsContent() {
     });
   };
 
-  // Filter & Sort computation
-  const filteredPaths = LEARNING_PATHS_MOCK.filter((path) => {
-    // 1. Search filter
-    if (searchVal) {
-      const query = searchVal.toLowerCase();
-      const matchTitle = path.title.toLowerCase().includes(query);
-      const matchDesc = path.description.toLowerCase().includes(query);
-      if (!matchTitle && !matchDesc) return false;
-    }
-
-    // 2. Category filter
-    if (activeCategory !== "All" && path.level !== activeCategory) {
-      return false;
-    }
-
-    return true;
-  }).sort((a, b) => {
-    // 3. Sorting
-    if (activeSort === "popular") {
-      return b.popularity - a.popularity;
-    }
-    if (activeSort === "recent") {
-      return b.updatedAt - a.updatedAt;
-    }
-    // Recommended / default sorting: DSA mastery first, then popular
-    return b.popularity - a.popularity;
-  });
+  // Filter & Sort computation (already handled by API, just slice for UI layout)
+  const filteredPaths = paths;
 
   // Separate top 6 paths (to display in a 3-column layout) and bottom 2 paths (to display in a 2-column layout)
   const topPaths = filteredPaths.slice(0, 6);
@@ -230,12 +126,11 @@ function LearningPathsContent() {
       </ErrorBoundary>
 
       {/* Main Responsive Grid Layout: Left Column (Paths content) + Right Column (Sidebar widget stack) */}
-      <div className="relative group mt-6">
-        <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-          <span className="px-4 py-2 rounded-xl bg-card-bg border border-border-card text-[14px] font-bold text-brand-orange shadow-xl">Coming Soon</span>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start w-full select-none opacity-60 pointer-events-none">
+      <div className="relative mt-6">
+        {loading ? (
+          <div className="py-20 text-center"><span className="text-text-secondary">Loading learning paths...</span></div>
+        ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6 items-start w-full">
 
           {/* Left Side: Main Learning Paths and Filters */}
           <div className="flex flex-col gap-6 min-w-0">
@@ -364,7 +259,7 @@ function LearningPathsContent() {
                     </div>
                     <span className="text-[13px] text-text-secondary font-medium">Paths Enrolled</span>
                   </div>
-                  <span className="text-[14px] font-bold text-text-primary">4</span>
+                  <span className="text-[14px] font-bold text-text-primary">{paths.filter(p => p.isEnrolled).length}</span>
                 </div>
 
                 {/* Item 2 */}
@@ -375,7 +270,11 @@ function LearningPathsContent() {
                     </div>
                     <span className="text-[13px] text-text-secondary font-medium">Total Progress</span>
                   </div>
-                  <span className="text-[14px] font-bold text-[#10b981]">46%</span>
+                  <span className="text-[14px] font-bold text-[#10b981]">
+                    {paths.filter(p => p.isEnrolled).length > 0 
+                      ? Math.round(paths.filter(p => p.isEnrolled).reduce((acc, p) => acc + p.progress, 0) / paths.filter(p => p.isEnrolled).length)
+                      : 0}%
+                  </span>
                 </div>
 
                 {/* Item 3 */}
@@ -386,7 +285,7 @@ function LearningPathsContent() {
                     </div>
                     <span className="text-[13px] text-text-secondary font-medium">Problems Solved</span>
                   </div>
-                  <span className="text-[14px] font-bold text-text-primary">342</span>
+                  <span className="text-[14px] font-bold text-text-primary">{paths[0]?.solvedCount || 0}</span>
                 </div>
 
                 {/* Item 4 */}
@@ -403,35 +302,42 @@ function LearningPathsContent() {
             </DashboardCard>
 
             {/* Card 2: Weekly Goal */}
-            <WeeklyGoal />
+            <WeeklyGoal 
+              activity={sidebarStats?.weeklyGoal?.activity}
+              totalSolvedThisWeek={sidebarStats?.weeklyGoal?.totalSolvedThisWeek}
+              target={sidebarStats?.weeklyGoal?.target}
+            />
 
             {/* Card 3: Recommended Next */}
-            <DashboardCard className="p-5 flex flex-col gap-3.5 border border-border-card bg-card-bg shadow-sm">
-              <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
-                Recommended Next
-              </h3>
+            {sidebarStats?.recommendedNext && (
+              <DashboardCard className="p-5 flex flex-col gap-3.5 border border-border-card bg-card-bg shadow-sm">
+                <h3 className="text-[15px] font-bold text-text-primary tracking-[-0.015em] leading-none mb-1">
+                  Recommended Next
+                </h3>
 
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
-                  <GitMerge className="w-4.5 h-4.5" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center">
+                    <GitMerge className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-[13.5px] font-bold text-text-primary leading-tight">{sidebarStats.recommendedNext.title}</span>
+                    <span className="text-[11px] text-text-secondary font-semibold mt-0.5">{sidebarStats.recommendedNext.problemsLeft} Problems Left</span>
+                  </div>
                 </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[13.5px] font-bold text-text-primary leading-tight">Trees in DSA</span>
-                  <span className="text-[11px] text-text-secondary font-semibold mt-0.5">7 Problems</span>
-                </div>
-              </div>
 
-              <Button variant="primary" className="w-full h-9 mt-0.5 rounded-xl text-[12.5px] font-bold flex items-center justify-center gap-1.5 transition-all">
-                <span>Start Learning</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
-            </DashboardCard>
+                <Button variant="primary" className="w-full mt-1 h-[42px] font-bold"
+                  onClick={() => router.push(`/learning-paths/${sidebarStats.recommendedNext?.pathId}`)}>
+                  Continue Learning <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </DashboardCard>
+            )}
 
             {/* Card 4: Achievements */}
-            <Achievements />
+            <Achievements achievements={sidebarStats?.achievements} />
 
           </div>
         </div>
+        )}
       </div>
     </ContentContainer>
   );

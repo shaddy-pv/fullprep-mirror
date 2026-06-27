@@ -33,13 +33,19 @@ test.describe("Problems Page E2E Tests", () => {
     const countBefore = await rows.count();
     expect(countBefore).toBeGreaterThan(0);
 
-    // Search for a specific seeded problem "Luntik"
-    await problemsPage.searchProblems("Luntik");
+    // Get the title of the first problem dynamically to search for it
+    const firstRow = rows.first();
+    const firstRowText = await firstRow.innerText();
+    // The title is usually the first line or part of the innerText. We can split by newline.
+    const titleToSearch = firstRowText.split('\\n')[0].trim();
+    
+    // Search for this specific problem
+    await problemsPage.searchProblems(titleToSearch);
     
     // Check search results
     const filteredRows = await problemsPage.getProblemsList();
-    const firstRowText = await filteredRows.first().innerText();
-    expect(firstRowText).toContain("Luntik");
+    const filteredFirstRowText = await filteredRows.first().innerText();
+    expect(filteredFirstRowText).toContain(titleToSearch);
   });
 
   test("should filter by difficulty and topic", async ({ page }) => {

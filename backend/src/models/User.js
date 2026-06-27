@@ -89,6 +89,13 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Map of Date strings (YYYY-MM-DD) to number of problems solved
+    activityMap: {
+      type: Map,
+      of: Number,
+      default: {},
+    },
+
     level: {
       type: Number,
       default: 1,
@@ -181,6 +188,14 @@ const userSchema = new mongoose.Schema(
     // Array of problemExternalIds the user has bookmarked.
     bookmarks: {
       type: [String],
+      default: [],
+      index: true,
+    },
+
+    // ── Enrolled Learning Paths ───────────────────────────────────
+    // Array of LearningPath ObjectIds the user has explicitly started.
+    enrolledPaths: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "LearningPath" }],
       default: [],
       index: true,
     },

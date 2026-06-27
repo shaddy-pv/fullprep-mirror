@@ -10,9 +10,25 @@ export interface LearningPath {
   topicsCount: number;
   estimatedTime: string;
   color: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: string | React.ComponentType<{ className?: string }>;
   popularity: number;
-  updatedAt: number;
+  updatedAt: string | number;
+  isPro?: boolean;
+  isEnrolled?: boolean;
+  solvedCount?: number;
+  modules?: Array<{
+    _id?: string;
+    title: string;
+    description: string;
+    problems: Array<{
+      externalId: string;
+      title: string;
+      difficulty: string;
+      acceptanceRate: number;
+      tags: string[];
+      status: "SOLVED" | "UNSOLVED";
+    }>;
+  }>;
 }
 
 export interface AchievementItem {

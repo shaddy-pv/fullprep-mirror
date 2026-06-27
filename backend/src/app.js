@@ -26,6 +26,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import { requestTracker } from "./middleware/requestTracker.js";
 import { logger }         from "./utils/logger.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import learningPathRoutes from "./routes/learningPathRoutes.js";
 
 const app = express();
 
@@ -116,13 +117,14 @@ import { checkSystemSettings } from "./middleware/settingsMiddleware.js";
 app.use("/api", checkSystemSettings);
 
 app.use("/api",          healthRoutes);
-app.use("/api/auth",     authRoutes);
-app.use("/api/users",    userRoutes);
-app.use("/api/problems", problemRoutes);
-app.use("/api/submissions", submissionRoutes);
-app.use("/api/settings",      settingsRoutes);
+app.use("/api/auth",         authRoutes);
+app.use("/api/problems",     problemRoutes);
+app.use("/api/submissions",   submissionRoutes);
+app.use("/api/users",        userRoutes);
+app.use("/api/settings",     settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/ai", aiRoutes);
+app.use("/api/ai",           aiRoutes);
+app.use("/api/learning-paths", learningPathRoutes);
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 

@@ -105,12 +105,17 @@ export async function runJudge({ submissionId, language, code, testCases, proble
         // daysDiff === 0 — already solved today, just update lastSolvedDate time
         streakUpdate = { lastSolvedDate: now };
       }
+      
+      const activityKey = `activityMap.${todayStr}`;
       // ─────────────────────────────────────────────────────────────────
 
       if (!alreadySolved) {
         // First time solving this problem — award XP and push to solvedProblems
         const xpInc = 10;
-        const baseUpdate = { $inc: { xp: xpInc }, $push: { solvedProblems: problemExternalId?.trim() } };
+        const baseUpdate = { 
+          $inc: { xp: xpInc, [activityKey]: 1 }, 
+          $push: { solvedProblems: problemExternalId?.trim() } 
+        };
 
         // Merge streak fields into the update
         if (streakUpdate.$inc) {
@@ -134,9 +139,10 @@ export async function runJudge({ submissionId, language, code, testCases, proble
 
         logger.info(`[Judge] User ${userId} solved ${problemExternalId} — +${xpInc} XP, streak updated`);
       } else {
-        // Already solved — just update streak (no duplicate XP)
-        await User.findByIdAndUpdate(userId, streakUpdate);
-        logger.info(`[Judge] User ${userId} re-submitted ${problemExternalId} — streak updated`);
+        // Already solved — just update streak and activity map (no duplicate XP)
+        const repeatUpdate = { ...streakUpdate, $inc: { [activityKey]: 1 } };
+        await User.findByIdAndUpdate(userId, repeatUpdate);
+        logger.info(`[Judge] User ${userId} re-submitted ${problemExternalId} — streak & activity updated`);
       }
     }
 

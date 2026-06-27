@@ -31,7 +31,7 @@ import {
   revokeSession,
   exportData,
 } from "../controllers/authController.js";
-import { getUserStats } from "../controllers/statsController.js";
+import { getUserStats, getSidebarStats } from "../controllers/statsController.js";
 import { protect, restrictTo, optionalProtect } from "../middleware/authMiddleware.js";
 
 const router = Router();
@@ -53,6 +53,7 @@ router.use(protect);
 
 router.get("/me", getMe);
 router.get("/stats", getUserStats);
+router.get("/sidebar-stats", getSidebarStats);
 router.get("/leaderboard", getLeaderboard);
 router.patch("/update-profile", updateProfile);
 router.patch("/update-password", updatePassword);
@@ -72,3 +73,4 @@ router.get("/admin-check", restrictTo("admin"), (req, res) => {
 });
 
 export default router;
+
