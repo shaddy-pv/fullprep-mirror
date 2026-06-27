@@ -52,7 +52,7 @@ test.describe("Profile and Settings E2E Tests", () => {
     const settingsPage = new SettingsPage(page);
 
     // Locate sample image in workspace
-    const imagePath = path.resolve("d:/Projects/fullprep-mirror/photos/Screenshot 2026-06-16 000715.png");
+    const imagePath = path.resolve("..", "photos", "Screenshot 2026-06-16 000715.png");
 
     // Trigger upload
     await settingsPage.uploadAvatar(imagePath);
