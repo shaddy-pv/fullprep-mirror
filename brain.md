@@ -239,6 +239,13 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 27, 2026) — Session 11: Docker Container Loopback Connection Refusal Fix
+
+#### DevOps & CI/CD Pipeline
+- **Fixed Container Loopback Hostname Resolution**: Replaced `localhost` with `127.0.0.1` in all container health check URLs across [docker-compose.yml](file:///d:/Projects/fullprep-frontend-mirror/docker-compose.yml), [backend/Dockerfile](file:///d:/Projects/fullprep-frontend-mirror/backend/Dockerfile), and [frontend/Dockerfile](file:///d:/Projects/fullprep-frontend-mirror/frontend/Dockerfile). This prevents Node's internal DNS resolver from incorrectly resolving loopbacks to IPv6 (`::1`), avoiding connection refusal errors on Docker network interfaces.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
