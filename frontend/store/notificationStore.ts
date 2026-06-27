@@ -3,12 +3,12 @@ import { create } from "zustand";
 interface ToastNotification {
   show: boolean;
   message: string;
-  type: "success" | "info";
+  type: "success" | "info" | "error";
 }
 
 interface NotificationState {
   toast: ToastNotification;
-  showToast: (message: string, type?: "success" | "info") => void;
+  showToast: (message: string, type?: "success" | "info" | "error") => void;
   hideToast: () => void;
 }
 

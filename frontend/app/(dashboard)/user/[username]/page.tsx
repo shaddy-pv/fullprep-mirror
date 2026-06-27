@@ -83,7 +83,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   // Process activity data for heatmap
   const rawActivityMap = profile.activityMap || {};
   const today = new Date();
-  const yearData = [];
+  const yearData: { date: string; count: number }[] = [];
   for (let i = 180; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);

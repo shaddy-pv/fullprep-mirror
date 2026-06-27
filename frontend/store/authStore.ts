@@ -23,6 +23,9 @@ interface UserProfile {
   bookmarks?: string[];
   location?: string;
   backupEmail?: string;
+  contestRating?: number;
+  highestRank?: number;
+  contestsParticipated?: number;
   createdAt?: string;
   preferences?: any;
   notifs?: any;

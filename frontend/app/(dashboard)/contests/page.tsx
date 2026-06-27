@@ -120,7 +120,7 @@ export default function ContestsPage() {
   const contestsList = buildContestCards();
   const filteredContests = contestsList.filter((c) =>
     c.title.toLowerCase().includes(searchVal.toLowerCase()) ||
-    c.tags.some((t) => t.toLowerCase().includes(searchVal.toLowerCase()))
+    c.tags.some((t: string) => t.toLowerCase().includes(searchVal.toLowerCase()))
   );
 
   return (
