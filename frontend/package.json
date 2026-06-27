@@ -6,7 +6,7 @@
     "dev": "node --max-http-header-size=256000 ./node_modules/next/dist/bin/next dev --webpack",
     "build": "node --max-http-header-size=256000 ./node_modules/next/dist/bin/next build --webpack",
     "start": "node --max-http-header-size=256000 ./node_modules/next/dist/bin/next start",
-    "lint": "eslint --max-warnings -1",
+    "lint": "eslint",
     "type-check": "tsc --noEmit",
     "test:e2e": "playwright test"
   },

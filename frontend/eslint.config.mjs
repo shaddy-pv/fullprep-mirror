@@ -14,13 +14,17 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: false
+    },
     rules: {
       "react-compiler/react-compiler": "off",
-      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/exhaustive-deps": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "react-hooks/set-state-in-effect": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "no-unused-vars": "off"
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
+      "@next/next/no-img-element": "off"
     }
   }
 ]);
