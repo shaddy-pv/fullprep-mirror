@@ -51,6 +51,7 @@ const syncJobSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    suppressReservedKeysWarning: true
   }
 );
 
