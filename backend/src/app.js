@@ -28,6 +28,7 @@ import { logger }         from "./utils/logger.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import learningPathRoutes from "./routes/learningPathRoutes.js";
 import contestRoutes from "./routes/contestRoutes.js";
+import friendRoutes from "./routes/friendRoutes.js";
 
 const app = express();
 
@@ -126,9 +127,10 @@ app.use("/api/settings",     settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai",           aiRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
-app.use("/api/contests", contestRoutes);
+app.use("/api/contests",      contestRoutes);
+app.use("/api/friends",       friendRoutes);
 
-// ── 404 Handler ───────────────────────────────────────────────────────────────
+// ── Fallback 404 Handler ───────────────────────────────────────────────────────────────
 
 app.use((req, res) => {
   res.status(404).json({

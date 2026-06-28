@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation";
 import {
   MapPin,
   Calendar,
+  Settings,
+  Activity,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Trophy,
   Award,
   Zap,
+  BookOpen,
   Code2,
-  Activity,
+  Users,
+  UserPlus,
   Crown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +27,7 @@ import { useAuthStore, getCurrentStreak } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
 import { ProblemsService } from "@/services/problems.service";
 import { BookmarksService } from "@/services/bookmarks.service";
+import { FriendsService } from "@/services/friends.service";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────
@@ -175,11 +180,32 @@ export default function ProfilePage() {
   const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
   const [bookmarkedProblems, setBookmarkedProblems] = useState<any[]>([]);
   const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
   // Settings Tab states
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("India");
   const [editBio, setEditBio] = useState("");
+
+  const loadFriendsData = async () => {
+    try {
+      const [friendsRes, requestsRes] = await Promise.all([
+        FriendsService.getFriends(),
+        FriendsService.getPendingRequests()
+      ]);
+      if (friendsRes.success) setFriends(friendsRes.data);
+      if (requestsRes.success) setPendingRequests(requestsRes.data);
+    } catch (err) {
+      console.error("Failed to load friends", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "friends") {
+      loadFriendsData();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -250,6 +276,7 @@ export default function ProfilePage() {
     { id: "activity", name: "Activity" },
     { id: "submissions", name: "Submissions" },
     { id: "bookmarks", name: "Bookmarks" },
+    { id: "friends", name: "Friends" },
     { id: "settings", name: "Settings" },
   ];
 
@@ -876,6 +903,90 @@ export default function ProfilePage() {
                     <div className="py-8 text-center text-text-secondary text-[12px]">No bookmarked problems found.</div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ──────────────────────────────────────────
+              FRIENDS TAB
+              ────────────────────────────────────────── */}
+          {activeTab === "friends" && (
+            <div className={cn(cardBase, "overflow-hidden")}>
+              <div className="p-5 flex flex-col gap-6">
+                
+                {/* Pending Requests */}
+                {pendingRequests && pendingRequests.length > 0 && (
+                  <div>
+                    <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none px-1 mb-2">Pending Requests</h3>
+                    <div className="flex flex-col border-t border-white/[0.06] mt-1">
+                      {pendingRequests.map((req, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200">
+                          <div 
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => router.push(`/user/${req.sender._id}`)}
+                          >
+                            <img src={req.sender.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" />
+                            <span className="text-[13px] font-semibold text-text-primary hover:text-brand-orange transition-colors">{req.sender.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                await FriendsService.acceptRequest(req.sender._id);
+                                loadFriendsData();
+                                showToast("Request accepted", "success");
+                              }}
+                              className="bg-green-500/10 text-green-500 hover:bg-green-500/20 px-3 py-1.5 rounded text-xs font-bold transition-colors"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              onClick={async () => {
+                                await FriendsService.rejectRequest(req.sender._id);
+                                loadFriendsData();
+                                showToast("Request rejected", "success");
+                              }}
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500/20 px-3 py-1.5 rounded text-xs font-bold transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Friends List */}
+                <div>
+                  <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none px-1 mb-2">My Friends</h3>
+                  <div className="flex flex-col border-t border-white/[0.06] mt-1">
+                    {friends && friends.length > 0 ? (
+                      friends.map((friend, idx) => (
+                        <div key={idx} className="flex items-center justify-between py-3.5 px-3 border-b border-white/[0.04] last:border-0 hover:bg-white/[0.015] transition-all duration-200">
+                          <div 
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => router.push(`/user/${friend._id}`)}
+                          >
+                            <img src={friend.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" />
+                            <div className="flex flex-col">
+                              <span className="text-[13px] font-semibold text-text-primary hover:text-brand-orange transition-colors leading-none">{friend.name}</span>
+                              <span className="text-[10px] text-text-secondary mt-1 leading-none">Level {friend.level || 1} • {friend.xp || 0} XP</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => router.push(`/user/${friend._id}`)}
+                            className="border border-white/[0.08] hover:bg-white/[0.04] bg-[#111217]/50 rounded-lg px-3 py-1.5 text-[10px] font-medium text-text-primary transition-all cursor-pointer"
+                          >
+                            View Profile
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center text-text-secondary text-[12px]">You haven&apos;t added any friends yet.</div>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </div>
           )}

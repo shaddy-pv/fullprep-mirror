@@ -102,6 +102,14 @@ const userSchema = new mongoose.Schema(
       min: [1, "Level starts at 1"],
     },
 
+    // ── Friends ─────────────────────────────────────────────
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      }
+    ],
+
     // ── Contests ─────────────────────────────────────────────
     contestRating: {
       type: Number,

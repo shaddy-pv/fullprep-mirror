@@ -14,7 +14,9 @@ import {
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
+import { useAuthStore } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
+import { FriendsService } from "@/services/friends.service";
 import { cn } from "@/lib/utils";
 
 
@@ -45,8 +47,13 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
   const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
 
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  
+  // Friend system states
+  const [friendStatus, setFriendStatus] = useState<"none" | "pending_sent" | "pending_received" | "friends">("none");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -67,6 +74,65 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     }
     loadProfile();
   }, [username, router, showToast]);
+
+  useEffect(() => {
+    // Check friend status if user is logged in and not viewing their own profile
+    async function checkFriendStatus() {
+      if (!user || !profile || user._id === profile._id) return;
+      
+      try {
+        // We can check local friends first (but better to fetch latest from server if possible)
+        // Check if already friends
+        const friendsRes = await FriendsService.getFriends();
+        if (friendsRes.data && friendsRes.data.find(f => f._id === profile._id)) {
+          setFriendStatus("friends");
+          return;
+        }
+
+        // Check if there is a pending request received
+        const pendingRes = await FriendsService.getPendingRequests();
+        if (pendingRes.data && pendingRes.data.find(r => r.sender._id === profile._id)) {
+          setFriendStatus("pending_received");
+          return;
+        }
+
+        // We can't easily check sent requests without a dedicated endpoint or checking all,
+        // For now, if send request fails with "already pending", we know it's pending.
+      } catch (err) {
+        console.error("Error checking friend status", err);
+      }
+    }
+    
+    checkFriendStatus();
+  }, [user, profile]);
+
+  const handleFriendAction = async () => {
+    if (!user || !profile) return;
+    setIsProcessing(true);
+    
+    try {
+      if (friendStatus === "none") {
+        const res = await FriendsService.sendRequest(profile._id);
+        if (res.success) {
+          showToast("Friend request sent!", "success");
+          setFriendStatus("pending_sent");
+        }
+      } else if (friendStatus === "pending_received") {
+        const res = await FriendsService.acceptRequest(profile._id);
+        if (res.success) {
+          showToast("Friend request accepted!", "success");
+          setFriendStatus("friends");
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to process friend request.";
+      showToast(msg, "error");
+      if (msg.includes("pending")) setFriendStatus("pending_sent");
+      if (msg.includes("already friends")) setFriendStatus("friends");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -148,6 +214,50 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                   <span>Joined {new Date(profile.joinedAt).getFullYear()}</span>
                 </div>
               </div>
+              
+              {/* Social Links */}
+              {profile.socialLinks && (
+                <div className="flex items-center gap-4 mt-4">
+                  {profile.socialLinks.github && (
+                    <a href={profile.socialLinks.github} target="_blank" rel="noreferrer" className="text-text-secondary hover:text-text-primary transition-colors">
+                      <GithubIcon />
+                    </a>
+                  )}
+                  {profile.socialLinks.linkedin && (
+                    <a href={profile.socialLinks.linkedin} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:opacity-80 transition-opacity">
+                      <LinkedinIcon />
+                    </a>
+                  )}
+                  {profile.socialLinks.twitter && (
+                    <a href={profile.socialLinks.twitter} target="_blank" rel="noreferrer" className="text-[#1da1f2] hover:opacity-80 transition-opacity">
+                      <TwitterIcon />
+                    </a>
+                  )}
+                </div>
+              )}
+              
+              {/* Friend Request Button */}
+              {user && user._id !== profile._id && (
+                <div className="mt-5">
+                  <button 
+                    onClick={handleFriendAction}
+                    disabled={isProcessing || friendStatus === "pending_sent" || friendStatus === "friends"}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm",
+                      friendStatus === "none" ? "bg-brand-orange text-white hover:bg-[#ff802b]" :
+                      friendStatus === "pending_received" ? "bg-green-500 text-white hover:bg-green-600" :
+                      friendStatus === "friends" ? "bg-[#11131c]/50 text-green-500 border border-green-500/20" :
+                      "bg-[#11131c]/50 text-text-secondary border border-border-card"
+                    )}
+                  >
+                    {isProcessing ? "Processing..." :
+                     friendStatus === "none" ? "Add Friend" :
+                     friendStatus === "pending_sent" ? "Request Pending" :
+                     friendStatus === "pending_received" ? "Accept Request" :
+                     "Friends"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

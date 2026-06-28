@@ -276,7 +276,7 @@ export const getSubmissions = async (req, res) => {
   const [submissions, total] = await Promise.all([
     Submission.find(filter)
       .select("-code") // Exclude code from list view (large payload)
-      .populate("problem", "difficulty")
+      .populate("problem", "difficulty cfTags")
       .populate("user", "name email avatar")
       .sort({ createdAt: -1 })
       .skip(skip)
