@@ -105,7 +105,7 @@ const userSchema = new mongoose.Schema(
     // ── Contests ─────────────────────────────────────────────
     contestRating: {
       type: Number,
-      default: 1200,
+      default: 0,
       min: [0, "Rating cannot be negative"],
     },
 

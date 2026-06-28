@@ -66,7 +66,7 @@ export default function ContestsPage() {
     },
     {
       title: "Rating",
-      value: user?.contestRating?.toString() || "1200",
+      value: (!user?.contestsParticipated || user.contestsParticipated === 0) ? "0" : (user.contestRating?.toString() ?? "0"),
       subtext: "Current",
       subtextColor: "text-[#10b981]",
       icon: TrendingUp,
@@ -86,6 +86,38 @@ export default function ContestsPage() {
 
   const buildContestCards = () => {
     const list = [];
+    const now = new Date();
+
+    // Daily: counts down to midnight tonight
+    const midnight = new Date();
+    midnight.setHours(23, 59, 59, 999);
+    const dailySecondsLeft = Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
+
+    // Weekly: active ONLY on weekends (Saturday & Sunday)
+    let weeklySecondsLeft = 0;
+    let weeklyStatus: "live" | "upcoming" = "upcoming";
+    
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    if (isWeekend) {
+      // Currently live, count down to Sunday 23:59:59
+      const endOfWeekend = new Date();
+      const daysToSunday = dayOfWeek === 6 ? 1 : 0;
+      endOfWeekend.setDate(endOfWeekend.getDate() + daysToSunday);
+      endOfWeekend.setHours(23, 59, 59, 999);
+      weeklySecondsLeft = Math.max(0, Math.floor((endOfWeekend.getTime() - now.getTime()) / 1000));
+      weeklyStatus = "live";
+    } else {
+      // It's a weekday, upcoming! Count down to Saturday 00:00:00
+      const startOfWeekend = new Date();
+      const daysToSaturday = 6 - dayOfWeek;
+      startOfWeekend.setDate(startOfWeekend.getDate() + daysToSaturday);
+      startOfWeekend.setHours(0, 0, 0, 0);
+      weeklySecondsLeft = Math.max(0, Math.floor((startOfWeekend.getTime() - now.getTime()) / 1000));
+      weeklyStatus = "upcoming";
+    }
+
     if (dailyContest && dailyContest.problem) {
       list.push({
         id: dailyContest.id,
@@ -94,10 +126,11 @@ export default function ContestsPage() {
         timeRange: "All Day",
         duration: "24 Hrs",
         tags: dailyContest.problem.tags?.slice(0, 3) || ["Daily"],
-        initialSecondsLeft: 12 * 3600, // mock countdown
+        initialSecondsLeft: dailySecondsLeft,
         featured: true,
         type: "Rated" as const,
-        slug: dailyContest.problem.slug
+        slug: dailyContest.problem.slug,
+        status: "live",
       });
     }
     if (weeklyContest && weeklyContest.problems?.length) {
@@ -108,17 +141,28 @@ export default function ContestsPage() {
         timeRange: "Anytime",
         duration: "1.5 Hrs",
         tags: ["Weekly", "Competition"],
-        initialSecondsLeft: 3 * 24 * 3600, // mock countdown
+        initialSecondsLeft: weeklySecondsLeft,
         featured: false,
         type: "Rated" as const,
-        slug: weeklyContest.problems[0].slug // solve the first problem for now as the entry point
+        slug: weeklyContest.problems[0].slug,
+        status: weeklyStatus,
       });
     }
     return list;
   };
 
   const contestsList = buildContestCards();
-  const filteredContests = contestsList.filter((c) =>
+
+  const tabFilteredContests = contestsList.filter((c) => {
+    if (activeTab === "All Contests") return true;
+    if (activeTab === "Live") return true; // Daily and weekly are currently active
+    if (activeTab === "Upcoming") return false; // None are strictly upcoming in this mock
+    if (activeTab === "Completed") return false;
+    if (activeTab === "Participated") return false; // To be implemented with real user history
+    return true;
+  });
+
+  const filteredContests = tabFilteredContests.filter((c) =>
     c.title.toLowerCase().includes(searchVal.toLowerCase()) ||
     c.tags.some((t: string) => t.toLowerCase().includes(searchVal.toLowerCase()))
   );
@@ -213,7 +257,7 @@ export default function ContestsPage() {
                 </div>
 
                 <h2 className="text-[16px] font-bold text-text-primary text-left select-none -mb-1 mt-1">
-                  Upcoming Contests
+                  {activeTab === "All Contests" ? "Upcoming Contests" : `${activeTab} Contests`}
                 </h2>
 
                 {/* Catalog list */}
@@ -241,7 +285,7 @@ export default function ContestsPage() {
                       ))
                     ) : (
                       <div className="p-12 text-center text-text-secondary border border-border-card bg-white dark:bg-[#11131c] rounded-[24px]">
-                        No upcoming contests found.
+                        No {activeTab.toLowerCase()} contests found.
                       </div>
                     )}
                   </ErrorBoundary>

@@ -15,23 +15,45 @@ const getDeterministicRandoms = (seed, max, count) => {
   return result;
 };
 
+// Helper to get today's daily problem
+const getCurrentDailyProblem = async () => {
+  const today = new Date();
+  const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const totalProblems = await Problem.countDocuments();
+  if (totalProblems === 0) return null;
+  const [index] = getDeterministicRandoms(dateSeed, totalProblems, 1);
+  return await Problem.findOne().skip(index).lean();
+};
+
+// Helper to get this week's problems
+const getCurrentWeeklyProblems = async () => {
+  const today = new Date();
+  const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
+  const pastDaysOfYear = (today - firstDayOfYear) / 86400000;
+  const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+  const weekSeed = today.getFullYear() * 100 + weekNumber;
+  
+  const totalProblems = await Problem.countDocuments();
+  if (totalProblems < 4) return [];
+  const indices = getDeterministicRandoms(weekSeed, totalProblems, 4);
+  const problems = await Promise.all(
+    indices.map(idx => Problem.findOne().skip(idx).lean())
+  );
+  return problems.filter(Boolean);
+};
+
 // ── @desc    Get daily contest problem
 // ── @route   GET /api/contests/daily
 // ── @access  Private
 export const getDailyContest = async (req, res) => {
   try {
-    const today = new Date();
-    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    
-    // We only need 1 problem for daily
-    const totalProblems = await Problem.countDocuments();
-    if (totalProblems === 0) {
+    const problem = await getCurrentDailyProblem();
+    if (!problem) {
       return res.status(404).json({ success: false, message: "No problems available in DB." });
     }
     
-    const [index] = getDeterministicRandoms(dateSeed, totalProblems, 1);
-    
-    const problem = await Problem.findOne().skip(index).lean();
+    const today = new Date();
+    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
     
     res.status(200).json({
       success: true,
@@ -39,7 +61,10 @@ export const getDailyContest = async (req, res) => {
         id: `daily-${dateSeed}`,
         title: "Daily Challenge: " + problem.name,
         type: "daily",
-        problem: problem,
+        problem: {
+          ...problem,
+          slug: problem.externalId, // use externalId as slug for routing
+        },
       }
     });
   } catch (error) {
@@ -53,23 +78,16 @@ export const getDailyContest = async (req, res) => {
 // ── @access  Private
 export const getWeeklyContest = async (req, res) => {
   try {
-    // A week starts on Monday for our logic
+    const problems = await getCurrentWeeklyProblems();
+    if (problems.length < 4) {
+      return res.status(404).json({ success: false, message: "Not enough problems in DB." });
+    }
+    
     const today = new Date();
     const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
     const pastDaysOfYear = (today - firstDayOfYear) / 86400000;
     const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
     const weekSeed = today.getFullYear() * 100 + weekNumber;
-    
-    const totalProblems = await Problem.countDocuments();
-    if (totalProblems < 4) {
-      return res.status(404).json({ success: false, message: "Not enough problems in DB." });
-    }
-    
-    const indices = getDeterministicRandoms(weekSeed, totalProblems, 4);
-    
-    const problems = await Promise.all(
-      indices.map(idx => Problem.findOne().skip(idx).lean())
-    );
     
     res.status(200).json({
       success: true,
@@ -77,7 +95,7 @@ export const getWeeklyContest = async (req, res) => {
         id: `weekly-${weekSeed}`,
         title: "Weekly Contest " + weekNumber,
         type: "weekly",
-        problems: problems,
+        problems: problems.map(p => ({ ...p, slug: p.externalId })),
       }
     });
   } catch (error) {
@@ -93,28 +111,44 @@ export const submitContestResult = async (req, res) => {
   try {
     const { contestId, type, timeTakenMs, passed } = req.body;
     
-    if (!passed) {
-      return res.status(200).json({ success: true, message: "No rating change." });
-    }
-    
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-    
-    // Check for previous accepted submission for this contest ID to prevent multiple bumps
-    // Usually contestId is saved in the submission. If not, we just give them the bump.
-    // For now we assume the frontend is honest or we check if they already solved it today.
-    
-    // Rating logic
-    let points = type === "daily" ? 15 : 40; // 15 for daily, 40 per weekly problem
-    
-    // Speed bonus
-    if (timeTakenMs < 5 * 60 * 1000) {
-      points += 10; // Extra 10 for solving under 5 mins
+
+    // Determine expected problems and start time
+    let expectedExternalIds = [];
+    let contestStartTime = new Date();
+
+    if (type === "daily") {
+      const p = await getCurrentDailyProblem();
+      if (p) expectedExternalIds.push(p.externalId);
+      contestStartTime.setHours(0, 0, 0, 0); // start of today
+    } else if (type === "weekly") {
+      const ps = await getCurrentWeeklyProblems();
+      expectedExternalIds = ps.map(p => p.externalId);
+      // Start of Saturday this week
+      const dayOfWeek = contestStartTime.getDay();
+      const daysToSaturday = (dayOfWeek === 6) ? 0 : (dayOfWeek === 0) ? -1 : (6 - dayOfWeek);
+      contestStartTime.setDate(contestStartTime.getDate() + daysToSaturday);
+      contestStartTime.setHours(0, 0, 0, 0);
     }
     
-    user.contestRating = (user.contestRating || 1200) + points;
+    // Find unique problems solved successfully during this timeframe
+    const submissions = await Submission.find({
+      user: req.user.id,
+      status: "ACCEPTED",
+      problemExternalId: { $in: expectedExternalIds },
+      createdAt: { $gte: contestStartTime }
+    });
+    
+    const uniqueSolved = new Set(submissions.map(s => s.problemExternalId));
+    const realSolvedCount = uniqueSolved.size;
+    
+    // Rating logic: User requested exactly 20 points per question actually solved
+    let points = realSolvedCount * 20;
+    
+    user.contestRating = (user.contestRating || 0) + points;
     user.contestsParticipated = (user.contestsParticipated || 0) + 1;
     await user.save();
     

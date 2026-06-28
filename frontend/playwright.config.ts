@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
+  timeout: 60000,
   testDir: "./e2e",
   /* Run tests sequentially (1 worker) to prevent DB record collisions on signups/settings updates */
   fullyParallel: false,

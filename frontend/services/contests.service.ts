@@ -50,11 +50,11 @@ export const ContestsService = {
     }
   },
 
-  async submitContestResult(contestId: string, type: string, timeTakenMs: number, passed: boolean) {
+  async submitContestResult(contestId: string, type: string, timeTakenMs: number, passed: boolean, solvedCount: number = 1) {
     try {
       const response = await api.post<{ success: boolean; data: any }>(
         `${BASE_URL}/contests/submit`,
-        { contestId, type, timeTakenMs, passed }
+        { contestId, type, timeTakenMs, passed, solvedCount }
       );
       if (response && response.success) {
         return response.data;

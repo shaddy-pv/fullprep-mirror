@@ -18,6 +18,7 @@ interface ContestCardProps {
   featured?: boolean;
   type?: "Rated" | "Practice";
   slug?: string;
+  status?: "live" | "upcoming";
 }
 
 export default function ContestCard({
@@ -31,6 +32,7 @@ export default function ContestCard({
   featured = false,
   type = "Rated",
   slug,
+  status = "live",
 }: ContestCardProps) {
   const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
@@ -136,7 +138,7 @@ export default function ContestCard({
       {/* Middle side: Countdown Tickers (visual layout matches mockup) */}
       <div className="flex flex-col items-start lg:items-center text-left lg:text-center min-w-[140px] shrink-0 border-l border-r border-transparent lg:border-border-card px-0 lg:px-6 py-1 lg:py-0">
         <span className="text-[9px] text-[#9ca3af] font-bold uppercase tracking-wider">
-          Starts in
+          {status === "live" ? "Time Left" : "Starts In"}
         </span>
         
         {/* Countdown layout matches screenshot exactly */}
@@ -164,16 +166,19 @@ export default function ContestCard({
       <div className="flex flex-col gap-2 shrink-0 w-full lg:w-[150px]">
         <Button
           variant="primary"
-          className="py-2.5 text-center justify-center font-bold w-full"
+          disabled={status === "upcoming"}
+          className="w-full sm:w-[150px] py-[10px] font-bold text-[14px] flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(255,106,0,0.25)] hover:shadow-[0_6px_16px_rgba(255,106,0,0.35)] active:shadow-none transition-all duration-200"
           onClick={() => {
-            if (slug) {
+            if (tags.includes("Weekly")) {
+              router.push(`/contests/${id}`);
+            } else if (slug) {
               router.push(`/problems/${slug}?mode=contest`);
             } else {
               showToast(`Entering lobby for ${title}!`, "success");
             }
           }}
         >
-          <span>Join Contest</span>
+          <span>{status === "upcoming" ? "Wait..." : "Join Contest"}</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </Button>
         <Button
