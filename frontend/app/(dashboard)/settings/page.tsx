@@ -1043,8 +1043,6 @@ export default function SettingsPage() {
           </section>
           )}
 
-          )}
-
           {/* ──────────────────────────────────────────
               APPEARANCE SECTION
               ────────────────────────────────────────── */}
