@@ -277,3 +277,20 @@ export const updateUserStatus = async (req, res) => {
 
   res.status(200).json({ success: true, message: `User account ${isActive ? 'activated' : 'suspended'}.`, data: user });
 };
+
+// ── @desc    Search users by name
+// ── @route   GET /api/users/search
+// ── @access  Private
+export const searchUsers = async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.length < 2) {
+    return res.status(200).json({ success: true, data: [] });
+  }
+  
+  const regex = new RegExp(q, "i");
+  const users = await User.find({ name: regex })
+    .select("name avatar level contestRating globalRank")
+    .limit(10);
+    
+  res.status(200).json({ success: true, data: users });
+};

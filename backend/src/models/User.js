@@ -117,6 +117,14 @@ const userSchema = new mongoose.Schema(
       min: [0, "Rating cannot be negative"],
     },
 
+    contestRatingHistory: [
+      {
+        rating: { type: Number, required: true },
+        month: { type: String, required: true },
+        date: { type: Date, default: Date.now }
+      }
+    ],
+
     contestsParticipated: {
       type: Number,
       default: 0,

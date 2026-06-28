@@ -17,7 +17,8 @@ import {
   Code2,
   Users,
   UserPlus,
-  Crown
+  Crown,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
@@ -104,7 +105,7 @@ const JavaScriptLogo = ({ className = "w-4 h-4 shrink-0" }: { className?: string
    ───────────────────────────────────────────── */
 
 interface HexBadgeProps {
-  color: "gold" | "orange" | "red" | "teal" | "green" | "purple";
+  color: "gold" | "orange" | "red" | "teal" | "green" | "purple" | "blue" | "slate";
   title: string;
   subtitle: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -118,6 +119,8 @@ const HexagonBadge: React.FC<HexBadgeProps> = ({ color, title, subtitle, icon: I
     teal:   { stroke: "#14b8a6", glow: "rgba(20,184,166,0.22)" },
     green:  { stroke: "#10b981", glow: "rgba(16,185,129,0.22)" },
     purple: { stroke: "#8b5cf6", glow: "rgba(139,92,246,0.22)" },
+    blue:   { stroke: "#3b82f6", glow: "rgba(59,130,246,0.22)" },
+    slate:  { stroke: "#64748b", glow: "rgba(100,116,139,0.1)" },
   };
 
   const { stroke: strokeColor, glow: glowColor } = colorMap[color];
@@ -184,6 +187,8 @@ export default function ProfilePage() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
   // Settings Tab states
+  const [heatmapYear, setHeatmapYear] = useState(2025);
+  const [showLevelModal, setShowLevelModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("India");
   const [editBio, setEditBio] = useState("");
@@ -286,7 +291,7 @@ export default function ProfilePage() {
   const level = user?.level ?? 1;
   const streak = getCurrentStreak(user);
 
-  const statMetrics = [
+  const statCards = [
     { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-white", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
     { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
     { label: "PROBLEMS SOLVED", value: solved.toString(), sub: "Verified solutions", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
@@ -318,15 +323,15 @@ export default function ProfilePage() {
         { name: "JavaScript", progress: 5, icon: JavaScriptLogo },
       ];
 
-  const chartData = [
-    { month: "Jan", rating: 1540 },
-    { month: "Feb", rating: 1565 },
-    { month: "Mar", rating: 1550 },
-    { month: "Apr", rating: 1612 },
-    { month: "May", rating: 1590 },
-    { month: "Jun", rating: 1624 },
-    { month: "Jul", rating: 1642 },
-  ];
+  const chartData = (user?.contestRatingHistory && user.contestRatingHistory.length > 0)
+    ? user.contestRatingHistory.map((h: any) => ({
+        month: h.month,
+        rating: h.rating
+      }))
+    : [
+        { month: "Join", rating: 0 },
+        { month: "Now", rating: user?.contestRating || 0 },
+      ];
 
   // Dynamic Difficulty Calculations
   const diffBreakdown = statsData?.difficultyBreakdown || [];
@@ -415,6 +420,21 @@ export default function ProfilePage() {
   }
 
   /* ── Helpers ── */
+
+  // Dynamic Badges Logic
+  const badges: any[] = [];
+  if (solved >= 1) badges.push({ color: "purple", title: "First Blood", subtitle: "FIRST SOLVE", icon: Trophy });
+  if (solved >= 100) badges.push({ color: "gold", title: "Problem Solver", subtitle: "SOLVED 100", icon: Code2 });
+  if ((user?.contestsParticipated || 0) >= 10) badges.push({ color: "orange", title: "Contest Warrior", subtitle: "10 CONTESTS", icon: Zap });
+  if (streak >= 7) badges.push({ color: "red", title: "Week Streak", subtitle: "7 DAYS", icon: Calendar });
+  if ((user?.contestRating || 0) >= 1600) badges.push({ color: "teal", title: "Top 10%", subtitle: "RATING 1600+", icon: Award });
+  if (streak >= 90) badges.push({ color: "green", title: "Consistency Master", subtitle: "90 DAYS", icon: Activity });
+  if (solved >= 50 && (statsData?.totalSubmissions || 0) > 100) badges.push({ color: "blue", title: "Quick Solver", subtitle: "DEDICATED", icon: Zap });
+
+  const displayBadges = [...badges];
+  while (displayBadges.length < 6) {
+    displayBadges.push({ color: "slate", title: "Locked", subtitle: "KEEP GRINDING", icon: Award, locked: true });
+  }
 
   const cardBase = "bg-card-bg border border-border-card rounded-[24px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:border-slate-900/15 dark:hover:border-white/[0.1] hover:-translate-y-[1px] transition-all duration-300 p-6 flex flex-col h-full justify-between text-text-primary";
 
@@ -534,17 +554,21 @@ export default function ProfilePage() {
             <>
               {/* Stats Cards Row */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full text-center">
-                {statMetrics.map((m) => (
-                  <div
-                    key={m.label}
+                {statCards.map((stat) => (
+                  <div 
+                    key={stat.label} 
+                    onClick={() => stat.label === "LEVEL" && setShowLevelModal(true)}
                     className={cn(
-                      "bg-card-bg border border-border-card rounded-[24px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] hover:border-slate-900/15 dark:hover:border-white/[0.19] transition-all duration-300 p-4 flex flex-col justify-center items-center h-[120px] hover:-translate-y-0.5",
-                      m.glow
+                      "bg-card-bg rounded-[24px] shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-all duration-300 p-4 flex flex-col justify-center items-center h-[120px] hover:-translate-y-0.5",
+                      stat.glow,
+                      stat.label === "LEVEL" 
+                        ? "border-2 border-brand-orange/40 cursor-pointer hover:border-brand-orange/70 shadow-lg shadow-brand-orange/10 bg-brand-orange/[0.02]"
+                        : "border border-border-card hover:border-slate-900/15 dark:hover:border-white/[0.19]"
                     )}
                   >
-                    <span className="text-[10px] text-text-secondary font-bold uppercase tracking-[0.08em] leading-none mb-2">{m.label}</span>
-                    <span className={cn("text-[30px] font-bold leading-none tracking-tight", m.color)}>{m.value}</span>
-                    <span className="text-[11px] text-text-muted font-normal leading-none mt-2">{m.sub}</span>
+                    <span className="text-[10px] text-text-secondary font-bold uppercase tracking-[0.08em] leading-none mb-2">{stat.label}</span>
+                    <span className={cn("text-[30px] font-bold leading-none tracking-tight", stat.color)}>{stat.value}</span>
+                    <span className="text-[11px] text-text-muted font-normal leading-none mt-2">{stat.sub}</span>
                   </div>
                 ))}
               </div>
@@ -647,22 +671,23 @@ export default function ProfilePage() {
 
                 {/* ── Badges (4fr) ── */}
                 <div className={cn(cardBase, "xl:col-span-4 flex flex-col p-6 relative overflow-hidden group")}>
-                  <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                  </div>
                   <div className="flex items-baseline justify-between mb-6">
                     <h3 className="text-[13px] font-bold text-text-primary tracking-tight leading-none">Badges</h3>
                     <button className="text-[11px] font-bold text-brand-orange hover:text-[#e05d00] transition-colors cursor-pointer leading-none">
                       View all
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 grid-rows-2 gap-x-4 gap-y-8 w-full flex-1 items-center justify-items-center mt-2 opacity-60">
-                    <HexagonBadge color="gold" title="Problem Solver" subtitle="SOLVED 100" icon={Code2} />
-                    <HexagonBadge color="orange" title="Contest Warrior" subtitle="10 CONTESTS" icon={Zap} />
-                    <HexagonBadge color="red" title="Week Streak" subtitle="7 DAYS" icon={Calendar} />
-                    <HexagonBadge color="teal" title="Top 10%" subtitle="RATING MAX" icon={Award} />
-                    <HexagonBadge color="green" title="Consistency Master" subtitle="90 DAYS" icon={Activity} />
-                    <HexagonBadge color="purple" title="Quick Solver" subtitle="SUB 1 MIN" icon={Trophy} />
+                  <div className="grid grid-cols-3 grid-rows-2 gap-x-4 gap-y-8 w-full flex-1 items-center justify-items-center mt-2">
+                    {displayBadges.slice(0, 6).map((badge, idx) => (
+                      <div key={idx} className={badge.locked ? "opacity-30 grayscale pointer-events-none" : ""}>
+                        <HexagonBadge 
+                          color={badge.color as any} 
+                          title={badge.title} 
+                          subtitle={badge.subtitle} 
+                          icon={badge.icon || Award} 
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -738,7 +763,7 @@ export default function ProfilePage() {
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div className="flex flex-col text-left leading-none">
-                    <span className="text-[22px] font-bold text-[#8b5cf6] tracking-tight leading-none">{user?.xp || 1280}</span>
+                    <span className="text-[22px] font-bold text-[#8b5cf6] tracking-tight leading-none">{user?.contestRating || 0}</span>
                     <span className="text-[10px] text-text-secondary/70 font-medium mt-1.5 leading-none">Current Rating</span>
                   </div>
                 </div>
@@ -1048,6 +1073,65 @@ export default function ProfilePage() {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Level Info Modal */}
+          {showLevelModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-[#060816]/80 backdrop-blur-sm" onClick={() => setShowLevelModal(false)} />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={cn(cardBase, "relative z-10 w-full max-w-md p-8 border-brand-orange/20 shadow-2xl shadow-brand-orange/10")}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-brand-orange/20 flex items-center justify-center border border-brand-orange/30 text-brand-orange">
+                      <Trophy className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-[18px] font-bold text-white leading-none mb-1">Level System</h3>
+                      <p className="text-[12px] text-white/50 leading-none">How to earn XP and level up</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowLevelModal(false)} className="text-white/40 hover:text-white transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl">
+                    <h4 className="text-[13px] font-bold text-brand-orange mb-3">Earning XP</h4>
+                    <ul className="space-y-2 text-[12px] text-white/70 font-medium">
+                      <li className="flex justify-between"><span>Solve an Easy Problem</span> <span>+10 XP</span></li>
+                      <li className="flex justify-between"><span>Solve a Medium Problem</span> <span>+30 XP</span></li>
+                      <li className="flex justify-between"><span>Solve a Hard Problem</span> <span>+60 XP</span></li>
+                      <li className="flex justify-between"><span>Maintain a 7-day streak</span> <span>+50 XP bonus</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl">
+                    <h4 className="text-[13px] font-bold text-[#10b981] mb-3">Unlocking Badges</h4>
+                    <ul className="space-y-2 text-[12px] text-white/70 font-medium">
+                      <li>• <strong className="text-purple-400">First Blood:</strong> Solve your very first problem</li>
+                      <li>• <strong className="text-yellow-500">Problem Solver:</strong> Reach 100 total solved problems</li>
+                      <li>• <strong className="text-orange-500">Contest Warrior:</strong> Participate in 10 contests</li>
+                      <li>• <strong className="text-red-500">Week Streak:</strong> Hit a 7-day activity streak</li>
+                      <li>• <strong className="text-teal-400">Top 10%:</strong> Achieve a contest rating of 1600+</li>
+                      <li>• <strong className="text-blue-400">Quick Solver:</strong> Solve 50+ problems & 100+ submissions</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowLevelModal(false)}
+                  className="w-full mt-8 bg-brand-orange hover:bg-brand-orange/90 text-white font-bold py-3 rounded-xl transition-colors text-[13px]"
+                >
+                  Got it!
+                </button>
+              </motion.div>
             </div>
           )}
 

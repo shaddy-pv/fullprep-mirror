@@ -29,7 +29,7 @@ function NavbarSearch() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [val, setVal] = useState("");
-  const [results, setResults] = useState<{ id: string; title: string; difficulty: string; cfTags: string[] }[]>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
@@ -75,25 +75,23 @@ function NavbarSearch() {
       return;
     }
 
-    // On /problems page, just update URL — no dropdown needed
-    if (pathname === "/problems") {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("search", val);
-      params.delete("page");
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-      return;
-    }
+    // If we are on /problems page, we still want to search users globally via the dropdown.
+    // So we don't automatically redirect input to /problems query params anymore.
 
     // On other pages, show dropdown with API results
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/problems-search?q=${encodeURIComponent(val)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setResults(data.slice(0, 6));
-          setIsOpen(true);
+        const usersRes = await fetch(`/api/users-search?q=${encodeURIComponent(val)}`);
+
+        let newResults: any[] = [];
+        if (usersRes.ok) {
+          const users = await usersRes.json();
+          newResults = users.slice(0, 7).map((u: any) => ({ ...u, _type: 'user' }));
         }
+
+        setResults(newResults);
+        setIsOpen(newResults.length > 0);
       } catch {
         // fallback: just route to problems page on submit
       } finally {
@@ -113,9 +111,11 @@ function NavbarSearch() {
     if (!val.trim()) return;
     setIsOpen(false);
     inputRef.current?.blur();
-    const params = new URLSearchParams();
-    params.set("search", val.trim());
-    router.push(`/problems?${params.toString()}`);
+    if (results.length > 0) {
+      router.push(`/user/${results[0].name}`);
+    } else {
+      router.push(`/user/${val.trim()}`);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -127,7 +127,12 @@ function NavbarSearch() {
     }
     if (e.key === "Enter") {
       if (selectedIdx >= 0 && results[selectedIdx]) {
-        router.push(`/problems/${results[selectedIdx].id}`);
+        const item = results[selectedIdx];
+        if (item._type === 'user') {
+          router.push(`/user/${item.name}`);
+        } else {
+          router.push(`/problems/${item.id}`);
+        }
         setIsOpen(false);
         setVal("");
       } else {
@@ -148,10 +153,7 @@ function NavbarSearch() {
   const difficultyColor = (d: string) =>
     d === "Easy" ? "text-emerald-500" : d === "Medium" ? "text-yellow-500" : "text-red-500";
 
-  const isLearningPaths = pathname === "/learning-paths";
-  const placeholder = isLearningPaths
-    ? "Search learning paths..."
-    : "Search problems, topics, contests...";
+  const placeholder = "Search for users...";
 
   return (
     <div className="relative w-[380px] hidden sm:block">
@@ -187,9 +189,13 @@ function NavbarSearch() {
         >
           {results.map((item, idx) => (
             <button
-              key={item.id}
+              key={item._type === 'user' ? item._id : item.id}
               onClick={() => {
-                router.push(`/problems/${item.id}`);
+                if (item._type === 'user') {
+                  router.push(`/user/${item.name}`);
+                } else {
+                  router.push(`/problems/${item.id}`);
+                }
                 setIsOpen(false);
                 setVal("");
               }}
@@ -197,15 +203,38 @@ function NavbarSearch() {
                 idx === selectedIdx ? "bg-brand-orange/10" : "hover:bg-white/[0.04]"
               }`}
             >
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-[13px] font-semibold text-white truncate">{item.title}</span>
-                {item.cfTags?.length > 0 && (
-                  <span className="text-[10px] text-white/40 truncate">{item.cfTags.slice(0, 3).join(" · ")}</span>
-                )}
-              </div>
-              <span className={`text-[11px] font-bold shrink-0 ml-3 ${difficultyColor(item.difficulty)}`}>
-                {item.difficulty}
-              </span>
+              {item._type === 'user' ? (
+                <>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center shrink-0 border border-brand-orange/30 overflow-hidden">
+                      {item.avatar ? (
+                        <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-brand-orange font-bold text-[14px]">{(item.name || 'U').charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="text-[13px] font-semibold text-white truncate">{item.name}</span>
+                      <span className="text-[10px] text-white/40 truncate">Lvl {item.level || 1} • Rank #{item.globalRank || '-'}</span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold shrink-0 ml-3 text-white/60">
+                    User
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[13px] font-semibold text-white truncate">{item.title}</span>
+                    {item.cfTags?.length > 0 && (
+                      <span className="text-[10px] text-white/40 truncate">{item.cfTags.slice(0, 3).join(" · ")}</span>
+                    )}
+                  </div>
+                  <span className={`text-[11px] font-bold shrink-0 ml-3 ${difficultyColor(item.difficulty)}`}>
+                    {item.difficulty}
+                  </span>
+                </>
+              )}
             </button>
           ))}
           <button

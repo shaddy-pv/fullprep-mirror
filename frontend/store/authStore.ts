@@ -24,6 +24,7 @@ interface UserProfile {
   location?: string;
   backupEmail?: string;
   contestRating?: number;
+  contestRatingHistory?: any[];
   highestRank?: number;
   contestsParticipated?: number;
   createdAt?: string;

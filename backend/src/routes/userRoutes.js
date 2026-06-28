@@ -4,16 +4,20 @@
  */
 
 import { Router } from "express";
-import { getUsers, getUserById, updateUserRole, createAdminUser, getAdminUserStats, deleteUser, updateUserStatus, updateProfile } from "../controllers/userController.js";
+import { getUsers, getUserById, updateUserRole, createAdminUser, getAdminUserStats, deleteUser, updateUserStatus, updateProfile, searchUsers } from "../controllers/userController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-// All user routes require authentication and admin role
-router.use(protect, restrictTo("admin"));
+// Routes available to any authenticated user
+router.use(protect);
+router.get("/search", searchUsers);
+router.put("/profile", updateProfile);
+
+// Routes restricted to admin
+router.use(restrictTo("admin"));
 
 router.get("/", getUsers);
-router.put("/profile", updateProfile);
 router.post("/admin", createAdminUser);
 router.get("/:id", getUserById);
 router.get("/:id/stats", getAdminUserStats);
