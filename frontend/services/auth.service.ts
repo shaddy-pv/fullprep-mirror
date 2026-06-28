@@ -186,9 +186,9 @@ export const AuthService = {
     );
   },
 
-  async getLeaderboard() {
+  async getLeaderboard(mainTab: string = 'Global', filterTab: string = 'Overall') {
     try {
-      const response = await api.get<{ success: boolean; data: any[] }>(`${BASE_URL}/auth/leaderboard`);
+      const response = await api.get<{ success: boolean; data: any[] }>(`${BASE_URL}/auth/leaderboard?main=${encodeURIComponent(mainTab)}&filter=${encodeURIComponent(filterTab)}`);
       if (response && response.success && response.data) {
         return response.data;
       }

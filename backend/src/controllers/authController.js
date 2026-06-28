@@ -636,7 +636,17 @@ export const resetPassword = async (req, res) => {
 // ── @access  Private
 export const getLeaderboard = async (req, res) => {
   try {
-    const cachedData = await cacheManager.get("leaderboard");
+    const { main = 'Global', filter = 'Overall' } = req.query;
+    
+    // Determine the user's details for Friends/Country filtering
+    let currentUser = null;
+    if (main === 'Friends' || main === 'Country') {
+      currentUser = await User.findById(req.user?._id).lean();
+    }
+    
+    const cacheKey = `leaderboard_${main}_${filter}_${main !== 'Global' ? req.user?._id : 'all'}`;
+    const cachedData = await cacheManager.get(cacheKey);
+    
     if (cachedData) {
       return res.status(200).json({
         success: true,
@@ -645,10 +655,60 @@ export const getLeaderboard = async (req, res) => {
       });
     }
 
-    const users = await User.find({ isActive: true })
-      .sort({ xp: -1 })
-      .limit(50);
+    // 1. Determine Scope Filter (Global, Country, Friends)
+    const matchQuery = { isActive: true };
+    
+    if (main === 'Friends' && currentUser) {
+      const friendIds = Array.isArray(currentUser.friends) ? currentUser.friends : [];
+      matchQuery._id = { $in: [currentUser._id, ...friendIds] };
+    } else if (main === 'Country' && currentUser) {
+      if (currentUser.location) {
+        matchQuery.location = { $regex: new RegExp(`^${currentUser.location}$`, 'i') };
+      } else {
+        matchQuery._id = currentUser._id;
+      }
+    }
 
+    let users = [];
+
+    // 2. Determine Time Filter (Overall, All Time, Monthly, Weekly)
+    if (filter === 'Monthly' || filter === 'Weekly') {
+      const days = filter === 'Weekly' ? 7 : 30;
+      const dateLimit = new Date();
+      dateLimit.setDate(dateLimit.getDate() - days);
+
+      const subMatch = { status: "ACCEPTED", createdAt: { $gte: dateLimit } };
+      
+      if (main === 'Friends' && currentUser) {
+        const friendIds = Array.isArray(currentUser.friends) ? currentUser.friends : [];
+        subMatch.user = { $in: [currentUser._id, ...friendIds] };
+      }
+
+      const recentSolvedCounts = await Submission.aggregate([
+        { $match: subMatch },
+        { $group: { _id: { user: "$user", prob: "$problemExternalId" } } },
+        { $group: { _id: "$_id.user", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 100 }
+      ]);
+
+      const topUserIds = recentSolvedCounts.map(s => s._id);
+      
+      let topUsersRaw = await User.find({ _id: { $in: topUserIds }, ...matchQuery });
+      
+      const countMap = {};
+      recentSolvedCounts.forEach(s => countMap[s._id.toString()] = s.count);
+      
+      topUsersRaw.sort((a, b) => (countMap[b._id.toString()] || 0) - (countMap[a._id.toString()] || 0));
+      users = topUsersRaw.slice(0, 50);
+    } else {
+      // Overall / All Time
+      users = await User.find(matchQuery)
+        .sort({ xp: -1 })
+        .limit(50);
+    }
+
+    // Total lifetime solved for ALL users for display
     const userIds = users.map((u) => u._id);
     const solvedCounts = await Submission.aggregate([
       { $match: { user: { $in: userIds }, status: "ACCEPTED" } },
@@ -675,7 +735,7 @@ export const getLeaderboard = async (req, res) => {
       };
     });
 
-    await cacheManager.set("leaderboard", leaderboard, 10); // 10 seconds TTL
+    await cacheManager.set(cacheKey, leaderboard, 10); // 10 seconds TTL
 
     res.status(200).json({
       success: true,

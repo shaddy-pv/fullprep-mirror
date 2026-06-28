@@ -63,9 +63,10 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       try {
         const [leaderboardData, statsData] = await Promise.all([
-          AuthService.getLeaderboard(),
+          AuthService.getLeaderboard(activeMainTab, activeFilterTab),
           AuthService.getStats()
         ]);
         if (leaderboardData) {
@@ -82,7 +83,7 @@ export default function LeaderboardPage() {
       }
     }
     loadData();
-  }, [showToast]);
+  }, [showToast, activeMainTab, activeFilterTab]);
 
   const getAvatarBg = (index: number) => {
     const bgs = [
