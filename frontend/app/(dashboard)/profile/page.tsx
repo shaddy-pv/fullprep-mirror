@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
   Calendar,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Trophy,
   Award,
   Zap,
@@ -165,6 +167,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const showToast = useNotificationStore((state) => state.showToast);
   const { user } = useAuthStore();
+  const heatmapRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [mounted, setMounted] = useState(false);
   const [statsData, setStatsData] = useState<any>(null);
@@ -525,11 +528,35 @@ export default function ProfilePage() {
                 {/* ── Submission Activity Heatmap (5fr) ── */}
                 <div className={cn(cardBase, "xl:col-span-5 flex flex-col justify-between p-6")}>
                   <div className="w-full flex flex-col">
-                    <h3 className="text-[13px] font-bold text-text-primary tracking-tight mb-6 leading-none">
-                      Submission Activity
-                    </h3>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-[13px] font-bold text-text-primary tracking-tight leading-none">
+                        Submission Activity
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => {
+                            if (heatmapRef.current) {
+                              heatmapRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                            }
+                          }}
+                          className="w-7 h-7 rounded bg-white/[0.03] hover:bg-white/[0.08] flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-text-secondary" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (heatmapRef.current) {
+                              heatmapRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                            }
+                          }}
+                          className="w-7 h-7 rounded bg-white/[0.03] hover:bg-white/[0.08] flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <ChevronRight className="w-4 h-4 text-text-secondary" />
+                        </button>
+                      </div>
+                    </div>
 
-                    <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar pb-2 relative">
+                    <div ref={heatmapRef} className="w-full overflow-x-auto overflow-y-hidden no-scrollbar pb-2 relative">
                       <div className="flex flex-col min-w-max" style={{ width: `${52 * STEP + 40}px` }}>
                         
                         {/* Month labels */}
@@ -668,11 +695,8 @@ export default function ProfilePage() {
               </div>
 
               {/* Contest Rating Chart */}
-              <div className={cn(cardBase, "p-6 flex flex-col h-[240px] relative overflow-hidden group")}>
-                <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                </div>
-                <div className="flex items-baseline justify-between mb-3 opacity-60">
+              <div className={cn(cardBase, "p-6 flex flex-col h-[240px] relative overflow-hidden")}>
+                <div className="flex items-baseline justify-between mb-3">
                   <span className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] leading-none">Contest Rating History</span>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] text-[#10b981] font-semibold bg-[#10b981]/15 px-1.5 py-0.5 rounded leading-none border border-[#10b981]/15">↑ 8.21%</span>
@@ -682,16 +706,16 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mb-2 opacity-60">
+                <div className="flex items-center gap-4 mb-2">
                   <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center shrink-0">
                     <Trophy className="w-4 h-4" />
                   </div>
                   <div className="flex flex-col text-left leading-none">
-                    <span className="text-[22px] font-bold text-[#8b5cf6] tracking-tight leading-none">1,642</span>
-                    <span className="text-[10px] text-text-secondary/70 font-medium mt-1.5 leading-none">Top 12.12%</span>
+                    <span className="text-[22px] font-bold text-[#8b5cf6] tracking-tight leading-none">{user?.xp || 1280}</span>
+                    <span className="text-[10px] text-text-secondary/70 font-medium mt-1.5 leading-none">Current Rating</span>
                   </div>
                 </div>
-                <div className="h-[100px] w-full relative opacity-60">
+                <div className="h-[100px] w-full relative">
                   <ResponsiveContainer width="99%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 2, right: 2, left: -28, bottom: -5 }}>
                       <defs>
@@ -702,7 +726,7 @@ export default function ProfilePage() {
                       </defs>
                       <CartesianGrid strokeDasharray="0" vertical={false} stroke="rgba(255,255,255,0.02)" />
                       <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 9, fontWeight: 500 }} dy={4} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 9, fontWeight: 500 }} domain={[1500, 1660]} ticks={[1500, 1550, 1600, 1650]} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280", fontSize: 9, fontWeight: 500 }} domain={['dataMin - 100', 'dataMax + 100']} />
                       <Tooltip contentStyle={{ backgroundColor: "#111217", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", color: "white", fontSize: "10px", fontWeight: 500, padding: "4px 8px" }} cursor={{ stroke: "#8b5cf6", strokeWidth: 1, strokeDasharray: "3 3" }} />
                       <Area type="monotone" dataKey="rating" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#profileRatingColorStats)" dot={{ r: 2.5, fill: "#8b5cf6", stroke: "#ffffff", strokeWidth: 1 }} activeDot={{ r: 4, fill: "#8b5cf6", stroke: "#ffffff", strokeWidth: 1.5 }} />
                     </AreaChart>

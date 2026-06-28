@@ -94,7 +94,7 @@ export default function AIHintsPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, dryRunOutput, visualizeActive]);
 
-  const tabs = ["Ask AI", "Explain Code", "Debug Code", "Complexity", "Approach", "Study Buddy"];
+  const tabs = ["Ask AI"];
 
   const suggestions = [
     "Explain Binary Search",

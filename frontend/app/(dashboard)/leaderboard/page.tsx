@@ -253,7 +253,7 @@ export default function LeaderboardPage() {
             <div className="grid grid-cols-3 gap-4 items-end select-none w-full p-6 bg-transparent border-b border-border-card">
               
               {/* 2nd Place Card (Left) */}
-              <div className="flex flex-col items-center">
+              <Link href={`/user/${podiumData.second.username}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                 <DashboardCard className="w-full p-4 flex flex-col items-center justify-center relative border border-border-card/60 h-[170px] bg-[#fcfcfa]/60 dark:bg-[#151722]/40 shadow-inner">
                   {/* 2nd Badge */}
                   <div className="w-6 h-6 rounded-full bg-slate-400 border border-white dark:border-[#111827] text-white flex items-center justify-center font-extrabold text-[11px] absolute -top-3 shadow-md">
@@ -279,10 +279,10 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
                 </DashboardCard>
-              </div>
+              </Link>
 
               {/* 1st Place Card (Center - Sized slightly larger with warm accent frame) */}
-              <div className="flex flex-col items-center">
+              <Link href={`/user/${podiumData.first.username}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                 <DashboardCard className="w-full p-5 flex flex-col items-center justify-center relative border-2 border-brand-orange/45 h-[200px] bg-[#fcfcfa]/60 dark:bg-[#151722]/40 shadow-md shadow-brand-orange/[0.03]">
                   {/* 1st Golden Badge */}
                   <div className="w-7 h-7 rounded-full bg-[#eab308] border border-white dark:border-[#111827] text-white flex items-center justify-center font-extrabold text-[12px] absolute -top-3.5 shadow-md">
@@ -308,10 +308,10 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
                 </DashboardCard>
-              </div>
+              </Link>
 
               {/* 3rd Place Card (Right) */}
-              <div className="flex flex-col items-center">
+              <Link href={`/user/${podiumData.third.username}`} className="flex flex-col items-center hover:opacity-90 transition-opacity">
                 <DashboardCard className="w-full p-4 flex flex-col items-center justify-center relative border border-border-card/60 h-[170px] bg-[#fcfcfa]/60 dark:bg-[#151722]/40 shadow-inner">
                   {/* 3rd Bronze Badge */}
                   <div className="w-6 h-6 rounded-full bg-[#d97706] border border-white dark:border-[#111827] text-white flex items-center justify-center font-extrabold text-[11px] absolute -top-3 shadow-md">
@@ -337,7 +337,7 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
                 </DashboardCard>
-              </div>
+              </Link>
 
             </div>
 
