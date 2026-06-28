@@ -417,7 +417,6 @@ export default function SettingsPage() {
     { id: "account", name: "Account Settings", icon: Settings },
     { id: "preferences", name: "Preferences", icon: Sliders },
     { id: "privacy", name: "Privacy & Security", icon: Shield },
-    { id: "connected", name: "Connected Accounts", icon: Link2 },
     { id: "appearance", name: "Appearance", icon: Palette },
     { id: "billing", name: "Billing & Subscription", icon: CreditCard },
     { id: "data", name: "Data & Export", icon: Download },
@@ -1044,55 +1043,6 @@ export default function SettingsPage() {
           </section>
           )}
 
-          {/* ──────────────────────────────────────────
-              CONNECTED ACCOUNTS SECTION
-              ────────────────────────────────────────── */}
-          {activeTab === "connected" && (
-          <section id="connected" className="scroll-mt-[100px] flex flex-col gap-4 w-full min-w-0">
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full"
-                >
-                  <div className={cn(cardBase, "relative overflow-hidden group")}>
-                    <div className="absolute inset-0 bg-[#060816]/70 backdrop-blur-[4px] z-10 flex items-center justify-center opacity-100 transition-opacity duration-300">
-                      <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                    </div>
-                    <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                      <Link2 className="w-4 h-4 text-brand-orange" />
-                      <span>Linked Integrations</span>
-                    </h3>
-                    <div className="flex flex-col gap-4 w-full">
-                {[
-                  { label: "LeetCode Auto-Sync API", active: true, desc: "Automatically import solved LeetCode counts history daily." },
-                  { label: "Codeforces Rating Checker", active: true, desc: "Periodically fetch active competitive contest ratings." },
-                  { label: "GitHub Code Solutions Hub", active: false, desc: "Push accepted source codes directly into your GitHub repository." },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-900/[0.06] dark:border-white/[0.04] last:border-0 pb-3.5 last:pb-0">
-                    <div className="flex flex-col text-left leading-none gap-2">
-                      <span className="text-[13px] font-bold text-[#111827] dark:text-white leading-none">{item.label}</span>
-                      <span className="text-[11px] text-slate-500 dark:text-[#9ca3af]/60 leading-none">{item.desc}</span>
-                    </div>
-                    <button
-                      onClick={() => showToast(`Linked integration updated.`, "info")}
-                      className={cn(
-                        "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-pointer",
-                        item.active ? "bg-brand-orange shadow-[0_0_6px_rgba(255,106,0,0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
-                      )}
-                    >
-                      <span className={cn(
-                        "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute",
-                        item.active ? "left-[18px]" : "left-0.5"
-                      )} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-                </motion.div>
-          </section>
           )}
 
           {/* ──────────────────────────────────────────

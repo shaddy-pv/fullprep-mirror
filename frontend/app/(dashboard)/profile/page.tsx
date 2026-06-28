@@ -1049,34 +1049,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className={cn(cardBase, "p-6 text-left relative overflow-hidden group")}>
-                <div className="absolute inset-0 bg-bg-page/40 backdrop-blur-[2px] z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                </div>
-                <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-4 leading-none opacity-60">Linked Account Integrations</h3>
-                <div className="flex flex-col gap-4 opacity-60">
-                  {[
-                    { label: "LeetCode Live Sync", active: true },
-                    { label: "Codeforces Rating Checker", active: true },
-                    { label: "GitHub Repositories Autopilot", active: false },
-                  ].map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-2 border-b border-white/[0.04] last:border-0 pb-3 last:pb-0">
-                      <span className="text-[12px] font-semibold text-text-primary tracking-tight leading-none">{item.label}</span>
-                      <button
-                        onClick={() => showToast(`${item.label} setting toggled successfully!`, "info")}
-                        className={cn(
-                          "w-10 h-5.5 rounded-full p-0.5 transition-all duration-300 cursor-pointer flex relative items-center",
-                          item.active ? "bg-brand-orange" : "bg-white/[0.04] border border-white/[0.06]"
-                        )}
-                      >
-                        <span className={cn(
-                          "w-4.5 h-4.5 rounded-full bg-white shadow-sm transition-all duration-300 absolute",
-                          item.active ? "left-5" : "left-0.5"
-                        )} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
           )}
