@@ -23,11 +23,11 @@ export default function ContestLobbyPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     const fetchContest = async () => {
-      // Validate weekday for weekly contest
+      // Validate weekend for weekly contest
       const today = new Date().getDay();
-      const isWeekday = today >= 1 && today <= 5;
-      if (id === "weekly-contest" && !isWeekday) {
-        showToast("Weekly contests are only available on weekdays!", "error");
+      const isWeekend = today === 0 || today === 6;
+      if (id === "weekly-contest" && !isWeekend) {
+        showToast("Weekly contests are only available on weekends!", "error");
         router.push("/contests");
         return;
       }
