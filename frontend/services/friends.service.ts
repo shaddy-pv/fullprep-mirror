@@ -44,5 +44,9 @@ export const FriendsService = {
 
   async rejectRequest(senderId: string) {
     return api.post<{ success: boolean; message: string }>(`${BASE_URL}/friends/reject/${senderId}`, {});
+  },
+
+  async getStatus(userId: string) {
+    return api.get<{ success: boolean; data: string }>(`${BASE_URL}/friends/status/${userId}`);
   }
 };

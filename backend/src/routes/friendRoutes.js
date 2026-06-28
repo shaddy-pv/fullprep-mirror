@@ -4,7 +4,8 @@ import {
   acceptFriendRequest,
   rejectFriendRequest,
   getFriends,
-  getPendingRequests
+  getPendingRequests,
+  getFriendStatus
 } from "../controllers/friendController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ router.use(protect);
 router.post("/request/:id", sendFriendRequest);
 router.post("/accept/:id", acceptFriendRequest);
 router.post("/reject/:id", rejectFriendRequest);
+router.get("/status/:id", getFriendStatus);
 router.get("/", getFriends);
 router.get("/requests", getPendingRequests);
 

@@ -160,3 +160,37 @@ export const getPendingRequests = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get friend status with a specific user
+// @route   GET /api/friends/status/:id
+// @access  Private
+export const getFriendStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const targetId = req.params.id;
+
+    if (user.friends && user.friends.includes(targetId)) {
+      return res.status(200).json({ success: true, data: "friends" });
+    }
+
+    const friendReq = await FriendRequest.findOne({
+      $or: [
+        { sender: req.user._id, receiver: targetId },
+        { sender: targetId, receiver: req.user._id }
+      ],
+      status: "pending"
+    });
+
+    if (friendReq) {
+      if (friendReq.sender.toString() === req.user._id.toString()) {
+        return res.status(200).json({ success: true, data: "pending_sent" });
+      } else {
+        return res.status(200).json({ success: true, data: "pending_received" });
+      }
+    }
+
+    res.status(200).json({ success: true, data: "none" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -81,23 +81,10 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
       if (!user || !profile || user._id === profile._id) return;
       
       try {
-        // We can check local friends first (but better to fetch latest from server if possible)
-        // Check if already friends
-        const friendsRes = await FriendsService.getFriends();
-        if (friendsRes.data && friendsRes.data.find(f => f._id === profile._id)) {
-          setFriendStatus("friends");
-          return;
+        const statusRes = await FriendsService.getStatus(profile._id);
+        if (statusRes.success) {
+          setFriendStatus(statusRes.data as any);
         }
-
-        // Check if there is a pending request received
-        const pendingRes = await FriendsService.getPendingRequests();
-        if (pendingRes.data && pendingRes.data.find(r => r.sender._id === profile._id)) {
-          setFriendStatus("pending_received");
-          return;
-        }
-
-        // We can't easily check sent requests without a dedicated endpoint or checking all,
-        // For now, if send request fails with "already pending", we know it's pending.
       } catch (err) {
         console.error("Error checking friend status", err);
       }
@@ -125,7 +112,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         }
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Failed to process friend request.";
+      const msg = err?.message || err?.response?.data?.message || "Failed to process friend request.";
       showToast(msg, "error");
       if (msg.includes("pending")) setFriendStatus("pending_sent");
       if (msg.includes("already friends")) setFriendStatus("friends");
