@@ -80,9 +80,9 @@ export default function ProblemsTable() {
     
     if (activeTab === "Upcoming Contests") {
       const today = new Date().getDay();
-      const isWeekend = today === 0 || today === 6;
-      if (!isWeekend) {
-        return <div className="text-sm text-text-secondary py-4 text-center">No upcoming contests currently. Check back on the weekend!</div>;
+      const isWeekday = today >= 1 && today <= 5;
+      if (!isWeekday) {
+        return <div className="text-sm text-text-secondary py-4 text-center">No upcoming contests currently. Check back on a weekday!</div>;
       }
       return (
         <div className="flex items-center justify-between py-3 px-2">

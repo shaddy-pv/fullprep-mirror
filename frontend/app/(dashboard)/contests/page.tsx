@@ -93,28 +93,28 @@ export default function ContestsPage() {
     midnight.setHours(23, 59, 59, 999);
     const dailySecondsLeft = Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
 
-    // Weekly: active ONLY on weekends (Saturday & Sunday)
+    // Weekly: active ONLY on weekdays (Monday to Friday)
     let weeklySecondsLeft = 0;
     let weeklyStatus: "live" | "upcoming" = "upcoming";
     
     const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
 
-    if (isWeekend) {
-      // Currently live, count down to Sunday 23:59:59
-      const endOfWeekend = new Date();
-      const daysToSunday = dayOfWeek === 6 ? 1 : 0;
-      endOfWeekend.setDate(endOfWeekend.getDate() + daysToSunday);
-      endOfWeekend.setHours(23, 59, 59, 999);
-      weeklySecondsLeft = Math.max(0, Math.floor((endOfWeekend.getTime() - now.getTime()) / 1000));
+    if (isWeekday) {
+      // Currently live, count down to Friday 23:59:59
+      const endOfWeekday = new Date();
+      const daysToFriday = 5 - dayOfWeek;
+      endOfWeekday.setDate(endOfWeekday.getDate() + daysToFriday);
+      endOfWeekday.setHours(23, 59, 59, 999);
+      weeklySecondsLeft = Math.max(0, Math.floor((endOfWeekday.getTime() - now.getTime()) / 1000));
       weeklyStatus = "live";
     } else {
-      // It's a weekday, upcoming! Count down to Saturday 00:00:00
-      const startOfWeekend = new Date();
-      const daysToSaturday = 6 - dayOfWeek;
-      startOfWeekend.setDate(startOfWeekend.getDate() + daysToSaturday);
-      startOfWeekend.setHours(0, 0, 0, 0);
-      weeklySecondsLeft = Math.max(0, Math.floor((startOfWeekend.getTime() - now.getTime()) / 1000));
+      // It's the weekend, upcoming! Count down to Monday 00:00:00
+      const startOfWeekday = new Date();
+      const daysToMonday = dayOfWeek === 6 ? 2 : 1; // if Sat, +2 days; if Sun, +1 day
+      startOfWeekday.setDate(startOfWeekday.getDate() + daysToMonday);
+      startOfWeekday.setHours(0, 0, 0, 0);
+      weeklySecondsLeft = Math.max(0, Math.floor((startOfWeekday.getTime() - now.getTime()) / 1000));
       weeklyStatus = "upcoming";
     }
 
