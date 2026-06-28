@@ -26,7 +26,7 @@ export default function ContestLobbyPage({ params }: { params: Promise<{ id: str
       // Validate weekend for weekly contest
       const today = new Date().getDay();
       const isWeekend = today === 0 || today === 6;
-      if (id === "weekly-contest" && !isWeekend) {
+      if (!isWeekend) {
         showToast("Weekly contests are only available on weekends!", "error");
         router.push("/contests");
         return;
