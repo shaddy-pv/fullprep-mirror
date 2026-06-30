@@ -16,13 +16,13 @@ FullPrep is a SaaS application designed for competitive programmers. It enables 
 ## 📁 System Architecture & Directory Structure
 
 ```
-d:\Projects\fullprep-frontend-mirror/
+d:\Projects\fullprep-mirror/
 ├── backend/                  # Express.js backend application
 │   ├── src/
 │   │   ├── config/           # Database and third-party configuration (MongoDB, Firebase)
 │   │   ├── controllers/      # Route controllers (auth, stats, submissions, problems, etc.)
 │   │   ├── middleware/       # Express middlewares (JWT auth, error handler, rate limits)
-│   │   ├── models/           # Mongoose schemas (User, Problem, Submission, Notification)
+│   │   ├── models/           # Mongoose schemas (User, Problem, Submission, Contest, Notification)
 │   │   ├── routes/           # Express route definitions
 │   │   ├── utils/            # Utility services (Judge, email sender)
 │   │   └── workers/          # Background worker tasks (BullMQ queue processors, inline judge)
@@ -269,6 +269,81 @@ Under high load, the following optimizations maintain response times below **300
 
 ---
 
+### Recent Modifications (June 30, 2026) — Session 14: Static Platform Filter (Leaderboard)
+
+#### Frontend: `leaderboard/page.tsx`
+- **Removed API dependency for Platform filter**: Replaced any API/hook-based platform fetching with a local in-memory `PLATFORMS` array (`["All Platforms", "Codeforces", "LeetCode", "AtCoder", "HackerRank", "CodeChef"]`). The dropdown UI remains identical; switching to a real API later requires only changing the data source.
+- **Added Country filter scrollability**: Country dropdown list is now scrollable so all country options are reachable without truncation.
+- **Separated branch**: Delivered on `dev-platform-filter` branch, tested locally, then merged to `main` after all CI checks passed.
+
+---
+
+### Recent Modifications (June 30, 2026) — Session 15: Contest Calendar — End-to-End Admin Integration
+
+#### Backend: `models/Contest.js`
+- **Extended Contest schema**: Added three new optional fields:
+  - `platform` (String, default `"Codnite"`) — the hosting platform name.
+  - `registrationUrl` (String) — direct registration/contest link for users.
+  - `bannerUrl` (String) — optional banner image URL.
+- Updated compound index to `{ isActive: 1, startTime: 1 }` for chronological queries.
+
+#### Backend: `controllers/contestController.js`
+- **Extended `getActiveCustomContests`**: Added `?all=true` query parameter support. When `all=true`, returns ALL active contests regardless of end time (for the calendar view showing past contests). Default behaviour (no param) still filters to `endTime >= now`. Results are sorted chronologically by `startTime` ascending.
+
+#### Admin: `routes/_admin.contests.create.tsx`
+- **Added Platform select**: Dropdown with options `[Codnite, Codeforces, LeetCode, AtCoder, HackerRank, CodeChef, Other]`.
+- **Added Registration URL field**: `type="url"` input validated by the browser.
+- **Added client-side validation**: Checks for required title, start/end time, and that end > start before submitting.
+- **Added inline error banner**: Replaces `alert()` calls with an in-page red error card.
+- **Improved status toggle**: Now reads `"✓ Published (Visible to users)"` / `"✗ Draft (Hidden from users)"` instead of ambiguous Active/Inactive.
+
+#### Admin: `routes/_admin.contests.$id.tsx`
+- **Added same Platform + Registration URL fields** as the create form.
+- **Populates from existing data**: `useEffect` now maps `contestData.platform` and `contestData.registrationUrl` into the form state on load.
+- **Same validation + error banner** as create form.
+- **Improved Delete button label**: Now `"Delete Contest"` for clarity.
+
+#### Frontend: `app/(dashboard)/contests/page.tsx` — Full rewrite
+- **Real data integration**: Fetches all active admin-created contests via `GET /api/contests?all=true`, no more dummy hardcoded tags.
+- **`CalendarContestCard` component**: Each admin contest renders with:
+  - Platform badge (colour-coded per platform: Codeforces=blue, LeetCode=yellow, AtCoder=purple, etc.)
+  - Live / Upcoming / Completed status pill
+  - Date, time range, duration, problem count meta row
+  - Orange "Register" button linking to `registrationUrl` (opens in new tab)
+  - Optional description excerpt
+- **Status tabs**: `All Contests | Live | Upcoming | Completed` — properly filters using start/end time against `Date.now()`. Live tab shows a green count badge when contests are active.
+- **Sort order**: Live first → Upcoming (chronological) → Completed (chronological).
+- **Loading state**: Spinner with label while fetching.
+- **Error state**: Red alert with Retry button.
+- **Empty state**: Calendar icon with contextual message.
+- **Refresh button**: Manual refresh without full page reload.
+- **System contests** (Daily / Weekly) kept in a separate "System Contests" labelled section above the Calendar section.
+- **Search**: Filters by title, platform, and description across all sections.
+
+---
+
+### Recent Modifications (June 30, 2026) — Session 16: UI Polish, Docs & Admin Favicon
+
+#### Admin: `index.html` + `favicon.svg`
+- **Created custom SVG favicon** (`favicon.svg`): Dark `#0f1117` rounded square background, orange brand accent bar, shield outline, and orange checkmark — matches brand identity. Linked via `<link rel="icon" type="image/svg+xml" href="/favicon.svg" />`.
+- **Added meta description** to `index.html` for SEO/tab context.
+
+#### Documentation: `README.md`
+- **Added Contest Calendar section** — detailed 5-step integration flow from Admin create → MongoDB → Frontend display.
+- **Added feature listing** for Contest Calendar, Leaderboard social features.
+- **Added repository structure table** mapping key directories to their purpose.
+- **Added Testing section** with all test commands.
+- **Added Contributing guide** with branch + PR workflow.
+- **Updated Admin step** — corrected env var name to `VITE_API_BASE_URL`.
+- **Added Step 4** for landing page startup.
+
+#### Documentation: `brain.md`
+- Updated directory path from `fullprep-frontend-mirror` to `fullprep-mirror`.
+- Added `Contest` to the models directory comment.
+- Documented Sessions 14, 15, and 16.
+
+---
+
 ## 📋 Outstanding Todo List
 
 - [x] Complete current E2E Playwright test run and resolve any failing suites.
@@ -280,5 +355,7 @@ Under high load, the following optimizations maintain response times below **300
 - [x] Resolve HTTP 431 Request Header Fields Too Large website crash by stripping base64 avatars and arrays from NextAuth JWT.
 - [x] Archive completed GSD architectural milestones (N/A - planning directories do not exist in workspace).
 - [x] Run E2E Playwright tests on the Admin panel (`fullprep-Admin`) and verify 100% stability.
-
+- [x] Replace Leaderboard platform filter API with static in-memory data.
+- [x] Implement Contest Calendar end-to-end: backend schema extensions, admin CRUD forms, user-facing live/upcoming/completed calendar view.
+- [x] Add custom SVG favicon to Admin panel and update README and brain.md documentation.
 

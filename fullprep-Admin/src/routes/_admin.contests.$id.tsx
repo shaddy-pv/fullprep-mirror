@@ -4,7 +4,7 @@ import { ArrowLeft, Save, Plus, X, Search, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { AdminProblem } from "@/lib/types";
-import { StatusBadge, DifficultyBadge } from "@/components/admin/badges";
+import { DifficultyBadge } from "@/components/admin/badges";
 import { InlineProblemModal } from "@/components/admin/InlineProblemModal";
 
 export const Route = createFileRoute("/_admin/contests/$id")({
@@ -12,15 +12,20 @@ export const Route = createFileRoute("/_admin/contests/$id")({
   component: EditContestPage,
 });
 
+const PLATFORMS = ["Codnite", "Codeforces", "LeetCode", "AtCoder", "HackerRank", "CodeChef", "Other"];
+
 function EditContestPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
+    platform: "Codnite",
+    registrationUrl: "",
     type: "custom",
     startTime: "",
     endTime: "",
@@ -35,7 +40,6 @@ function EditContestPage() {
 
   useEffect(() => {
     if (contestData) {
-      // Helper to format date for datetime-local input (YYYY-MM-DDThh:mm) in local timezone
       const formatLocal = (dateString: string) => {
         if (!dateString) return "";
         const d = new Date(dateString);
@@ -46,6 +50,8 @@ function EditContestPage() {
       setForm({
         title: contestData.title || "",
         description: contestData.description || "",
+        platform: contestData.platform || "Codnite",
+        registrationUrl: contestData.registrationUrl || "",
         type: contestData.type || "custom",
         startTime: formatLocal(contestData.startTime),
         endTime: formatLocal(contestData.endTime),
@@ -55,7 +61,6 @@ function EditContestPage() {
     }
   }, [contestData]);
 
-  // Problem Search State
   const [search, setSearch] = useState("");
   const { data: allProblems = [] } = useQuery({
     queryKey: ["problems"],
@@ -88,6 +93,13 @@ function EditContestPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+
+    if (new Date(form.endTime) <= new Date(form.startTime)) {
+      setError("End time must be after start time.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await api.updateContest(id, {
@@ -96,23 +108,23 @@ function EditContestPage() {
         endTime: new Date(form.endTime).toISOString(),
       });
       navigate({ to: "/contests" });
-    } catch (err) {
+    } catch (err: any) {
+      setError(err?.message || "Failed to update contest.");
       console.error("Failed to update contest:", err);
-      alert("Failed to update contest. See console.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function onDelete() {
-    if (!window.confirm("Are you sure you want to delete this contest? This cannot be undone.")) return;
+    if (!window.confirm("Are you sure you want to delete this contest? This cannot be undone."))
+      return;
     setIsSubmitting(true);
     try {
       await api.deleteContest(id);
       navigate({ to: "/contests" });
-    } catch (err) {
-      console.error("Failed to delete contest:", err);
-      alert("Failed to delete contest.");
+    } catch (err: any) {
+      setError(err?.message || "Failed to delete contest.");
       setIsSubmitting(false);
     }
   }
@@ -120,6 +132,8 @@ function EditContestPage() {
   if (isContestLoading) {
     return <div className="p-12 text-center text-text-muted">Loading contest details...</div>;
   }
+
+  const inputCls = "w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30";
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -132,68 +146,125 @@ function EditContestPage() {
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Edit Contest</h1>
-        <p className="text-sm text-text-muted">Modify existing contest settings and problems</p>
+        <p className="text-sm text-text-muted">Modify contest settings and problems</p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={onSubmit} className="space-y-8">
+        {/* ── Contest Details ─────────────────────────────────────── */}
         <div className="rounded-2xl border border-border-card bg-surface p-6 shadow-sm space-y-5">
           <h2 className="text-lg font-bold text-text-primary mb-4">Contest Details</h2>
-          
+
+          {/* Title */}
           <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">Title</span>
+            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+              Title <span className="text-red-400">*</span>
+            </span>
             <input
               required
               value={form.title}
               onChange={(e) => updateForm("title", e.target.value)}
-              className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm"
+              className={inputCls}
             />
           </label>
 
+          {/* Description */}
           <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">Description</span>
+            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+              Description
+            </span>
             <textarea
               value={form.description}
               onChange={(e) => updateForm("description", e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm"
+              className={inputCls}
             />
           </label>
 
+          {/* Platform + Registration URL */}
           <div className="grid grid-cols-2 gap-4">
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">Start Time</span>
+              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+                Platform
+              </span>
+              <select
+                value={form.platform}
+                onChange={(e) => updateForm("platform", e.target.value)}
+                className={inputCls}
+              >
+                {PLATFORMS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+                Registration / Contest URL
+              </span>
+              <input
+                type="url"
+                value={form.registrationUrl}
+                onChange={(e) => updateForm("registrationUrl", e.target.value)}
+                className={inputCls}
+                placeholder="https://..."
+              />
+            </label>
+          </div>
+
+          {/* Start Time + End Time */}
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+                Start Time <span className="text-red-400">*</span>
+              </span>
               <input
                 type="datetime-local"
                 required
                 value={form.startTime}
                 onChange={(e) => updateForm("startTime", e.target.value)}
-                className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm"
+                className={inputCls}
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">End Time</span>
+              <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+                End Time <span className="text-red-400">*</span>
+              </span>
               <input
                 type="datetime-local"
                 required
                 value={form.endTime}
                 onChange={(e) => updateForm("endTime", e.target.value)}
-                className="w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm"
+                className={inputCls}
               />
             </label>
           </div>
 
+          {/* Active Status */}
           <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">Active Status</span>
+            <span className="mb-1.5 block text-xs font-semibold text-text-secondary uppercase">
+              Status
+            </span>
             <button
               type="button"
               onClick={() => updateForm("isActive", !form.isActive)}
-              className={`h-9 w-full rounded-lg border text-sm ${form.isActive ? "border-brand-emerald/40 bg-brand-emerald/10 text-brand-emerald" : "border-border-card text-text-muted"}`}
+              className={`h-9 w-full rounded-lg border text-sm font-semibold transition-colors ${
+                form.isActive
+                  ? "border-green-500/40 bg-green-500/10 text-green-400"
+                  : "border-border-card bg-background/40 text-text-muted"
+              }`}
             >
-              {form.isActive ? "Active" : "Inactive"}
+              {form.isActive ? "✓ Published (Visible to users)" : "✗ Draft (Hidden from users)"}
             </button>
           </label>
         </div>
 
+        {/* ── Problems ────────────────────────────────────────────── */}
         <div className="rounded-2xl border border-border-card bg-surface p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-text-primary">Problems</h2>
@@ -206,7 +277,6 @@ function EditContestPage() {
             </button>
           </div>
 
-          {/* Search Existing */}
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-text-muted" />
             <input
@@ -232,10 +302,12 @@ function EditContestPage() {
             )}
           </div>
 
-          {/* Selected List */}
           <div className="space-y-2 mt-4">
             {selectedProblemsData.map((p, i) => (
-              <div key={p._id} className="flex items-center justify-between p-3 rounded-lg border border-border-card bg-background/50">
+              <div
+                key={p._id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border-card bg-background/50"
+              >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-mono text-text-muted">{i + 1}.</span>
                   <span className="font-medium text-sm">{p.name}</span>
@@ -263,19 +335,19 @@ function EditContestPage() {
             disabled={isSubmitting}
             className="inline-flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-6 py-2 text-sm font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" /> Delete
+            <Trash2 className="h-4 w-4" /> Delete Contest
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-6 py-2 text-sm font-semibold text-primary-foreground hover:brightness-110 disabled:opacity-50"
           >
-            <Save className="h-4 w-4" /> Save Changes
+            <Save className="h-4 w-4" />
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>
 
-      {/* Inline Problem Creation Modal */}
       {isModalOpen && (
         <InlineProblemModal
           onClose={() => setIsModalOpen(false)}
@@ -285,5 +357,3 @@ function EditContestPage() {
     </div>
   );
 }
-
-

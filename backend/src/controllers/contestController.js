@@ -183,19 +183,25 @@ export const createContest = async (req, res) => {
   }
 };
 
-// ── @desc    Get all active custom contests for frontend
-// ── @route   GET /api/contests
+// ── @desc    Get custom contests for frontend calendar
+// ── @route   GET /api/contests          → upcoming + live (endTime >= now)
+// ── @route   GET /api/contests?all=true → all active regardless of end time
 // ── @access  Private
 export const getActiveCustomContests = async (req, res) => {
   try {
     const now = new Date();
-    // Return contests that are active, and have not yet ended (endTime >= now)
-    const contests = await Contest.find({
-      type: "custom",
-      isActive: true,
-      endTime: { $gte: now },
-    }).populate("problems", "name externalId difficulty cfRating cfTags");
-    
+    const showAll = req.query.all === "true";
+
+    const query = { type: "custom", isActive: true };
+    // When not showing all, only show contests that haven't ended
+    if (!showAll) {
+      query.endTime = { $gte: now };
+    }
+
+    const contests = await Contest.find(query)
+      .populate("problems", "name externalId difficulty cfRating cfTags")
+      .sort({ startTime: 1 }); // chronological order
+
     // Transform problems to include 'slug' like daily/weekly do
     const formattedContests = contests.map((c) => {
       const obj = c.toObject();

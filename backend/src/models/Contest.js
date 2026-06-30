@@ -11,6 +11,21 @@ const contestSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    platform: {
+      type: String,
+      default: "Codnite",
+      trim: true,
+    },
+    registrationUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    bannerUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     type: {
       type: String,
       enum: {
@@ -50,7 +65,7 @@ const contestSchema = new mongoose.Schema(
 );
 
 // Basic indexing for faster lookups based on active status and timing
-contestSchema.index({ isActive: 1, startTime: -1 });
+contestSchema.index({ isActive: 1, startTime: 1 });
 
 const Contest = mongoose.model("Contest", contestSchema);
 
