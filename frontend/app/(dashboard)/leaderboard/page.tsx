@@ -15,6 +15,25 @@ import { useNotificationStore } from "@/store/notificationStore";
 import { AuthService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
 
+const PLATFORMS = ["All Platforms", "Codeforces", "LeetCode", "Codnite"];
+const COUNTRIES = [
+  "All Countries", 
+  "India", 
+  "United States", 
+  "United Kingdom", 
+  "Canada", 
+  "Germany", 
+  "France", 
+  "Japan", 
+  "Australia", 
+  "Brazil", 
+  "Singapore",
+  "South Korea",
+  "Netherlands",
+  "Switzerland"
+];
+const TIME_PERIODS = ["Overall", "Monthly", "Weekly", "All Time"];
+
 interface LeaderboardUser {
   rank: number;
   username: string;
@@ -36,6 +55,25 @@ export default function LeaderboardPage() {
   const [activeMainTab, setActiveMainTab] = useState("Global");
   const [activeFilterTab, setActiveFilterTab] = useState("Overall");
   const [searchVal, setSearchVal] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("All Platforms");
+  const [isPlatformOpen, setIsPlatformOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("All Countries");
+  const [isCountryOpen, setIsCountryOpen] = useState(false);
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState("Overall");
+  const [isTimePeriodOpen, setIsTimePeriodOpen] = useState(false);
+
+  // Sync dropdowns when top main tabs or filter pills change
+  useEffect(() => {
+    if (activeMainTab === "Global") {
+      setSelectedCountry("All Countries");
+    } else if (activeMainTab === "Country" && selectedCountry === "All Countries") {
+      setSelectedCountry("India");
+    }
+  }, [activeMainTab, selectedCountry]);
+
+  useEffect(() => {
+    setSelectedTimePeriod(activeFilterTab);
+  }, [activeFilterTab]);
   const [currentPage, setCurrentPage] = useState(1);
   const [countdownSeconds, setCountdownSeconds] = useState(37475); // 10:24:35 in seconds
 
@@ -597,39 +635,126 @@ export default function LeaderboardPage() {
 
             <div className="flex flex-col gap-3">
               {/* Country Select */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 relative">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Country</span>
-                <button className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={() => setIsCountryOpen(!isCountryOpen)}
+                  className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
                     <Globe className="w-4 h-4 text-text-secondary" />
-                    <span>All Countries</span>
+                    <span>{selectedCountry}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-text-secondary" />
+                  <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isCountryOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {isCountryOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
+                    {COUNTRIES.map((country) => (
+                      <button
+                        key={country}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCountry(country);
+                          setIsCountryOpen(false);
+                          if (country === "All Countries") {
+                            setActiveMainTab("Global");
+                          } else {
+                            setActiveMainTab("Country");
+                          }
+                          showToast(`Country filter changed to: ${country}`, "info");
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-[12.5px] font-semibold transition-colors cursor-pointer ${
+                          selectedCountry === country
+                            ? "bg-brand-orange/10 text-brand-orange"
+                            : "text-text-secondary hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-text-primary"
+                        }`}
+                      >
+                        {country}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Time Period Select */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 relative">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Time Period</span>
-                <button className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={() => setIsTimePeriodOpen(!isTimePeriodOpen)}
+                  className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-text-secondary" />
-                    <span>Overall</span>
+                    <span>{selectedTimePeriod}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-text-secondary" />
+                  <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isTimePeriodOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {isTimePeriodOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
+                    {TIME_PERIODS.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTimePeriod(time);
+                          setIsTimePeriodOpen(false);
+                          setActiveFilterTab(time);
+                          showToast(`Time period changed to: ${time}`, "info");
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-[12.5px] font-semibold transition-colors cursor-pointer ${
+                          selectedTimePeriod === time
+                            ? "bg-brand-orange/10 text-brand-orange"
+                            : "text-text-secondary hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-text-primary"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Platform Select */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 relative">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Platform</span>
-                <button className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={() => setIsPlatformOpen(!isPlatformOpen)}
+                  className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
                     <Code className="w-4 h-4 text-text-secondary" />
-                    <span>All Platforms</span>
+                    <span>{selectedPlatform}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-text-secondary" />
+                  <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isPlatformOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {isPlatformOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
+                    {PLATFORMS.map((platform) => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlatform(platform);
+                          setIsPlatformOpen(false);
+                          showToast(`Platform filter changed to: ${platform}`, "info");
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-[12.5px] font-semibold transition-colors cursor-pointer ${
+                          selectedPlatform === platform
+                            ? "bg-brand-orange/10 text-brand-orange"
+                            : "text-text-secondary hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-text-primary"
+                        }`}
+                      >
+                        {platform}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </DashboardCard>
