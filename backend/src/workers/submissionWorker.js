@@ -85,9 +85,12 @@ export async function runJudge({ submissionId, language, code, testCases, proble
       // ── Streak calculation ────────────────────────────────────────────
       // A streak increments if the user solves at least once per calendar day.
       const now         = new Date();
-      const todayStr    = now.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr    = `${year}-${month}-${day}`; // "YYYY-MM-DD" local time
       const lastSolved  = freshUser?.lastSolvedDate;
-      const lastStr     = lastSolved ? new Date(lastSolved).toISOString().slice(0, 10) : null;
+      const lastStr     = lastSolved ? `${lastSolved.getFullYear()}-${String(lastSolved.getMonth() + 1).padStart(2, '0')}-${String(lastSolved.getDate()).padStart(2, '0')}` : null;
 
       // Calculate difference in calendar days
       const msPerDay    = 24 * 60 * 60 * 1000;

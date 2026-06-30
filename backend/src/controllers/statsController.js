@@ -42,7 +42,7 @@ export const getUserStats = async (req, res) => {
     acceptedSubmissions,
     solvedProblems,
     globalRank,
-    dailyActivity,
+    recentSubmissions,
     languageBreakdown,
     difficultyBreakdown,
     yearlyActivity,
@@ -65,25 +65,11 @@ export const getUserStats = async (req, res) => {
     // Rank = (active users with more XP) + 1
     User.countDocuments({ isActive: true, xp: { $gt: req.user.xp ?? 0 } }),
 
-    // 6. Daily submission activity for the last 7 days (for the graph)
-    Submission.aggregate([
-      {
-        $match: {
-          user:      userId,
-          createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
-          },
-          total:    { $sum: 1 },
-          accepted: { $sum: { $cond: [{ $eq: ["$status", "ACCEPTED"] }, 1, 0] } },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]),
+    // 6. Recent submissions for the last 7 days (for the graph) - grouped in memory to respect server timezone
+    Submission.find({
+      user: userId,
+      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+    }).select("createdAt status"),
 
     // 7. Language usage breakdown
     Submission.aggregate([
@@ -173,15 +159,30 @@ export const getUserStats = async (req, res) => {
 
   // ── Fill in missing days with 0 for the graph ─────────────────
   const activityMap = {};
-  dailyActivity.forEach((d) => { activityMap[d._id] = d; });
+  recentSubmissions.forEach((sub) => {
+    const d = new Date(sub.createdAt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const key = `${year}-${month}-${day}`;
+    if (!activityMap[key]) {
+      activityMap[key] = { total: 0, accepted: 0 };
+    }
+    activityMap[key].total++;
+    if (sub.status === "ACCEPTED") activityMap[key].accepted++;
+  });
+
   const last7Days = [];
   for (let i = 6; i >= 0; i--) {
     const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-    const key  = date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const key = `${year}-${month}-${day}`;
     last7Days.push({
       date,
-      label:    date.toLocaleDateString("en-US", { weekday: "short" }),
-      total:    activityMap[key]?.total    ?? 0,
+      label: date.toLocaleDateString("en-US", { weekday: "short" }),
+      total: activityMap[key]?.total ?? 0,
       accepted: activityMap[key]?.accepted ?? 0,
     });
   }
@@ -238,7 +239,16 @@ export const getSidebarStats = async (req, res) => {
     const user = await User.findById(req.user._id).populate("enrolledPaths").lean();
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // 1. Weekly Goal Logic (Monday to Sunday)
+    // 1. Collect all problems from enrolled paths
+    const enrolledPaths = user.enrolledPaths || [];
+    const pathProblems = new Set();
+    enrolledPaths.forEach(path => {
+      path.modules?.forEach(mod => {
+        mod.problems?.forEach(pId => pathProblems.add(pId));
+      });
+    });
+
+    // 2. Weekly Goal Logic (Monday to Sunday)
     const now = new Date();
     // Get Monday of current week
     const currentDay = now.getDay();
@@ -246,16 +256,39 @@ export const getSidebarStats = async (req, res) => {
     const monday = new Date(now.setDate(diff));
     monday.setHours(0, 0, 0, 0);
 
+    // Fetch this week's submissions
+    const recentSubmissions = await Submission.find({
+      user: req.user._id,
+      status: "ACCEPTED",
+      createdAt: { $gte: monday }
+    }).select("createdAt problemExternalId").lean();
+
+    const weekPathActivity = {};
+    const solvedThisWeek = new Set();
+
+    recentSubmissions.forEach(sub => {
+      if (pathProblems.has(sub.problemExternalId)) {
+        const d = new Date(sub.createdAt);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        weekPathActivity[dateStr] = (weekPathActivity[dateStr] || 0) + 1;
+        solvedThisWeek.add(sub.problemExternalId);
+      }
+    });
+
     const weeklyActivity = [];
-    let weekTotal = 0;
-    const activityMap = user.activityMap || {};
+    const weekTotal = solvedThisWeek.size;
 
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(monday);
       dayDate.setDate(monday.getDate() + i);
-      const dateStr = dayDate.toISOString().slice(0, 10);
-      const done = (activityMap[dateStr] && activityMap[dateStr] > 0) ? true : false;
-      if (done) weekTotal += activityMap[dateStr];
+      const year = dayDate.getFullYear();
+      const month = String(dayDate.getMonth() + 1).padStart(2, '0');
+      const date = String(dayDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${date}`;
+      const done = weekPathActivity[dateStr] > 0;
       weeklyActivity.push({ done, dateStr });
     }
 
@@ -284,7 +317,6 @@ export const getSidebarStats = async (req, res) => {
 
     // 3. Recommended Next Logic
     let recommendedNext = null;
-    const enrolledPaths = user.enrolledPaths || [];
     
     // Find first enrolled path where user progress < 100%
     for (const path of enrolledPaths) {
