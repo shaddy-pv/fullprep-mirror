@@ -640,7 +640,7 @@ export default function ProfilePage() {
                                       title={cell ? `${cell.date}` : ""}
                                       className={cn(
                                         "w-[12px] h-[12px] rounded-[3px] transition-colors duration-300",
-                                        level === 0 && "bg-white/[0.03] hover:bg-white/[0.08]",
+                                        level === 0 && "bg-black/5 dark:bg-white/[0.03] hover:bg-black/10 dark:hover:bg-white/[0.08]",
                                         level === 1 && "bg-[#10b981]/30 hover:bg-[#10b981]/40",
                                         level === 2 && "bg-[#10b981]/50 hover:bg-[#10b981]/60",
                                         level === 3 && "bg-[#10b981]/80 hover:bg-[#10b981]/90",
@@ -657,7 +657,7 @@ export default function ProfilePage() {
                         {/* Legend */}
                         <div className="flex items-center gap-2 text-[10px] text-text-secondary/60 font-medium mt-5 self-end select-none">
                           <span>Less</span>
-                          <div className="w-[12px] h-[12px] rounded-[3px] bg-white/[0.03]" />
+                          <div className="w-[12px] h-[12px] rounded-[3px] bg-black/5 dark:bg-white/[0.03]" />
                           <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/30" />
                           <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/50" />
                           <div className="w-[12px] h-[12px] rounded-[3px] bg-[#10b981]/80" />
@@ -732,7 +732,7 @@ export default function ProfilePage() {
                   <div key={d.label} className={cn(cardBase, "p-6 flex flex-col items-center justify-center text-center h-[200px]")}>
                     <div className="relative w-[80px] h-[80px]">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="8" />
+                        <circle cx="50" cy="50" r="40" fill="none" className="stroke-black/5 dark:stroke-white/[0.04]" strokeWidth="8" />
                         <circle cx="50" cy="50" r="40" fill="none" stroke={d.color} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${d.pct * 2.51} ${251 - d.pct * 2.51}`} />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -834,25 +834,73 @@ export default function ProfilePage() {
             <div className="w-full flex flex-col gap-6">
               <div className={cn(cardBase, "p-6 text-left")}>
                 <h3 className="text-[13px] font-semibold text-text-primary tracking-[-0.01em] mb-5 leading-none">Milestone Activity Timeline</h3>
-                <div className="flex flex-col border-l-2 border-white/[0.06] ml-3 pl-6 gap-6 relative">
-                  {[
-                    { title: "Consistency Master Badge Unlocked", desc: "Maintained active coding streak for 90 days straight.", time: "Today, May 28", badge: Crown, badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-                    { title: "Weekly Contest 406 Completed", desc: "Finished 406th globally out of 18,452 participants.", time: "May 24, 2026", badge: Trophy, badgeColor: "text-[#eab308] bg-[#eab308]/10 border-[#eab308]/20" },
-                    { title: "Solved Trapping Rain Water (Hard)", desc: "Completed code in 12ms utilizing dynamic programming.", time: "May 22, 2026", badge: Code2, badgeColor: "text-[#ff6a00] bg-[#ff6a00]/10 border-[#ff6a00]/20" },
-                    { title: "LeetCode Profile Successfully Linked", desc: "Synchronized account settings and historic records.", time: "May 18, 2026", badge: Crown, badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-                  ].map((m, idx) => {
-                    const Icon = m.badge;
-                    return (
-                      <div key={idx} className="relative flex flex-col text-left py-0.5">
-                        <span className={cn("absolute -left-[33px] top-0.5 w-5 h-5 rounded-full flex items-center justify-center border text-xs", m.badgeColor)}>
-                          <Icon className="w-2.5 h-2.5" />
-                        </span>
-                        <span className="text-[12px] font-semibold text-text-primary tracking-tight leading-none">{m.title}</span>
-                        <span className="text-[11px] text-text-secondary/70 mt-1.5 leading-tight font-normal">{m.desc}</span>
-                        <span className="text-[9px] text-text-secondary/50 font-medium uppercase tracking-wider mt-1.5 leading-none">{m.time}</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-col border-l-2 border-dotted border-black/20 dark:border-white/20 ml-3 pl-6 gap-6 relative">
+                  {(() => {
+                    const events: any[] = [];
+                    const badgeColors: Record<string, string> = {
+                      gold: "text-[#eab308] bg-[#eab308]/10 border-[#eab308]/20",
+                      orange: "text-[#ff6a00] bg-[#ff6a00]/10 border-[#ff6a00]/20",
+                      red: "text-[#f43f5e] bg-[#f43f5e]/10 border-[#f43f5e]/20",
+                      teal: "text-[#14b8a6] bg-[#14b8a6]/10 border-[#14b8a6]/20",
+                      green: "text-[#10b981] bg-[#10b981]/10 border-[#10b981]/20",
+                      purple: "text-[#8b5cf6] bg-[#8b5cf6]/10 border-[#8b5cf6]/20",
+                      blue: "text-[#3b82f6] bg-[#3b82f6]/10 border-[#3b82f6]/20",
+                      slate: "text-slate-500 bg-slate-500/10 border-slate-500/20",
+                    };
+
+                    badges.forEach((b) => {
+                      events.push({
+                        title: `${b.title} Badge Unlocked`,
+                        desc: b.subtitle,
+                        time: "Recent Achievement",
+                        badge: b.icon,
+                        badgeColor: badgeColors[b.color] || badgeColors.slate
+                      });
+                    });
+
+                    if (recentSubmissions) {
+                      recentSubmissions.slice(0, 10).forEach((sub) => {
+                        const isAcc = sub.status === "ACCEPTED";
+                        events.push({
+                          title: `${isAcc ? "Solved" : "Attempted"} ${sub.problemExternalId}`,
+                          desc: isAcc ? `Completed using ${sub.language}${sub.executionTime ? ` in ${sub.executionTime}ms` : ""}.` : `Attempted using ${sub.language}.`,
+                          time: new Date(sub.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+                          badge: Code2,
+                          badgeColor: isAcc ? "text-[#10b981] bg-[#10b981]/10 border-[#10b981]/20" : "text-[#f43f5e] bg-[#f43f5e]/10 border-[#f43f5e]/20",
+                          timestamp: new Date(sub.createdAt).getTime()
+                        });
+                      });
+                    }
+
+                    // Sort by timestamp if available (recent first), though badges don't have timestamps, they will stay at the top.
+                    events.sort((a, b) => {
+                      if (a.timestamp && b.timestamp) return b.timestamp - a.timestamp;
+                      if (!a.timestamp && b.timestamp) return -1;
+                      if (a.timestamp && !b.timestamp) return 1;
+                      return 0;
+                    });
+
+                    if (events.length === 0) {
+                      return <div className="text-[12px] text-text-secondary italic">No recent activity found.</div>;
+                    }
+
+                    return events.map((m, idx) => {
+                      const Icon = m.badge;
+                      return (
+                        <div key={idx} className="relative flex flex-col text-left py-0.5">
+                          {/* Solid base to hide the line underneath */}
+                          <div className="absolute -left-[33px] top-0.5 w-5 h-5 rounded-full bg-card-bg flex items-center justify-center z-10" />
+                          {/* Semi-transparent icon on top */}
+                          <span className={cn("absolute -left-[33px] top-0.5 w-5 h-5 rounded-full flex items-center justify-center border text-xs z-20", m.badgeColor)}>
+                            <Icon className="w-2.5 h-2.5" />
+                          </span>
+                          <span className="text-[12px] font-semibold text-text-primary tracking-tight leading-none">{m.title}</span>
+                          <span className="text-[11px] text-text-secondary/70 mt-1.5 leading-tight font-normal">{m.desc}</span>
+                          <span className="text-[9px] text-text-secondary/50 font-medium uppercase tracking-wider mt-1.5 leading-none">{m.time}</span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>
@@ -1092,19 +1140,19 @@ export default function ProfilePage() {
                       <Trophy className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-[18px] font-bold text-white leading-none mb-1">Level System</h3>
-                      <p className="text-[12px] text-white/50 leading-none">How to earn XP and level up</p>
+                      <h3 className="text-[18px] font-bold text-text-primary dark:text-white leading-none mb-1">Level System</h3>
+                      <p className="text-[12px] text-text-secondary dark:text-white/50 leading-none">How to earn XP and level up</p>
                     </div>
                   </div>
-                  <button onClick={() => setShowLevelModal(false)} className="text-white/40 hover:text-white transition-colors">
+                  <button onClick={() => setShowLevelModal(false)} className="text-text-secondary/60 hover:text-text-primary dark:text-white/40 dark:hover:text-white transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 
                 <div className="space-y-6">
-                  <div className="bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl">
+                  <div className="bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/[0.04] p-4 rounded-xl">
                     <h4 className="text-[13px] font-bold text-brand-orange mb-3">Earning XP</h4>
-                    <ul className="space-y-2 text-[12px] text-white/70 font-medium">
+                    <ul className="space-y-2 text-[12px] text-text-secondary dark:text-white/70 font-medium">
                       <li className="flex justify-between"><span>Solve an Easy Problem</span> <span>+10 XP</span></li>
                       <li className="flex justify-between"><span>Solve a Medium Problem</span> <span>+30 XP</span></li>
                       <li className="flex justify-between"><span>Solve a Hard Problem</span> <span>+60 XP</span></li>
@@ -1112,15 +1160,15 @@ export default function ProfilePage() {
                     </ul>
                   </div>
 
-                  <div className="bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl">
+                  <div className="bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/[0.04] p-4 rounded-xl">
                     <h4 className="text-[13px] font-bold text-[#10b981] mb-3">Unlocking Badges</h4>
-                    <ul className="space-y-2 text-[12px] text-white/70 font-medium">
-                      <li>• <strong className="text-purple-400">First Blood:</strong> Solve your very first problem</li>
-                      <li>• <strong className="text-yellow-500">Problem Solver:</strong> Reach 100 total solved problems</li>
-                      <li>• <strong className="text-orange-500">Contest Warrior:</strong> Participate in 10 contests</li>
-                      <li>• <strong className="text-red-500">Week Streak:</strong> Hit a 7-day activity streak</li>
-                      <li>• <strong className="text-teal-400">Top 10%:</strong> Achieve a contest rating of 1600+</li>
-                      <li>• <strong className="text-blue-400">Quick Solver:</strong> Solve 50+ problems & 100+ submissions</li>
+                    <ul className="space-y-2 text-[12px] text-text-secondary dark:text-white/70 font-medium">
+                      <li>• <strong className="text-purple-500 dark:text-purple-400">First Blood:</strong> Solve your very first problem</li>
+                      <li>• <strong className="text-yellow-600 dark:text-yellow-500">Problem Solver:</strong> Reach 100 total solved problems</li>
+                      <li>• <strong className="text-orange-500 dark:text-orange-500">Contest Warrior:</strong> Participate in 10 contests</li>
+                      <li>• <strong className="text-red-500 dark:text-red-500">Week Streak:</strong> Hit a 7-day activity streak</li>
+                      <li>• <strong className="text-teal-500 dark:text-teal-400">Top 10%:</strong> Achieve a contest rating of 1600+</li>
+                      <li>• <strong className="text-blue-500 dark:text-blue-400">Quick Solver:</strong> Solve 50+ problems & 100+ submissions</li>
                     </ul>
                   </div>
                 </div>
