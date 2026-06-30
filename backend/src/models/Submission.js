@@ -97,6 +97,12 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    // ── Moderation ────────────────────────────────────────────────
+    isFlagged: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true, // createdAt = submission time, updatedAt = when judge finished

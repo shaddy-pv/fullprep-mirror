@@ -132,4 +132,14 @@ export interface AdminSubmission {
   jobId: string | null;
   createdAt: string;
   updatedAt: string;
+  isFlagged?: boolean;
+}
+
+export interface AdminNotification {
+  _id: string;
+  title: string;
+  message: string;
+  type: "SUCCESS" | "INFO" | "WARNING" | "ERROR";
+  isRead: boolean;
+  createdAt: string;
 }

@@ -23,6 +23,7 @@ export default function ContestsPage() {
 
   const [dailyContest, setDailyContest] = useState<ContestData | null>(null);
   const [weeklyContest, setWeeklyContest] = useState<ContestData | null>(null);
+  const [customContests, setCustomContests] = useState<ContestData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const tabs = ["All Contests", "Upcoming", "Live", "Completed", "Participated"];
@@ -30,12 +31,14 @@ export default function ContestsPage() {
   useEffect(() => {
     async function loadContests() {
       try {
-        const [daily, weekly] = await Promise.all([
+        const [daily, weekly, custom] = await Promise.all([
           ContestsService.getDailyContest(),
-          ContestsService.getWeeklyContest()
+          ContestsService.getWeeklyContest(),
+          ContestsService.getCustomContests()
         ]);
         setDailyContest(daily);
         setWeeklyContest(weekly);
+        setCustomContests(custom);
       } catch (_err) {
         console.error("Failed to load contests:", _err);
       } finally {
@@ -148,6 +151,38 @@ export default function ContestsPage() {
         status: weeklyStatus,
       });
     }
+
+    if (customContests && customContests.length > 0) {
+      customContests.forEach(c => {
+        const start = new Date(c.startTime || now);
+        const end = new Date(c.endTime || now);
+        const isLive = now >= start && now <= end;
+        const isUpcoming = now < start;
+        
+        let initialSecondsLeft = 0;
+        let status = "live";
+        if (isLive) {
+          initialSecondsLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+        } else if (isUpcoming) {
+          initialSecondsLeft = Math.max(0, Math.floor((start.getTime() - now.getTime()) / 1000));
+          status = "upcoming";
+        }
+        
+        list.push({
+          id: c.id || c._id || "custom-contest",
+          title: c.title || c.name || "Custom Contest",
+          date: start.toLocaleDateString(),
+          timeRange: `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+          duration: c.duration ? `${c.duration} Hrs` : "Custom",
+          tags: ["Custom", "Admin"],
+          initialSecondsLeft,
+          featured: false,
+          type: "Rated" as const,
+          slug: (c.problems && c.problems.length > 0) ? c.problems[0].slug : "",
+          status: status,
+        });
+      });
+    }
     return list;
   };
 
@@ -163,8 +198,8 @@ export default function ContestsPage() {
   });
 
   const filteredContests = tabFilteredContests.filter((c) =>
-    c.title.toLowerCase().includes(searchVal.toLowerCase()) ||
-    c.tags.some((t: string) => t.toLowerCase().includes(searchVal.toLowerCase()))
+    (c.title || "").toLowerCase().includes(searchVal.toLowerCase()) ||
+    (c.tags || []).some((t: string) => t.toLowerCase().includes(searchVal.toLowerCase()))
   );
 
   return (
@@ -271,12 +306,12 @@ export default function ContestsPage() {
                       filteredContests.map((c) => (
                         <ContestCard
                           key={c.id}
-                          id={c.id}
-                          title={c.title}
+                          id={c.id || ""}
+                          title={c.title || ""}
                           date={c.date}
                           timeRange={c.timeRange}
                           duration={c.duration}
-                          tags={c.tags}
+                          tags={c.tags || []}
                           initialSecondsLeft={c.initialSecondsLeft}
                           featured={c.featured}
                           type={c.type}

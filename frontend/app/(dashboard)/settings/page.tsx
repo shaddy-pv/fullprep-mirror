@@ -573,7 +573,7 @@ export default function SettingsPage() {
                   />
                   <div className="relative group">
                     {user?.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user?.name || "User"} className="w-24 h-24 rounded-full object-cover shadow-lg shrink-0 border border-slate-900/[0.08] dark:border-white/[0.08]" />
+                      <img src={user.avatarUrl} alt={user?.name || "User"} className="w-24 h-24 rounded-full object-cover shadow-lg shrink-0 border border-slate-900/[0.08] dark:border-white/[0.08]" referrerPolicy="no-referrer" />
                     ) : (
                       <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
                         <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>

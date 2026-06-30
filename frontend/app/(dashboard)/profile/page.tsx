@@ -455,7 +455,7 @@ export default function ProfilePage() {
           {/* Avatar */}
           <div className="relative shrink-0">
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user?.name || "User"} className="w-20 h-20 rounded-full object-cover shadow-lg shrink-0" />
+              <img src={user.avatarUrl} alt={user?.name || "User"} className="w-20 h-20 rounded-full object-cover shadow-lg shrink-0" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[28px] text-white border border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 font-sans">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -950,7 +950,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 cursor-pointer"
                             onClick={() => router.push(`/user/${req.sender._id}`)}
                           >
-                            <img src={req.sender.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" />
+                            <img src={req.sender.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" referrerPolicy="no-referrer" />
                             <span className="text-[13px] font-semibold text-text-primary hover:text-brand-orange transition-colors">{req.sender.name}</span>
                           </div>
                           <div className="flex items-center gap-2">
@@ -992,7 +992,7 @@ export default function ProfilePage() {
                             className="flex items-center gap-3 cursor-pointer"
                             onClick={() => router.push(`/user/${friend._id}`)}
                           >
-                            <img src={friend.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" />
+                            <img src={friend.avatar || "/placeholder.png"} className="w-8 h-8 rounded-full bg-border-card" alt="Avatar" referrerPolicy="no-referrer" />
                             <div className="flex flex-col">
                               <span className="text-[13px] font-semibold text-text-primary hover:text-brand-orange transition-colors leading-none">{friend.name}</span>
                               <span className="text-[10px] text-text-secondary mt-1 leading-none">Level {friend.level || 1} • {friend.xp || 0} XP</span>

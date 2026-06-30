@@ -21,6 +21,8 @@ interface UserProfile {
     leetcode?: string;
   };
   bookmarks?: string[];
+  upvotedProblems?: string[];
+  downvotedProblems?: string[];
   location?: string;
   backupEmail?: string;
   contestRating?: number;
@@ -37,9 +39,12 @@ interface UserProfile {
 interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  /** True once the initial session check has completed (success or failure). */
+  sessionReady: boolean;
   login: (user: UserProfile) => void;
   logout: () => void;
   setUser: (user: UserProfile | null) => void;
+  setSessionReady: (ready: boolean) => void;
 }
 
 /**
@@ -61,6 +66,7 @@ export function getCurrentStreak(user: UserProfile | null): number {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
+  sessionReady: false,
   login: (user) => set({ 
     user,
     isAuthenticated: true 
@@ -70,4 +76,5 @@ export const useAuthStore = create<AuthState>((set) => ({
     user,
     isAuthenticated: !!user
   }),
+  setSessionReady: (ready) => set({ sessionReady: ready }),
 }));

@@ -52,6 +52,17 @@ function ProblemDetailsPage() {
     onSuccess: () => navigate({ to: "/problems" }),
   });
 
+  const rejudgeMutation = useMutation({
+    mutationFn: () => api.rejudgeProblem(p!._id),
+    onSuccess: (data) => {
+      alert(data.message);
+      queryClient.invalidateQueries({ queryKey: ["problem-submissions", id] });
+    },
+    onError: (err: any) => {
+      alert("Failed to rejudge problem: " + err.message);
+    },
+  });
+
   if (isProblemLoading) {
     return <div className="p-8 text-center text-text-muted">Loading problem details...</div>;
   }
@@ -580,10 +591,16 @@ function ProblemDetailsPage() {
                 </Link>
 
                 <button
-                  className="w-full py-2.5 rounded-lg text-sm font-semibold border border-border-card bg-background/50 hover:bg-background transition-colors flex justify-center items-center gap-2 text-text-primary"
-                  onClick={() => alert("Problem Rejudge is not implemented in the current MVP.")}
+                  className="w-full py-2.5 rounded-lg text-sm font-semibold border border-border-card bg-background/50 hover:bg-background transition-colors flex justify-center items-center gap-2 text-text-primary disabled:opacity-50"
+                  onClick={() => {
+                    if (confirm(`Are you sure you want to rejudge all submissions for ${p.name}? This will reset them to PENDING.`)) {
+                      rejudgeMutation.mutate();
+                    }
+                  }}
+                  disabled={rejudgeMutation.isPending}
                 >
-                  <RefreshCcw className="h-4 w-4" /> Trigger Rejudge
+                  <RefreshCcw className={`h-4 w-4 ${rejudgeMutation.isPending ? "animate-spin" : ""}`} /> 
+                  {rejudgeMutation.isPending ? "Rejudging..." : "Trigger Rejudge"}
                 </button>
 
                 <div className="pt-4 border-t border-border-card mt-4">

@@ -31,8 +31,8 @@ export async function fetcher<T>(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       
-      // Only trigger global logout if it's NOT a login request (wrong password returns 401)
-      if (response.status === 401 && typeof window !== "undefined" && !url.includes("/auth/login")) {
+      // Only trigger global logout if it's NOT a login/logout request
+      if (response.status === 401 && typeof window !== "undefined" && !url.includes("/auth/login") && !url.includes("/auth/logout")) {
         window.dispatchEvent(new Event("fp-unauthorized"));
       }
 

@@ -1,4 +1,4 @@
-import type { AdminUser, AdminProblem, AdminSubmission } from "./types";
+import type { AdminUser, AdminProblem, AdminSubmission, AdminNotification } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 export const TOKEN_KEY = "fp_token";
@@ -142,6 +142,14 @@ export const api = {
     await request(`/problems/${id}`, { method: "DELETE" });
   },
 
+  async rejudgeProblem(id: string) {
+    const r = await request<{ message: string }>(`/problems/${id}/rejudge`, {
+      method: "POST",
+    });
+    return r;
+  },
+
+
   async listSubmissions(params?: {
     userId?: string;
     problemExternalId?: string;
@@ -170,6 +178,13 @@ export const api = {
       method: "POST",
     });
     return r.data;
+  },
+
+  async flagSubmission(id: string) {
+    const r = await request<{ data: { isFlagged: boolean }; message: string }>(`/submissions/${id}/flag`, {
+      method: "PATCH",
+    });
+    return r;
   },
 
   async syncProblems(mode: "ALL" | "STALE" | "MISSING" = "ALL") {
@@ -209,6 +224,60 @@ export const api = {
       body: JSON.stringify(data),
     });
     return r.data;
+  },
+
+  async listContests() {
+    const r = await request<{ data: any[] }>("/contests/admin");
+    return r.data;
+  },
+
+  async getDashboardAnalytics(timeRange: "24h" | "7d" | "30d" | "all" = "7d") {
+    const r = await request<{ data: any }>(`/analytics/dashboard?timeRange=${timeRange}`);
+    return r.data;
+  },
+
+  async getNotifications() {
+    const r = await request<{ data: AdminNotification[] }>("/notifications");
+    return r.data;
+  },
+
+  async markNotificationAsRead(id: string) {
+    const r = await request<{ success: boolean }>(`/notifications/${id}/read`, {
+      method: "PATCH",
+    });
+    return r;
+  },
+
+  async markAllNotificationsAsRead() {
+    const r = await request<{ success: boolean }>("/notifications/read-all", {
+      method: "PATCH",
+    });
+    return r;
+  },
+
+  async getContest(id: string) {
+    const r = await request<{ data: any }>(`/contests/${id}`);
+    return r.data;
+  },
+
+  async createContest(payload: any) {
+    const r = await request<{ data: any }>("/contests", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return r.data;
+  },
+
+  async updateContest(id: string, payload: any) {
+    const r = await request<{ data: any }>(`/contests/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    return r.data;
+  },
+
+  async deleteContest(id: string) {
+    await request(`/contests/${id}`, { method: "DELETE" });
   },
 };
 

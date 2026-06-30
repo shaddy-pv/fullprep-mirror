@@ -14,7 +14,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, sessionReady } = useAuthStore();
   const { 
     isSidebarCollapsed, 
     isMobileSidebarOpen, 
@@ -22,12 +22,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   } = useDashboard();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only redirect AFTER the session check is complete.
+    // If we redirect immediately (before sessionReady), we cause an infinite
+    // loop because isAuthenticated starts as false on every page load.
+    if (sessionReady && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, sessionReady, router]);
 
-  if (!isAuthenticated) {
+  // While session is being checked OR user is not authenticated, show nothing.
+  // SessionProvider already shows a spinner during the check, so we just return null here.
+  if (!sessionReady || !isAuthenticated) {
     return null;
   }
 
