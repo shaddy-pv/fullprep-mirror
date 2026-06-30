@@ -10,7 +10,7 @@
 
 <div align="center">
   <h1>🚀 FullPrep Platform</h1>
-  <p><strong>An industry-level competitive programming platform featuring a modern Next.js frontend, an Express/MongoDB backend, and a dedicated Admin Dashboard.</strong></p>
+  <p><strong>An industry-level competitive programming platform featuring a modern Next.js frontend, an Express/MongoDB backend, a dedicated Admin Dashboard, and a public marketing landing page.</strong></p>
 </div>
 
 ---
@@ -28,10 +28,12 @@
 
 * **Interactive Code Workspace**: Monaco editor integration with execution support for C++, Java, Python, and JavaScript.
 * **AI Tutor (Gemini 2.5 Flash)**: Context-aware AI hints based on user code to unblock stuck users with integrated free/pro limits.
-* **Admin Dashboard**: Full CRUD panel to manage problems, view user statistics, and monitor system health.
+* **Contest Calendar**: Live contest scheduler where admins create contests (with platform, registration URL, start/end time) from the Admin Dashboard, and users see them automatically on the Contest Calendar page with Live/Upcoming/Completed status tabs.
+* **Admin Dashboard**: Full CRUD panel to manage problems, contests, users, submissions, view system analytics, and monitor platform health.
 * **Live Database Cache & Seeding**: Automated problem seeding from external APIs (Codnite) mapping directly to MongoDB.
 * **Authentication & Security**: Robust JWT-based authentication with persistent local sessions, data export, and account deletion functionality.
 * **Advanced Analytics**: Dynamic statistics tracking including Level, Experience Points (XP), current/longest problem-solving streaks, and performance charts.
+* **Leaderboard & Social**: Global leaderboard with platform filter, country filter, time period selector, and friend system.
 
 ---
 
@@ -39,84 +41,86 @@
 
 This project is organized as a monorepo containing four main services:
 
-* `frontend/` - **Main Web Application**: Built with Next.js App Router, TailwindCSS, Zustand, and Monaco Editor.
-* `backend/` - **REST API Server**: Built with Express.js, MongoDB Atlas/Mongoose, and Google Gemini AI integrations.
-* `fullprep-Admin/` - **Admin Dashboard**: Built as a React Single Page Application (SPA) for problem and user management.
-* `landing-page/` - **Marketing Site**: A lightweight Next.js application for the platform's public-facing landing page.
-* `devops/` - **Infrastructure**: Dockerization and deployment configuration files.
+```
+fullprep-mirror/
+├── backend/              # Express.js REST API (MVC, Mongoose, Gemini AI, BullMQ)
+├── frontend/             # Main Web App (Next.js App Router, Tailwind, Zustand, Monaco)
+├── fullprep-Admin/       # Admin Dashboard (React + Vite SPA, TanStack Router & Query)
+├── landing-page/         # Marketing Site (Next.js, lightweight)
+└── devops/               # Docker & CI/CD infrastructure
+```
+
+### Key Directories
+
+| Path | Purpose |
+|------|---------|
+| `backend/src/controllers/` | Route controllers (auth, stats, problems, contests, AI, etc.) |
+| `backend/src/models/` | Mongoose schemas (User, Problem, Contest, Submission, …) |
+| `backend/src/routes/` | Express route definitions |
+| `frontend/app/(dashboard)/` | All authenticated dashboard pages |
+| `frontend/app/(dashboard)/contests/` | Contest Calendar page |
+| `frontend/services/` | API service wrappers (DIP-compliant) |
+| `frontend/store/` | Zustand state stores |
+| `fullprep-Admin/src/routes/` | Admin page routes (TanStack File-Based Routing) |
+| `fullprep-Admin/src/lib/api.ts` | Admin API client (all backend calls) |
 
 ---
 
 ## 🛠️ Local Development Quickstart
 
-Follow these steps to run the FullPrep platform locally.
-
 ### Prerequisites
-* **Node.js** (v18 or higher)
-* **MongoDB** (Running locally on `mongodb://localhost:27017` or via MongoDB Atlas connection)
-* **Gemini API Key** (Required for the AI Tutor features)
+* **Node.js** v18 or higher
+* **MongoDB** running locally on `mongodb://localhost:27017` or via MongoDB Atlas
+* **Gemini API Key** — required for AI Tutor features
 
 ### Step 1: Start the Backend API
 
-1. Navigate to the backend directory and install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-
-2. Configure your environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-   *Edit `.env` to include your `MONGO_URI`, `JWT_SECRET`, and `GEMINI_API_KEY`.*
-
-3. Seed the local MongoDB database with problems (Optional):
-   ```bash
-   npm run seed
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-   *The API will run on `http://localhost:5000`.*
+```bash
+cd backend
+npm install
+cp .env.example .env        # Fill in MONGO_URI, JWT_SECRET, GEMINI_API_KEY
+npm run seed                 # (Optional) Seed problems from Codnite
+npm run dev                  # → http://localhost:5000
+```
 
 ### Step 2: Start the Main Frontend Platform
 
-1. Open a new terminal, navigate to the frontend directory:
-   ```bash
-   cd frontend
-   npm install
-   ```
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local   # Set NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+npm run dev                         # → http://localhost:3000
+```
 
-2. Configure environment variables:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-   *Ensure `NEXT_PUBLIC_API_URL` points to `http://localhost:5000/api`.*
+### Step 3: Start the Admin Panel
 
-3. Launch the Next.js development server:
-   ```bash
-   npm run dev
-   ```
-   *The application will be accessible at `http://localhost:3000`.*
+```bash
+cd fullprep-Admin
+npm install
+# Create .env with: VITE_API_BASE_URL=http://localhost:5000/api
+npm run dev                         # → http://localhost:5173
+```
 
-### Step 3: Start the Admin Panel (Optional)
+### Step 4: (Optional) Start the Landing Page
 
-1. Open a new terminal, navigate to the admin directory:
-   ```bash
-   cd fullprep-Admin
-   npm install
-   ```
+```bash
+cd landing-page
+npm install
+npm run dev                         # → http://localhost:3001
+```
 
-2. Configure environment variables:
-   Create a `.env` file and set `VITE_API_URL=http://localhost:5000/api`
+---
 
-3. Launch the Admin development server:
-   ```bash
-   npm run dev
-   ```
-   *The Admin Panel will be accessible at `http://localhost:5173`.*
+## 🗄️ Contest Calendar — Admin Integration
+
+The Contest Calendar is fully integrated between the Admin Dashboard and the user-facing platform:
+
+1. **Admin creates a contest** at `/contests/create` — sets title, description, platform (Codeforces, LeetCode, AtCoder, HackerRank, CodeChef, Codnite, etc.), registration URL, start/end time, problems, and publish status.
+2. **Backend stores** the contest in MongoDB via `POST /api/contests` (admin-only).
+3. **Frontend fetches** all active contests via `GET /api/contests?all=true` and displays them on the Contest Calendar page.
+4. Contests are automatically tagged **Live**, **Upcoming**, or **Completed** based on the current time.
+5. Admin can **Edit** or **Delete** contests from `/contests/:id` — changes reflect instantly on the user-facing page.
+6. **Published/Draft toggle** allows admins to soft-hide a contest without deleting it.
 
 ---
 
@@ -134,9 +138,36 @@ Follow these steps to run the FullPrep platform locally.
 
 ## 📦 Deployment & Containerization
 
-The platform supports Docker out-of-the-box. Refer to the `devops/` directory and the `docker-compose.yml` configuration at the root of the project to orchestrate the services in containerized environments.
+The platform supports Docker out-of-the-box. Refer to the `devops/` directory and the `docker-compose.yml` at the project root to orchestrate all services together.
 
 ```bash
 # Spin up the entire platform via Docker
 docker-compose up --build -d
 ```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Frontend type check
+cd frontend && npm run type-check
+
+# Frontend lint
+cd frontend && npm run lint
+
+# Backend unit tests
+cd backend && npm test
+
+# Full E2E Playwright suite (requires both servers running)
+cd frontend && npm run test:e2e
+```
+
+---
+
+## 🤝 Contributing
+
+1. Create a feature branch from `main`: `git checkout -b feat/your-feature`
+2. Make your changes and ensure all tests pass
+3. Open a PR — GitHub Actions will automatically run lint, type-check, unit tests, build, and E2E validation
+4. Merge after all checks are green ✅
