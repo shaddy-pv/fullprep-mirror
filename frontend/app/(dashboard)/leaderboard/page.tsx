@@ -16,7 +16,22 @@ import { AuthService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
 
 const PLATFORMS = ["All Platforms", "Codeforces", "LeetCode", "Codnite"];
-const COUNTRIES = ["All Countries", "India", "United States", "United Kingdom", "Canada", "Germany"];
+const COUNTRIES = [
+  "All Countries", 
+  "India", 
+  "United States", 
+  "United Kingdom", 
+  "Canada", 
+  "Germany", 
+  "France", 
+  "Japan", 
+  "Australia", 
+  "Brazil", 
+  "Singapore",
+  "South Korea",
+  "Netherlands",
+  "Switzerland"
+];
 const TIME_PERIODS = ["Overall", "Monthly", "Weekly", "All Time"];
 
 interface LeaderboardUser {
@@ -635,7 +650,7 @@ export default function LeaderboardPage() {
                 </button>
 
                 {isCountryOpen && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
                     {COUNTRIES.map((country) => (
                       <button
                         key={country}
@@ -679,7 +694,7 @@ export default function LeaderboardPage() {
                 </button>
 
                 {isTimePeriodOpen && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
                     {TIME_PERIODS.map((time) => (
                       <button
                         key={time}
@@ -719,7 +734,7 @@ export default function LeaderboardPage() {
                 </button>
 
                 {isPlatformOpen && (
-                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl max-h-[160px] overflow-y-auto z-50 scrollbar-thin">
                     {PLATFORMS.map((platform) => (
                       <button
                         key={platform}
