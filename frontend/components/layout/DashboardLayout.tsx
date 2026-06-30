@@ -37,7 +37,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex w-full h-screen bg-[#0b0f17] text-white overflow-hidden relative">
+    <div className="flex w-full h-screen bg-bg-page text-text-primary overflow-hidden relative">
       <EmailVerificationOverlay />
       
       {/* Mobile Drawer Overlay Backdrop */}
@@ -60,7 +60,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-[#0b0f17]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 bg-bg-page">
         {/* Navbar */}
         <Navbar />
 
