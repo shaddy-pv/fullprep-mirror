@@ -60,13 +60,11 @@ export const getChatHistory = async (req, res) => {
   // Fetch fresh user to get accurate hints state (bypasses 30s auth cache)
   const freshUserForHistory = await User.findById(req.user._id).select("role subscriptionTier aiHintsUsed aiHintsLastReset");
   const isAdmin = freshUserForHistory?.role === "admin";
-  const FREE_LIMIT_H = 5;
-  const PRO_LIMIT_H = 100;
   let hintsRemaining;
   if (isAdmin || freshUserForHistory?.subscriptionTier === "pro") {
     hintsRemaining = "Unlimited";
   } else {
-    const limit = FREE_LIMIT_H;
+    const limit = 5;
     const now = new Date();
     const lastReset = new Date(freshUserForHistory?.aiHintsLastReset || 0);
     const usedToday = now.getTime() - lastReset.getTime() > 24 * 60 * 60 * 1000 ? 0 : (freshUserForHistory?.aiHintsUsed || 0);
@@ -177,7 +175,7 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
     let aiData;
     try {
       aiData = JSON.parse(responseText);
-    } catch (_parseErr) {
+    } catch {
       // If JSON parse fails, treat the whole response as plain text
       aiData = {
         text: responseText || "I encountered an issue formatting my response. Please try again.",
@@ -213,7 +211,6 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
 
     const updatedUser = isAdminUser ? freshUser : await User.findById(req.user._id).select("aiHintsUsed subscriptionTier");
     const FREE_LIMIT = 5;
-    const PRO_LIMIT = 100;
     let hintsRemaining;
     if (isAdminUser || isProUser) {
       hintsRemaining = "Unlimited";

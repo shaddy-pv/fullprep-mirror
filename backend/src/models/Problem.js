@@ -228,6 +228,17 @@ const problemSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Used to restrict auto-selection pools for system contests
+    contestType: {
+      type: String,
+      enum: {
+        values: ["NONE", "DAILY", "WEEKLY"],
+        message: "Invalid contest classification",
+      },
+      default: "NONE",
+      index: true,
+    },
+
     // Admin who imported / created this problem
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

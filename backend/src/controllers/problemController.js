@@ -633,7 +633,7 @@ export const createProblem = async (req, res) => {
     timeLimitSeconds, memoryLimitMb, publicTests, privateTests, source,
     inputFormat, outputFormat, constraints, notes, examples, hints,
     starterCodeTemplates, editorial, judgeConfig, problemCode,
-    problemSlug, originalProblemLink
+    problemSlug, originalProblemLink, contestType
   } = req.body;
 
   if (!name || !description) {
@@ -670,6 +670,7 @@ export const createProblem = async (req, res) => {
     problemCode:       problemCode || "",
     problemSlug:       problemSlug || "",
     originalProblemLink: originalProblemLink || "",
+    contestType:       contestType || "NONE",
     createdBy:         req.user._id,
     lastSyncedAt:      new Date(),
   });
@@ -694,7 +695,7 @@ export const updateProblem = async (req, res) => {
     "timeLimitSeconds", "memoryLimitMb", "publicTests", "privateTests", "isActive",
     "source", "inputFormat", "outputFormat", "constraints", "notes",
     "examples", "hints", "starterCodeTemplates", "editorial", "judgeConfig",
-    "problemCode", "problemSlug", "originalProblemLink"
+    "problemCode", "problemSlug", "originalProblemLink", "contestType"
   ];
 
   const updates = {};

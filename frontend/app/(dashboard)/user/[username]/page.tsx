@@ -11,7 +11,7 @@ import {
   Award,
   Activity,
 } from "lucide-react";
-import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from "recharts";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useAuthStore } from "@/store/authStore";
@@ -41,6 +41,69 @@ const TwitterIcon = ({ className = "w-4 h-4 shrink-0" }: { className?: string })
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
+
+interface HexBadgeProps {
+  color: "gold" | "orange" | "red" | "teal" | "green" | "purple" | "blue" | "slate";
+  title: string;
+  subtitle: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+}
+
+const HexagonBadge: React.FC<HexBadgeProps> = ({ color, title, subtitle, icon: IconComponent }) => {
+  const colorMap: Record<string, { stroke: string; glow: string }> = {
+    gold:   { stroke: "#eab308", glow: "rgba(234,179,8,0.22)" },
+    orange: { stroke: "#ff6a00", glow: "rgba(255,106,0,0.22)" },
+    red:    { stroke: "#f43f5e", glow: "rgba(244,63,94,0.22)" },
+    teal:   { stroke: "#14b8a6", glow: "rgba(20,184,166,0.22)" },
+    green:  { stroke: "#10b981", glow: "rgba(16,185,129,0.22)" },
+    purple: { stroke: "#8b5cf6", glow: "rgba(139,92,246,0.22)" },
+    blue:   { stroke: "#3b82f6", glow: "rgba(59,130,246,0.22)" },
+    slate:  { stroke: "#64748b", glow: "rgba(100,116,139,0.1)" },
+  };
+
+  const { stroke: strokeColor, glow: glowColor } = colorMap[color];
+  const gradientId = `grad-${color}`;
+  const innerGradientId = `inner-${color}`;
+
+  return (
+    <div className="flex flex-col items-center justify-start select-none group cursor-pointer w-full text-center">
+      <div
+        className="w-[56px] h-[64px] flex items-center justify-center relative transition-transform duration-300 group-hover:scale-105 shrink-0"
+        style={{ filter: `drop-shadow(0 0 6px ${glowColor})` }}
+      >
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 106" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="metallicDark" x1="50" y1="0" x2="50" y2="106" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#1e2230" stopOpacity="0.85" />
+              <stop offset="50%" stopColor="#12141c" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#0a0b10" stopOpacity="1" />
+            </linearGradient>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="100" y2="106" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <stop offset="30%" stopColor={strokeColor} />
+              <stop offset="70%" stopColor={strokeColor} stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.6" />
+            </linearGradient>
+            <linearGradient id={innerGradientId} x1="50" y1="11" x2="50" y2="95" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.8" />
+              <stop offset="100%" stopColor="transparent" />
+            </linearGradient>
+          </defs>
+          <path d="M 50 3 L 93.3 28 L 93.3 78 L 50 103 L 6.7 78 L 6.7 28 Z" fill="url(#metallicDark)" stroke={`url(#${gradientId})`} strokeWidth="3" />
+          <path d="M 50 11 L 86.4 32 L 86.4 74 L 50 95 L 13.6 74 L 13.6 32 Z" stroke={`url(#${innerGradientId})`} strokeWidth="1.2" fill="none" />
+          <path d="M 6.7 28 C 20 16, 80 16, 93.3 28 L 93.3 28 L 50 3 L 6.7 28 Z" fill="#ffffff" fillOpacity="0.04" />
+        </svg>
+        <div className="relative z-10 flex items-center justify-center">
+          <IconComponent className="w-5 h-5 drop-shadow-sm animate-pulse-slow" style={{ color: strokeColor }} />
+        </div>
+      </div>
+      <div className="flex flex-col items-center mt-3 w-full gap-1">
+        <span className="text-[11px] font-semibold text-text-primary leading-none tracking-tight truncate max-w-[90px] group-hover:text-brand-orange transition-colors">{title}</span>
+        <span className="text-[9px] text-text-secondary/60 font-medium uppercase tracking-wider leading-none">{subtitle}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
@@ -147,10 +210,35 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     });
   }
 
-  const chartData = yearData.slice(-30).map(d => ({
-    name: d.date.split("-").slice(1).join("/"),
-    problems: d.count
-  }));
+  const easySolved = profile.difficultyBreakdown?.Easy || 0;
+  const mediumSolved = profile.difficultyBreakdown?.Medium || 0;
+  const hardSolved = profile.difficultyBreakdown?.Hard || 0;
+  const totalSolved = easySolved + mediumSolved + hardSolved;
+  
+  const easyTotal = profile.totalProblemsByDifficulty?.Easy || 0;
+  const mediumTotal = profile.totalProblemsByDifficulty?.Medium || 0;
+  const hardTotal = profile.totalProblemsByDifficulty?.Hard || 0;
+  const totalProblemsCount = easyTotal + mediumTotal + hardTotal;
+
+  // Generate dynamic badges
+  const badges: any[] = [];
+  if (totalSolved >= 1) badges.push({ color: "purple", title: "First Blood", subtitle: "FIRST SOLVE", icon: Trophy });
+  if (totalSolved >= 100) badges.push({ color: "gold", title: "Problem Solver", subtitle: "SOLVED 100", icon: Code2 });
+  if ((profile.contestsParticipated || 0) >= 10) badges.push({ color: "orange", title: "Contest Warrior", subtitle: "10 CONTESTS", icon: Zap });
+  if ((profile.streak || 0) >= 7) badges.push({ color: "red", title: "Week Streak", subtitle: "7 DAYS", icon: Calendar });
+  if ((profile.contestRating || 0) >= 1600) badges.push({ color: "teal", title: "Top 10%", subtitle: "RATING 1600+", icon: Award });
+  if ((profile.streak || 0) >= 90) badges.push({ color: "green", title: "Consistency Master", subtitle: "90 DAYS", icon: Activity });
+  if (totalSolved >= 50) badges.push({ color: "blue", title: "Quick Solver", subtitle: "DEDICATED", icon: Zap });
+  
+  const displayBadge = badges.length > 0 ? badges[0] : null;
+
+  const pieData = totalSolved === 0 
+    ? [{ name: 'Empty', value: 1, color: '#2c2e33' }]
+    : [
+        { name: 'Easy', value: easySolved, color: '#10b981' }, // green
+        { name: 'Medium', value: mediumSolved, color: '#ff6a00' }, // brand-orange
+        { name: 'Hard', value: hardSolved, color: '#f43f5e' }, // red
+      ];
 
   const getHeatmapColor = (count: number) => {
     if (count === 0) return "bg-[#ebedf0] dark:bg-[#161b22]";
@@ -168,7 +256,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
     <ContentContainer>
       <div className="w-full flex flex-col gap-6 select-none max-w-[1200px] mx-auto pb-8">
         {/* Profile Header Card */}
-        <div className="bg-card-bg border border-border-card rounded-[24px] p-6 lg:p-8 flex flex-col md:flex-row gap-8 shadow-sm">
+        <div className="bg-card-bg border border-border-card rounded-[24px] overflow-hidden shadow-sm relative">
+          <div className="h-32 w-full bg-gradient-to-r from-[#ff6a00]/20 via-[#8b5cf6]/20 to-[#10b981]/20 absolute top-0 left-0 z-0" />
+          <div className="p-6 lg:p-8 flex flex-col md:flex-row gap-8 relative z-10 mt-6">
           {/* Avatar and Basic Info */}
           <div className="flex items-center gap-6 md:w-1/3">
             <div className="relative">
@@ -201,27 +291,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                   <span>Joined {new Date(profile.joinedAt).getFullYear()}</span>
                 </div>
               </div>
-              
-              {/* Social Links */}
-              {profile.socialLinks && (
-                <div className="flex items-center gap-4 mt-4">
-                  {profile.socialLinks.github && (
-                    <a href={profile.socialLinks.github} target="_blank" rel="noreferrer" className="text-text-secondary hover:text-text-primary transition-colors">
-                      <GithubIcon />
-                    </a>
-                  )}
-                  {profile.socialLinks.linkedin && (
-                    <a href={profile.socialLinks.linkedin} target="_blank" rel="noreferrer" className="text-[#0a66c2] hover:opacity-80 transition-opacity">
-                      <LinkedinIcon />
-                    </a>
-                  )}
-                  {profile.socialLinks.twitter && (
-                    <a href={profile.socialLinks.twitter} target="_blank" rel="noreferrer" className="text-[#1da1f2] hover:opacity-80 transition-opacity">
-                      <TwitterIcon />
-                    </a>
-                  )}
-                </div>
-              )}
               
               {/* Friend Request Button */}
               {user && user._id !== profile._id && (
@@ -271,7 +340,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                 <Trophy className="w-4 h-4 text-[#10b981]" />
                 <span className="text-[12px] font-semibold uppercase tracking-wider">Contest Rating</span>
               </div>
-              <span className="text-[28px] font-bold text-text-primary">{profile.contestRating || 1200}</span>
+              <span className="text-[28px] font-bold text-text-primary">{profile.contestRating ?? 0}</span>
             </div>
             
             <div className="flex flex-col p-4 rounded-xl bg-gray-50 dark:bg-[#11131c]/50">
@@ -281,6 +350,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
               </div>
               <span className="text-[28px] font-bold text-text-primary">{profile.level || 1}</span>
             </div>
+          </div>
           </div>
         </div>
 
@@ -329,44 +399,76 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
               </div>
             </div>
 
-            {/* Recent Activity Line Chart */}
-            <div className="bg-card-bg border border-border-card rounded-[24px] p-6 shadow-sm h-[320px]">
-              <h2 className="text-[16px] font-bold text-text-primary mb-6">Recent Trends (30 Days)</h2>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorProblems" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ff6a00" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ff6a00" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border-card opacity-50" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "#9ca3af" }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "#9ca3af" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(17, 19, 28, 0.9)', 
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '12px',
-                      color: '#fff',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-                    }}
-                    itemStyle={{ color: '#ff6a00', fontWeight: 'bold' }}
-                  />
-                  <Area type="monotone" dataKey="problems" stroke="#ff6a00" strokeWidth={3} fillOpacity={1} fill="url(#colorProblems)" />
-                </AreaChart>
-              </ResponsiveContainer>
+            {/* Solved Problems and Badges Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Solved Problems Donut Chart (LeetCode style) */}
+              <div className="bg-card-bg border border-border-card rounded-[24px] p-6 shadow-sm flex items-center justify-between">
+                <div className="relative w-[120px] h-[120px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        innerRadius={45}
+                        outerRadius={55}
+                        paddingAngle={2}
+                        dataKey="value"
+                        stroke="none"
+                        cornerRadius={4}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-bold text-text-primary leading-tight">{totalSolved}</span>
+                    <span className="text-[10px] text-text-secondary border-t border-border-card pt-0.5 mt-0.5">Solved</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 flex-1 ml-6">
+                  <div className="flex items-center justify-between text-[13px] bg-gray-50 dark:bg-[#11131c]/50 p-2 rounded-lg">
+                    <span className="text-[#00b8a3] font-medium">Easy</span>
+                    <span className="text-text-primary font-bold">{easySolved}<span className="text-text-secondary font-normal text-[11px] ml-1">/ {easyTotal}</span></span>
+                  </div>
+                  <div className="flex items-center justify-between text-[13px] bg-gray-50 dark:bg-[#11131c]/50 p-2 rounded-lg">
+                    <span className="text-[#ffc01e] font-medium">Medium</span>
+                    <span className="text-text-primary font-bold">{mediumSolved}<span className="text-text-secondary font-normal text-[11px] ml-1">/ {mediumTotal}</span></span>
+                  </div>
+                  <div className="flex items-center justify-between text-[13px] bg-gray-50 dark:bg-[#11131c]/50 p-2 rounded-lg">
+                    <span className="text-[#ff375f] font-medium">Hard</span>
+                    <span className="text-text-primary font-bold">{hardSolved}<span className="text-text-secondary font-normal text-[11px] ml-1">/ {hardTotal}</span></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Badges Box */}
+              <div className="bg-card-bg border border-border-card rounded-[24px] p-6 shadow-sm flex flex-col items-center">
+                <div className="flex items-center justify-between mb-4 w-full">
+                  <span className="text-[14px] text-text-secondary font-medium">Badges</span>
+                  <span className="text-[16px] text-text-primary font-bold">{badges.length}</span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  {displayBadge ? (
+                    <HexagonBadge 
+                      color={displayBadge.color} 
+                      title={displayBadge.title} 
+                      subtitle={displayBadge.subtitle} 
+                      icon={displayBadge.icon} 
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-3">
+                        <Award className="w-8 h-8 text-text-secondary/50" />
+                      </div>
+                      <span className="text-[13px] text-text-secondary">No badges yet</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
             
           </div>

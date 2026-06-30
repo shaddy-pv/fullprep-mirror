@@ -130,9 +130,14 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
-    highestRank: {
+    highestRating: {
       type: Number,
       default: 0,
+    },
+
+    claimedContests: {
+      type: [String],
+      default: [],
     },
 
     // ── Access Control ───────────────────────────────────────

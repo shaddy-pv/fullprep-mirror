@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { getDailyContest, getWeeklyContest, submitContestResult, createContest, getAdminContests, getContestById, updateContest, deleteContest, getActiveCustomContests } from "../controllers/contestController.js";
+import { getDailyContest, getWeeklyContest, submitContestResult, createContest, getAdminContests, getContestById, updateContest, deleteContest, getActiveContests } from "../controllers/contestController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
 router.use(protect);
 
-router.get("/", getActiveCustomContests);
+router.get("/", getActiveContests);
 router.get("/daily", getDailyContest);
 router.get("/weekly", getWeeklyContest);
 router.post("/submit", submitContestResult);

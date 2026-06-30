@@ -88,6 +88,7 @@ export interface AdminProblem {
   problemSlug: string;
   originalProblemLink: string;
   isActive: boolean;
+  contestType?: "NONE" | "DAILY" | "WEEKLY";
   createdBy: string | null;
   lastSyncedAt: string | null;
   createdAt: string;

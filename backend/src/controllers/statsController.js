@@ -6,7 +6,6 @@
 
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
-import LearningPath from "../models/LearningPath.js";
 import { cacheManager } from "../utils/cacheManager.js";
 
 // ── @desc    Get aggregated stats for the logged-in user

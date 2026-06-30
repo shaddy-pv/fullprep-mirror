@@ -29,10 +29,10 @@ const contestSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: {
-        values: ["custom"],
+        values: ["daily", "weekly"],
         message: "Invalid contest type",
       },
-      default: "custom",
+      default: "daily",
     },
     startTime: {
       type: Date,

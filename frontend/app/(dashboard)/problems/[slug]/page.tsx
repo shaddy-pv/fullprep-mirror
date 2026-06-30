@@ -43,7 +43,9 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
-  const isContestMode = mode === "contest";
+  const isContestMode = searchParams.get("mode") === "contest";
+  const urlContestId = searchParams.get("contestId") || "daily-contest";
+  const urlContestType = searchParams.get("type") || "daily";
 
   // Contest timer state
   const [contestSeconds, setContestSeconds] = useState(0);
@@ -497,8 +499,8 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                   if (isContestMode) {
                     try {
                       const res = await ContestsService.submitContestResult(
-                        "daily-contest", // mock contest id for now
-                        "daily", // mock type for now
+                        urlContestId,
+                        urlContestType,
                         contestSeconds * 1000,
                         true
                       );

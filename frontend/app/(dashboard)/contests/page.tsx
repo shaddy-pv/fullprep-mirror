@@ -181,16 +181,16 @@ export default function ContestsPage() {
       title: "Contests Participated",
       value: user?.contestsParticipated?.toString() || "0",
       subtext: "Total",
-      subtextColor: "text-[#10b981]",
+      subtextColor: "text-brand-orange",
       icon: Zap,
       iconColor: "text-brand-orange",
       bgColor: "bg-[#fff3eb] dark:bg-[#ff6a00]/10",
     },
     {
       title: "Global Rank",
-      value: "N/A",
-      subtext: "Unranked",
-      subtextColor: "text-[#9ca3af]",
+      value: (user as any)?.globalRank ? `#${(user as any).globalRank}` : "N/A",
+      subtext: (user as any)?.globalRank ? "Current" : "Unranked",
+      subtextColor: "text-[#8b5cf6]",
       icon: Trophy,
       iconColor: "text-[#8b5cf6]",
       bgColor: "bg-[#f5f3ff] dark:bg-[#8b5cf6]/10",
@@ -207,8 +207,8 @@ export default function ContestsPage() {
       bgColor: "bg-[#eafaf1] dark:bg-[#10b981]/10",
     },
     {
-      title: "Highest Rank",
-      value: user?.highestRank ? `#${user.highestRank}` : "N/A",
+      title: "Highest Rating",
+      value: (user as any)?.highestRating ? (user as any).highestRating.toString() : "0",
       subtext: "All Time",
       subtextColor: "text-[#3b82f6]",
       icon: Award,
@@ -240,28 +240,47 @@ export default function ContestsPage() {
         type: "Rated" as const,
         slug: dailyContest.problem.slug,
         status: "live",
+        isCompleted: dailyContest.isCompleted,
       });
     }
 
     // Weekly
-    const dayOfWeek = now.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     let weeklySecondsLeft = 0;
     let weeklyStatus: "live" | "upcoming" = "upcoming";
 
-    if (isWeekend) {
-      const endOfWeekend = new Date();
-      const daysToSunday = dayOfWeek === 6 ? 1 : 0;
-      endOfWeekend.setDate(endOfWeekend.getDate() + daysToSunday);
-      endOfWeekend.setHours(23, 59, 59, 999);
-      weeklySecondsLeft = Math.max(0, Math.floor((endOfWeekend.getTime() - now.getTime()) / 1000));
-      weeklyStatus = "live";
+    if (weeklyContest?.startTime && weeklyContest?.endTime) {
+      const start = new Date(weeklyContest.startTime);
+      const end = new Date(weeklyContest.endTime);
+      
+      if (now >= start && now <= end) {
+        weeklyStatus = "live";
+        weeklySecondsLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+      } else if (now < start) {
+        weeklyStatus = "upcoming";
+        weeklySecondsLeft = Math.max(0, Math.floor((start.getTime() - now.getTime()) / 1000));
+      } else {
+        // completed time-wise
+        weeklyStatus = "upcoming"; // Wait...
+      }
     } else {
-      const startOfWeekend = new Date();
-      const daysToSaturday = 6 - dayOfWeek;
-      startOfWeekend.setDate(startOfWeekend.getDate() + daysToSaturday);
-      startOfWeekend.setHours(0, 0, 0, 0);
-      weeklySecondsLeft = Math.max(0, Math.floor((startOfWeekend.getTime() - now.getTime()) / 1000));
+      // Fallback just in case
+      const dayOfWeek = now.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      if (isWeekend) {
+        const endOfWeekend = new Date();
+        const daysToSunday = dayOfWeek === 6 ? 1 : 0;
+        endOfWeekend.setDate(endOfWeekend.getDate() + daysToSunday);
+        endOfWeekend.setHours(23, 59, 59, 999);
+        weeklySecondsLeft = Math.max(0, Math.floor((endOfWeekend.getTime() - now.getTime()) / 1000));
+        weeklyStatus = "live";
+      } else {
+        const startOfWeekend = new Date();
+        const daysToSaturday = 6 - dayOfWeek;
+        startOfWeekend.setDate(startOfWeekend.getDate() + daysToSaturday);
+        startOfWeekend.setHours(0, 0, 0, 0);
+        weeklySecondsLeft = Math.max(0, Math.floor((startOfWeekend.getTime() - now.getTime()) / 1000));
+      }
     }
 
     if (weeklyContest?.problems?.length) {
@@ -277,6 +296,7 @@ export default function ContestsPage() {
         type: "Rated" as const,
         slug: weeklyContest.problems[0].slug,
         status: weeklyStatus,
+        isCompleted: weeklyContest.isCompleted,
       });
     }
 
@@ -327,7 +347,7 @@ export default function ContestsPage() {
     if (activeTab === "All Contests") return true;
     if (activeTab === "Live") return c.status === "live";
     if (activeTab === "Upcoming") return c.status === "upcoming";
-    if (activeTab === "Completed") return false;
+    if (activeTab === "Completed") return !!c.isCompleted;
     return true;
   });
 
@@ -453,6 +473,8 @@ export default function ContestsPage() {
                         featured={c.featured}
                         type={c.type}
                         slug={c.slug}
+                        status={c.status}
+                        isCompleted={c.isCompleted}
                       />
                     ))}
                   </ErrorBoundary>

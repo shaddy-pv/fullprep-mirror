@@ -66,7 +66,7 @@ function DynamicArray({
 }
 
 // ── Modal Component ────────────────────────────────────────────────────────
-export function InlineProblemModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (id: string) => void }) {
+export function InlineProblemModal({ onClose, onSuccess, defaultContestType = "NONE" }: { onClose: () => void; onSuccess: (id: string) => void; defaultContestType?: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [form, setForm] = useState<Partial<AdminProblem>>({
@@ -75,6 +75,7 @@ export function InlineProblemModal({ onClose, onSuccess }: { onClose: () => void
     source: "FULLPREP",
     cfRating: 1200,
     isActive: true,
+    contestType: defaultContestType,
     cfTags: [],
     timeLimitSeconds: 2,
     memoryLimitMb: 256,
@@ -169,6 +170,11 @@ export function InlineProblemModal({ onClose, onSuccess }: { onClose: () => void
                   <button type="button" onClick={() => updateForm("isActive", !form.isActive)} className={`h-9 w-full rounded-lg border text-sm ${form.isActive ? "border-brand-emerald/40 bg-brand-emerald/10 text-brand-emerald" : "border-border-card text-text-muted"}`}>
                     {form.isActive ? "Active" : "Inactive"}
                   </button>
+                </Field>
+                <Field label="Contest Classification">
+                  <select value={form.contestType || "NONE"} onChange={(e) => updateForm("contestType", e.target.value)} className={inputCls}>
+                    {["NONE", "DAILY", "WEEKLY"].map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </Field>
               </div>
               <Field label="Tags (comma separated)">

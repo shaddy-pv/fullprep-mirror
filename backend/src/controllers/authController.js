@@ -12,6 +12,7 @@ import firebaseAdmin from "../config/firebase.js";
 import { sendEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 import Submission from "../models/Submission.js";
+import Problem from "../models/Problem.js";
 import { invalidateTokenCache, invalidateUserTokenCache } from "../middleware/authMiddleware.js";
 import { cacheManager } from "../utils/cacheManager.js";
 
@@ -270,8 +271,21 @@ export const revokeSession = async (req, res) => {
 // ── @route   GET /api/auth/me
 // ── @access  Private
 export const getMe = async (req, res) => {
-  // Use the pre-fetched user from the protect middleware to avoid redundant database calls
   const publicUser = req.user.toPublicJSON ? req.user.toPublicJSON() : req.user;
+
+  // Calculate global contest rank dynamically
+  const rankCount = await User.countDocuments({ 
+    isActive: true, 
+    contestRating: { $gt: req.user.contestRating || 0 } 
+  });
+  publicUser.globalRank = rankCount + 1;
+
+  // Update highestRating if necessary
+  if (!publicUser.highestRating || publicUser.contestRating > publicUser.highestRating) {
+    publicUser.highestRating = publicUser.contestRating || 0;
+    // Fire and forget save to DB
+    User.findByIdAndUpdate(req.user._id, { highestRating: publicUser.highestRating }).exec().catch(console.error);
+  }
 
   res.status(200).json({
     success: true,
@@ -782,14 +796,91 @@ export const getPublicProfile = async (req, res) => {
     // Support finding by MongoDB ID or username/name match
     let query = mongoose.isValidObjectId(id) ? { _id: id } : { name: new RegExp(`^${id}$`, "i") };
     
-    const user = await User.findOne(query).select("name avatar bio socialLinks xp level streak contestRating contestsParticipated highestRank activityMap lastSolvedDate createdAt").lean();
+    const user = await User.findOne(query).select("name avatar bio socialLinks xp level streak contestRating contestRatingHistory contestsParticipated highestRating activityMap lastSolvedDate createdAt").lean();
     
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
     
     // Calculate solved problems count for this user
-    const solvedCount = await Submission.countDocuments({ user: user._id, status: "Accepted" });
+    // A user can submit the same problem multiple times, we just want the unique count of solved problems
+    // Wait, the best way is user.solvedProblems?.length but it's not selected.
+    // Instead we can just count distinct problemExternalId where status is ACCEPTED
+    const solvedSubmissions = await Submission.distinct("problemExternalId", { user: user._id, status: "ACCEPTED" });
+    const solvedCount = solvedSubmissions.length;
+    
+    const yearlyActivity = await Submission.aggregate([
+      { 
+        $match: { 
+          user: user._id, 
+          status: "ACCEPTED",
+          createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) }
+        } 
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    const activityMap = {};
+    yearlyActivity.forEach(y => {
+      activityMap[y._id] = y.count;
+    });
+
+    // Calculate solved difficulty breakdown
+    const solvedDifficultyBreakdownRaw = await Submission.aggregate([
+      { $match: { user: user._id, status: "ACCEPTED" } },
+      {
+        $group: { _id: "$problem" } // unique problems
+      },
+      {
+        $lookup: {
+          from: "problems",
+          localField: "_id",
+          foreignField: "_id",
+          as: "problemData"
+        }
+      },
+      { $unwind: { path: "$problemData", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$problemData.difficulty",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Calculate total platform problems by difficulty
+    const totalProblemsRaw = await Problem.aggregate([
+      {
+        $group: {
+          _id: "$difficulty",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Map difficulties to Easy, Medium, Hard
+    const mapDifficulty = (diff) => {
+      if (!diff) return "Unknown";
+      const upper = diff.toUpperCase();
+      if (upper === "EASY") return "Easy";
+      if (upper === "MEDIUM") return "Medium";
+      return "Hard"; // Hard, Harder, Hardest, Expert, etc.
+    };
+
+    const difficultyBreakdown = { Easy: 0, Medium: 0, Hard: 0, Unknown: 0 };
+    solvedDifficultyBreakdownRaw.forEach(item => {
+      difficultyBreakdown[mapDifficulty(item._id)] += item.count;
+    });
+
+    const totalProblemsByDifficulty = { Easy: 0, Medium: 0, Hard: 0, Unknown: 0 };
+    totalProblemsRaw.forEach(item => {
+      totalProblemsByDifficulty[mapDifficulty(item._id)] += item.count;
+    });
     
     // Return sanitized public info
     res.status(200).json({
@@ -804,14 +895,18 @@ export const getPublicProfile = async (req, res) => {
         level: user.level,
         streak: user.streak,
         contestRating: user.contestRating,
+        contestRatingHistory: user.contestRatingHistory || [],
         contestsParticipated: user.contestsParticipated,
-        highestRank: user.highestRank,
+        highestRating: user.highestRating,
         joinedAt: user.createdAt,
         solvedCount,
-        activityMap: user.activityMap || {}
+        activityMap,
+        difficultyBreakdown,
+        totalProblemsByDifficulty
       }
     });
   } catch (error) {
+    console.error("Public Profile Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

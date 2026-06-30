@@ -14,6 +14,7 @@ export interface ContestData {
   startTime?: string;
   endTime?: string;
   duration?: number;
+  isCompleted?: boolean;
 }
 
 export const ContestsService = {
