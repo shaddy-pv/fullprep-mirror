@@ -15,6 +15,8 @@ import { useNotificationStore } from "@/store/notificationStore";
 import { AuthService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
 
+const PLATFORMS = ["All Platforms", "Codeforces", "LeetCode", "Codnite"];
+
 interface LeaderboardUser {
   rank: number;
   username: string;
@@ -36,6 +38,8 @@ export default function LeaderboardPage() {
   const [activeMainTab, setActiveMainTab] = useState("Global");
   const [activeFilterTab, setActiveFilterTab] = useState("Overall");
   const [searchVal, setSearchVal] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("All Platforms");
+  const [isPlatformOpen, setIsPlatformOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [countdownSeconds, setCountdownSeconds] = useState(37475); // 10:24:35 in seconds
 
@@ -621,15 +625,42 @@ export default function LeaderboardPage() {
               </div>
 
               {/* Platform Select */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 relative">
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Platform</span>
-                <button className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={() => setIsPlatformOpen(!isPlatformOpen)}
+                  className="w-full flex items-center justify-between border border-border-card rounded-xl px-3.5 py-2 bg-bg-page text-[12.5px] font-semibold text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.01] transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-2">
                     <Code className="w-4 h-4 text-text-secondary" />
-                    <span>All Platforms</span>
+                    <span>{selectedPlatform}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-text-secondary" />
+                  <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${isPlatformOpen ? "rotate-180" : ""}`} />
                 </button>
+
+                {isPlatformOpen && (
+                  <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-[#11131c] border border-border-card rounded-xl shadow-xl overflow-hidden z-50">
+                    {PLATFORMS.map((platform) => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlatform(platform);
+                          setIsPlatformOpen(false);
+                          showToast(`Platform filter changed to: ${platform}`, "info");
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-[12.5px] font-semibold transition-colors cursor-pointer ${
+                          selectedPlatform === platform
+                            ? "bg-brand-orange/10 text-brand-orange"
+                            : "text-text-secondary hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-text-primary"
+                        }`}
+                      >
+                        {platform}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </DashboardCard>
