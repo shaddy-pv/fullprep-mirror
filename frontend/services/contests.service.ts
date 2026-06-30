@@ -70,6 +70,22 @@ export const ContestsService = {
     }
   },
 
+  // Returns ALL active admin-created contests (including completed ones) for the calendar view
+  async getAllContests() {
+    try {
+      const response = await api.get<{ success: boolean; data: ContestData[] }>(
+        `${BASE_URL}/contests?all=true`
+      );
+      if (response && response.success) {
+        return response.data || [];
+      }
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch all contests:", error);
+      return [];
+    }
+  },
+
   async submitContestResult(contestId: string, type: string, timeTakenMs: number, passed: boolean, solvedCount: number = 1) {
     try {
       const response = await api.post<{ success: boolean; data: any }>(

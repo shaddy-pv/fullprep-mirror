@@ -152,24 +152,16 @@ export default function ContestsPage() {
     setLoading(true);
     setError(null);
     try {
-      const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
-      const token = typeof window !== "undefined"
-        ? localStorage.getItem("fullprep_token") || sessionStorage.getItem("fullprep_token") || ""
-        : "";
-
-      const [daily, weekly, calendarRes] = await Promise.allSettled([
+      const [daily, weekly, allContests] = await Promise.allSettled([
         ContestsService.getDailyContest(),
         ContestsService.getWeeklyContest(),
-        // Fetch ALL active contests (including past) for the calendar
-        fetch(`${BASE_URL}/contests?all=true`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json()),
+        ContestsService.getAllContests(),
       ]);
 
       if (daily.status === "fulfilled") setDailyContest(daily.value);
       if (weekly.status === "fulfilled") setWeeklyContest(weekly.value);
-      if (calendarRes.status === "fulfilled" && calendarRes.value?.success) {
-        setCalendarContests(calendarRes.value.data || []);
+      if (allContests.status === "fulfilled") {
+        setCalendarContests(allContests.value || []);
       }
     } catch (err) {
       console.error("Failed to load contests:", err);
