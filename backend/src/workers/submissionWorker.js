@@ -1,6 +1,7 @@
 import Submission from '../models/Submission.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import Problem from '../models/Problem.js';
 import { judgeTestCase } from '../utils/judgeService.js';
 import { logger } from '../utils/logger.js';
 
@@ -145,6 +146,17 @@ export async function runJudge({ submissionId, language, code, testCases, proble
         logger.info(`[Judge] User ${userId} re-submitted ${problemExternalId} — streak & activity updated`);
       }
     }
+
+    // Update Problem stats
+    await Problem.findOneAndUpdate(
+      { externalId: problemExternalId?.trim() },
+      {
+        $inc: {
+          'stats.totalSolutions': 1,
+          'stats.totalIncorrectSolutions': finalStatus === 'ACCEPTED' ? 0 : 1,
+        }
+      }
+    );
 
     logger.info(`[Judge] Submission ${submissionId} → ${finalStatus} (${testCasesPassed}/${testCases.length})`);
   } catch (err) {

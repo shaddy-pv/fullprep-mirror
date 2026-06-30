@@ -17,11 +17,14 @@ import { Route as AdminSettingsRouteImport } from './routes/_admin.settings'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminSubmissionsIndexRouteImport } from './routes/_admin.submissions.index'
 import { Route as AdminProblemsIndexRouteImport } from './routes/_admin.problems.index'
+import { Route as AdminContestsIndexRouteImport } from './routes/_admin.contests.index'
 import { Route as AdminUsersIdRouteImport } from './routes/_admin.users_.$id'
 import { Route as AdminSubmissionsIdRouteImport } from './routes/_admin.submissions.$id'
 import { Route as AdminProblemsSyncRouteImport } from './routes/_admin.problems.sync'
 import { Route as AdminProblemsCreateRouteImport } from './routes/_admin.problems.create'
 import { Route as AdminProblemsIdRouteImport } from './routes/_admin.problems.$id'
+import { Route as AdminContestsCreateRouteImport } from './routes/_admin.contests.create'
+import { Route as AdminContestsIdRouteImport } from './routes/_admin.contests.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -62,6 +65,11 @@ const AdminProblemsIndexRoute = AdminProblemsIndexRouteImport.update({
   path: '/problems/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContestsIndexRoute = AdminContestsIndexRouteImport.update({
+  id: '/contests/',
+  path: '/contests/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersIdRoute = AdminUsersIdRouteImport.update({
   id: '/users_/$id',
   path: '/users/$id',
@@ -87,6 +95,16 @@ const AdminProblemsIdRoute = AdminProblemsIdRouteImport.update({
   path: '/problems/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContestsCreateRoute = AdminContestsCreateRouteImport.update({
+  id: '/contests/create',
+  path: '/contests/create',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContestsIdRoute = AdminContestsIdRouteImport.update({
+  id: '/contests/$id',
+  path: '/contests/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AdminIndexRoute
@@ -94,11 +112,14 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AdminAnalyticsRoute
   '/settings': typeof AdminSettingsRoute
   '/users': typeof AdminUsersRoute
+  '/contests/$id': typeof AdminContestsIdRoute
+  '/contests/create': typeof AdminContestsCreateRoute
   '/problems/$id': typeof AdminProblemsIdRoute
   '/problems/create': typeof AdminProblemsCreateRoute
   '/problems/sync': typeof AdminProblemsSyncRoute
   '/submissions/$id': typeof AdminSubmissionsIdRoute
   '/users/$id': typeof AdminUsersIdRoute
+  '/contests/': typeof AdminContestsIndexRoute
   '/problems/': typeof AdminProblemsIndexRoute
   '/submissions/': typeof AdminSubmissionsIndexRoute
 }
@@ -108,11 +129,14 @@ export interface FileRoutesByTo {
   '/settings': typeof AdminSettingsRoute
   '/users': typeof AdminUsersRoute
   '/': typeof AdminIndexRoute
+  '/contests/$id': typeof AdminContestsIdRoute
+  '/contests/create': typeof AdminContestsCreateRoute
   '/problems/$id': typeof AdminProblemsIdRoute
   '/problems/create': typeof AdminProblemsCreateRoute
   '/problems/sync': typeof AdminProblemsSyncRoute
   '/submissions/$id': typeof AdminSubmissionsIdRoute
   '/users/$id': typeof AdminUsersIdRoute
+  '/contests': typeof AdminContestsIndexRoute
   '/problems': typeof AdminProblemsIndexRoute
   '/submissions': typeof AdminSubmissionsIndexRoute
 }
@@ -124,11 +148,14 @@ export interface FileRoutesById {
   '/_admin/settings': typeof AdminSettingsRoute
   '/_admin/users': typeof AdminUsersRoute
   '/_admin/': typeof AdminIndexRoute
+  '/_admin/contests/$id': typeof AdminContestsIdRoute
+  '/_admin/contests/create': typeof AdminContestsCreateRoute
   '/_admin/problems/$id': typeof AdminProblemsIdRoute
   '/_admin/problems/create': typeof AdminProblemsCreateRoute
   '/_admin/problems/sync': typeof AdminProblemsSyncRoute
   '/_admin/submissions/$id': typeof AdminSubmissionsIdRoute
   '/_admin/users_/$id': typeof AdminUsersIdRoute
+  '/_admin/contests/': typeof AdminContestsIndexRoute
   '/_admin/problems/': typeof AdminProblemsIndexRoute
   '/_admin/submissions/': typeof AdminSubmissionsIndexRoute
 }
@@ -140,11 +167,14 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/settings'
     | '/users'
+    | '/contests/$id'
+    | '/contests/create'
     | '/problems/$id'
     | '/problems/create'
     | '/problems/sync'
     | '/submissions/$id'
     | '/users/$id'
+    | '/contests/'
     | '/problems/'
     | '/submissions/'
   fileRoutesByTo: FileRoutesByTo
@@ -154,11 +184,14 @@ export interface FileRouteTypes {
     | '/settings'
     | '/users'
     | '/'
+    | '/contests/$id'
+    | '/contests/create'
     | '/problems/$id'
     | '/problems/create'
     | '/problems/sync'
     | '/submissions/$id'
     | '/users/$id'
+    | '/contests'
     | '/problems'
     | '/submissions'
   id:
@@ -169,11 +202,14 @@ export interface FileRouteTypes {
     | '/_admin/settings'
     | '/_admin/users'
     | '/_admin/'
+    | '/_admin/contests/$id'
+    | '/_admin/contests/create'
     | '/_admin/problems/$id'
     | '/_admin/problems/create'
     | '/_admin/problems/sync'
     | '/_admin/submissions/$id'
     | '/_admin/users_/$id'
+    | '/_admin/contests/'
     | '/_admin/problems/'
     | '/_admin/submissions/'
   fileRoutesById: FileRoutesById
@@ -241,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProblemsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/contests/': {
+      id: '/_admin/contests/'
+      path: '/contests'
+      fullPath: '/contests/'
+      preLoaderRoute: typeof AdminContestsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/users_/$id': {
       id: '/_admin/users_/$id'
       path: '/users/$id'
@@ -276,6 +319,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProblemsIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/contests/create': {
+      id: '/_admin/contests/create'
+      path: '/contests/create'
+      fullPath: '/contests/create'
+      preLoaderRoute: typeof AdminContestsCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/contests/$id': {
+      id: '/_admin/contests/$id'
+      path: '/contests/$id'
+      fullPath: '/contests/$id'
+      preLoaderRoute: typeof AdminContestsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -284,11 +341,14 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminContestsIdRoute: typeof AdminContestsIdRoute
+  AdminContestsCreateRoute: typeof AdminContestsCreateRoute
   AdminProblemsIdRoute: typeof AdminProblemsIdRoute
   AdminProblemsCreateRoute: typeof AdminProblemsCreateRoute
   AdminProblemsSyncRoute: typeof AdminProblemsSyncRoute
   AdminSubmissionsIdRoute: typeof AdminSubmissionsIdRoute
   AdminUsersIdRoute: typeof AdminUsersIdRoute
+  AdminContestsIndexRoute: typeof AdminContestsIndexRoute
   AdminProblemsIndexRoute: typeof AdminProblemsIndexRoute
   AdminSubmissionsIndexRoute: typeof AdminSubmissionsIndexRoute
 }
@@ -298,11 +358,14 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminContestsIdRoute: AdminContestsIdRoute,
+  AdminContestsCreateRoute: AdminContestsCreateRoute,
   AdminProblemsIdRoute: AdminProblemsIdRoute,
   AdminProblemsCreateRoute: AdminProblemsCreateRoute,
   AdminProblemsSyncRoute: AdminProblemsSyncRoute,
   AdminSubmissionsIdRoute: AdminSubmissionsIdRoute,
   AdminUsersIdRoute: AdminUsersIdRoute,
+  AdminContestsIndexRoute: AdminContestsIndexRoute,
   AdminProblemsIndexRoute: AdminProblemsIndexRoute,
   AdminSubmissionsIndexRoute: AdminSubmissionsIndexRoute,
 }

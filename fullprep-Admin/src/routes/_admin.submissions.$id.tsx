@@ -59,6 +59,16 @@ function SubmissionDetailPage() {
     },
   });
 
+  const flagMutation = useMutation({
+    mutationFn: () => api.flagSubmission(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["submission", id] });
+    },
+    onError: (err: any) => {
+      alert("Failed to flag submission: " + err.message);
+    }
+  });
+
   if (isLoading)
     return <div className="p-8 text-center text-text-muted">Loading submission...</div>;
   if (!s) return <div className="p-8 text-center text-text-muted">Submission not found.</div>;
@@ -600,10 +610,16 @@ function SubmissionDetailPage() {
                 </button>
 
                 <button
-                  className="w-full py-2.5 rounded-lg text-sm font-semibold border border-brand-amber/20 bg-brand-amber/10 hover:bg-brand-amber/20 transition-colors flex justify-center items-center gap-2 text-brand-amber"
-                  onClick={() => alert("Flagged for manual review.")}
+                  className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors flex justify-center items-center gap-2 disabled:opacity-50 ${
+                    s.isFlagged
+                      ? "border border-brand-rose/20 bg-brand-rose/10 hover:bg-brand-rose/20 text-brand-rose"
+                      : "border border-brand-amber/20 bg-brand-amber/10 hover:bg-brand-amber/20 text-brand-amber"
+                  }`}
+                  onClick={() => flagMutation.mutate()}
+                  disabled={flagMutation.isPending}
                 >
-                  <AlertTriangle className="h-4 w-4" /> Flag Suspicious Activity
+                  <AlertTriangle className={`h-4 w-4 ${flagMutation.isPending ? "animate-pulse" : ""}`} /> 
+                  {s.isFlagged ? "Unflag Submission" : "Flag Suspicious Activity"}
                 </button>
 
                 <div className="pt-4 border-t border-border-card mt-4">

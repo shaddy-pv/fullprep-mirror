@@ -265,6 +265,7 @@ export default function Sidebar() {
                     src={user.avatar} 
                     alt={user?.name || "User"} 
                     className="w-10 h-10 rounded-full object-cover border border-white/[0.1] shadow-md shadow-black/5 shrink-0" 
+                    referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
@@ -337,6 +338,7 @@ export default function Sidebar() {
                 src={user.avatar} 
                 alt={user?.name || "User"} 
                 className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-inner shrink-0 select-none" 
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-inner shrink-0 select-none font-mono">

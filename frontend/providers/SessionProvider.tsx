@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { SessionProvider as NextAuthSessionProvider, useSession } from "next-auth/react";
 import { AuthService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/authStore";
@@ -15,11 +15,17 @@ interface SessionProviderProps {
  *   1. Restoring a regular JWT session (email/password login) from localStorage.
  *   2. Syncing an OAuth session (Google / GitHub) into our Zustand auth store
  *      by reading the backend token that NextAuth stores in the session.
+ *
+ * KEY FIX: Uses authStore.sessionReady so DashboardLayout knows NOT to redirect
+ * until after this check finishes. Previously, DashboardLayout would see
+ * isAuthenticated=false and redirect to /login BEFORE this provider
+ * had a chance to restore the session from localStorage — causing an infinite loop.
  */
 function SessionSync({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const setUser = useAuthStore((s) => s.setUser);
-  const [ready, setReady] = useState(false);
+  const setSessionReady = useAuthStore((s) => s.setSessionReady);
+  const sessionReady = useAuthStore((s) => s.sessionReady);
 
   // Suppress benign Recharts layout transition warnings in the console
   useEffect(() => {
@@ -39,7 +45,13 @@ function SessionSync({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (status === "loading") return; // Wait for NextAuth to resolve
+    // Don't run until NextAuth has resolved
+    if (status === "loading") return;
+
+    // KEY: Only run the session sync ONCE per page load.
+    // After the first check, sessionReady=true permanently (for this page load).
+    // This prevents the spinner from re-appearing and the loop from re-triggering.
+    if (sessionReady) return;
 
     const syncSession = async () => {
       try {
@@ -63,7 +75,6 @@ function SessionSync({ children }: { children: React.ReactNode }) {
             // Fetch fresh data in the background to ensure XP, Bio, etc. are up-to-date
             AuthService.getCurrentUser();
           }
-          setReady(true);
           return;
         }
 
@@ -76,7 +87,7 @@ function SessionSync({ children }: { children: React.ReactNode }) {
           document.cookie = `fp_session=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
           await AuthService.getCurrentUser();
         } else {
-          // No token anywhere — clear cookie too
+          // No token anywhere — clear cookie too and mark as logged out
           document.cookie = `fp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
           setUser(null);
         }
@@ -84,32 +95,51 @@ function SessionSync({ children }: { children: React.ReactNode }) {
         // Session is invalid or expired — clear state
         setUser(null);
       } finally {
-        setReady(true);
+        // Mark session as resolved — stays true for entire page lifecycle
+        setSessionReady(true);
       }
     };
 
     syncSession();
-  }, [session, status, setUser]);
+  // Only re-run when status transitions from "loading" to resolved
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, sessionReady]);
 
   // Listen for global 401 Unauthorized events from fetcher
   useEffect(() => {
     const handleUnauthorized = async () => {
-      // Clear token immediately so subsequent requests don't loop
+      // Prevent infinite redirect loops
+      if (typeof window !== "undefined") {
+        const lastRedirect = sessionStorage.getItem("fp_last_unauthorized_redirect");
+        const now = Date.now();
+        if (lastRedirect && now - parseInt(lastRedirect) < 5000) {
+          console.warn("Prevented infinite unauthorized redirect loop.");
+          return;
+        }
+        sessionStorage.setItem("fp_last_unauthorized_redirect", now.toString());
+      }
+
+      // Clear all tokens and cookies
       if (typeof window !== "undefined") {
         localStorage.removeItem("fp_token");
         document.cookie = `fp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+        document.cookie = `next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `__Secure-next-auth.session-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       }
       setUser(null);
-      await AuthService.logout();
-      window.location.href = "/login";
+      await AuthService.logout(false);
+
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     };
 
     window.addEventListener("fp-unauthorized", handleUnauthorized);
     return () => window.removeEventListener("fp-unauthorized", handleUnauthorized);
   }, [setUser]);
 
-  // Show spinner while resolving session
-  if (!ready) {
+  // Show spinner ONLY while session is being resolved for the first time
+  if (!sessionReady) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-bg-page select-none">
         <div className="flex flex-col items-center justify-center gap-4">

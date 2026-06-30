@@ -80,6 +80,8 @@ const statsSchema = new mongoose.Schema(
     totalGeneratedTests:  { type: Number, default: 0 },
     totalSolutions:       { type: Number, default: 0 },
     totalIncorrectSolutions: { type: Number, default: 0 },
+    upvotes:              { type: Number, default: 0 },
+    downvotes:            { type: Number, default: 0 },
   },
   { _id: false }
 );

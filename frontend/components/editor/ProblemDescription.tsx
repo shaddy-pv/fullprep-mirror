@@ -165,7 +165,7 @@ export default function ProblemDescription({
               hasUpvoted && "text-brand-orange border-brand-orange/30 bg-brand-orange/5"
             )}
           >
-            <ThumbsUp className="w-3.5 h-3.5" />
+            <ThumbsUp className={cn("w-3.5 h-3.5", hasUpvoted && "fill-brand-orange")} />
             <span>{upvotes.toLocaleString()}</span>
           </button>
 
@@ -176,7 +176,7 @@ export default function ProblemDescription({
               hasDownvoted && "text-brand-orange border-brand-orange/30 bg-brand-orange/5"
             )}
           >
-            <ThumbsDown className="w-3.5 h-3.5" />
+            <ThumbsDown className={cn("w-3.5 h-3.5", hasDownvoted && "fill-brand-orange")} />
             <span>{downvotes.toLocaleString()}</span>
           </button>
         </div>

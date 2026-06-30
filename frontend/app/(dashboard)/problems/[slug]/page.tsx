@@ -112,6 +112,14 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
   const [downvotes, setDownvotes] = useState(0);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setHasUpvoted(user.upvotedProblems?.includes(slug) || false);
+      setHasDownvoted(user.downvotedProblems?.includes(slug) || false);
+    }
+  }, [user, slug]);
+
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Monaco local code buffer
@@ -342,7 +350,14 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
     };
   }, [isResizing]);
 
-  const handleUpvote = () => {
+  const handleUpvote = async () => {
+    if (!user) {
+      showToast("Please log in to vote.", "info");
+      return;
+    }
+    const type = hasUpvoted ? 'none' : 'upvote';
+    
+    // Optimistic UI update
     if (hasUpvoted) {
       setUpvotes((u) => u - 1);
       setHasUpvoted(false);
@@ -354,9 +369,28 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         setHasDownvoted(false);
       }
     }
+
+    const res = await ProblemsService.voteProblem(slug, type);
+    if (res && res.success) {
+      setUpvotes(res.upvotes);
+      setDownvotes(res.downvotes);
+      setHasUpvoted(res.hasUpvoted);
+      setHasDownvoted(res.hasDownvoted);
+      // We don't have to perfectly sync user state unless necessary, 
+      // but if we do we can't easily without a full refetch of me().
+    } else {
+      showToast("Failed to upvote.", "error");
+    }
   };
 
-  const handleDownvote = () => {
+  const handleDownvote = async () => {
+    if (!user) {
+      showToast("Please log in to vote.", "info");
+      return;
+    }
+    const type = hasDownvoted ? 'none' : 'downvote';
+
+    // Optimistic UI update
     if (hasDownvoted) {
       setDownvotes((d) => d - 1);
       setHasDownvoted(false);
@@ -367,6 +401,16 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         setUpvotes((u) => u - 1);
         setHasUpvoted(false);
       }
+    }
+
+    const res = await ProblemsService.voteProblem(slug, type);
+    if (res && res.success) {
+      setUpvotes(res.upvotes);
+      setDownvotes(res.downvotes);
+      setHasUpvoted(res.hasUpvoted);
+      setHasDownvoted(res.hasDownvoted);
+    } else {
+      showToast("Failed to downvote.", "error");
     }
   };
 

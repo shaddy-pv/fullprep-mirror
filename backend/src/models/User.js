@@ -225,6 +225,17 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    // ── Upvoted/Downvoted Problems ────────────────────────────────
+    // Arrays of problemExternalIds the user has voted on.
+    upvotedProblems: {
+      type: [String],
+      default: [],
+    },
+    downvotedProblems: {
+      type: [String],
+      default: [],
+    },
+
     // ── Enrolled Learning Paths ───────────────────────────────────
     // Array of LearningPath ObjectIds the user has explicitly started.
     enrolledPaths: {

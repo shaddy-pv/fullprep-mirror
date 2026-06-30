@@ -4,11 +4,16 @@ import { CHART_MOCK_DATA, DIFFICULTY_PIE_DATA } from "@/mocks/contests.mock";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 export interface ContestData {
-  id: string;
-  title: string;
-  type: "daily" | "weekly";
+  id?: string;
+  _id?: string;
+  title?: string;
+  name?: string;
+  type?: "daily" | "weekly" | "custom" | "CUSTOM" | string;
   problem?: any;
   problems?: any[];
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
 }
 
 export const ContestsService = {
@@ -31,7 +36,7 @@ export const ContestsService = {
       return null;
     } catch (error) {
       console.error("Failed to fetch daily contest:", error);
-      throw error;
+      return null;
     }
   },
 
@@ -46,7 +51,22 @@ export const ContestsService = {
       return null;
     } catch (error) {
       console.error("Failed to fetch weekly contest:", error);
-      throw error;
+      return null;
+    }
+  },
+
+  async getCustomContests() {
+    try {
+      const response = await api.get<{ success: boolean; data: ContestData[] }>(
+        `${BASE_URL}/contests`
+      );
+      if (response && response.success) {
+        return response.data || [];
+      }
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch custom contests:", error);
+      return [];
     }
   },
 

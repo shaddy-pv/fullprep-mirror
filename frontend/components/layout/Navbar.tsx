@@ -208,7 +208,7 @@ function NavbarSearch() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center shrink-0 border border-brand-orange/30 overflow-hidden">
                       {item.avatar ? (
-                        <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <span className="text-brand-orange font-bold text-[14px]">{(item.name || 'U').charAt(0).toUpperCase()}</span>
                       )}
@@ -385,6 +385,7 @@ export default function Navbar() {
                 src={user.avatar} 
                 alt={user?.name || "User"} 
                 className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-md shadow-black/5 select-none shrink-0" 
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-md shadow-black/5 select-none font-mono">

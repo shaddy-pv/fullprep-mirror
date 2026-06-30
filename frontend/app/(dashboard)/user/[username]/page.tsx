@@ -174,7 +174,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
             <div className="relative">
               {profile.avatar ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={profile.avatar} alt={profile.name} className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-card-bg shadow-lg" />
+                <img src={profile.avatar} alt={profile.name} className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-card-bg shadow-lg" referrerPolicy="no-referrer" />
               ) : (
                 <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-br from-brand-orange to-amber-500 flex items-center justify-center text-white text-3xl lg:text-4xl font-bold shadow-lg">
                   {getAvatarFallback(profile.name)}

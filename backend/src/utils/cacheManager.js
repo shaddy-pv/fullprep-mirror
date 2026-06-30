@@ -9,12 +9,23 @@ if (process.env.REDIS_URL && process.env.REDIS_URL !== "") {
     redisClient = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: 3,
       connectTimeout: 5000,
+      retryStrategy(times) {
+        if (times > 3) {
+          return null; // stop retrying
+        }
+        return Math.min(times * 50, 2000);
+      },
     });
     redisClient.on("connect", () => {
       logger.info("Connected to external Redis cache.");
     });
+    
+    let hasLoggedError = false;
     redisClient.on("error", (err) => {
-      logger.warn("Redis cache connection failed, falling back to in-memory caching", { error: err.message });
+      if (!hasLoggedError) {
+        logger.warn("Redis cache connection failed, falling back to in-memory caching", { error: err.message });
+        hasLoggedError = true;
+      }
     });
   } catch (err) {
     logger.warn("Failed to initialize Redis client, falling back to in-memory caching", { error: err.message });

@@ -262,7 +262,7 @@ export default function LeaderboardPage() {
                   </div>
                   {/* Avatar char/image circular */}
                   {podiumData.second.avatarUrl ? (
-                    <img src={podiumData.second.avatarUrl} alt={podiumData.second.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                    <img src={podiumData.second.avatarUrl} alt={podiumData.second.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" referrerPolicy="no-referrer" />
                   ) : (
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.second.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md shrink-0`}>
                       {podiumData.second.avatarChar}
@@ -291,7 +291,7 @@ export default function LeaderboardPage() {
                   </div>
                   {/* Avatar circular */}
                   {podiumData.first.avatarUrl ? (
-                    <img src={podiumData.first.avatarUrl} alt={podiumData.first.username} className="w-14 h-14 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                    <img src={podiumData.first.avatarUrl} alt={podiumData.first.username} className="w-14 h-14 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" referrerPolicy="no-referrer" />
                   ) : (
                     <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${podiumData.first.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-lg text-white shadow-md shrink-0`}>
                       {podiumData.first.avatarChar}
@@ -320,7 +320,7 @@ export default function LeaderboardPage() {
                   </div>
                   {/* Avatar circular */}
                   {podiumData.third.avatarUrl ? (
-                    <img src={podiumData.third.avatarUrl} alt={podiumData.third.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" />
+                    <img src={podiumData.third.avatarUrl} alt={podiumData.third.username} className="w-12 h-12 rounded-full border-2 border-white dark:border-[#111827] object-cover shadow-md shrink-0" referrerPolicy="no-referrer" />
                   ) : (
                     <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${podiumData.third.avatarBg} border-2 border-white dark:border-[#111827] flex items-center justify-center font-bold text-base text-white shadow-md shrink-0`}>
                       {podiumData.third.avatarChar}
@@ -376,7 +376,7 @@ export default function LeaderboardPage() {
                       <td className="py-2 px-4 align-middle text-left">
                         <Link href={`/user/${user.username}`} className="flex items-center gap-3 group-hover:opacity-80 transition-opacity">
                           {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" />
+                            <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" referrerPolicy="no-referrer" />
                           ) : (
                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${
                               user.isCurrentUser ? "from-brand-orange to-[#8b5cf6]" : user.avatarBg
@@ -506,7 +506,7 @@ export default function LeaderboardPage() {
             <div className="flex items-center gap-4 mt-1">
               {/* Profile Avatar circular */}
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user?.name || "User"} className="w-12 h-12 rounded-full object-cover shadow-md shrink-0" />
+                <img src={user.avatarUrl} alt={user?.name || "User"} className="w-12 h-12 rounded-full object-cover shadow-md shrink-0" referrerPolicy="no-referrer" />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-lg text-white border border-white/20 shadow-md shadow-black/5 shrink-0">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
@@ -562,7 +562,7 @@ export default function LeaderboardPage() {
                     </span>
                     <Link href={`/user/${gainer.username}`} className="flex items-center gap-3">
                       {gainer.avatarUrl ? (
-                        <img src={gainer.avatarUrl} alt={gainer.username} className="w-7 h-7 rounded-full object-cover shadow-sm shrink-0" />
+                        <img src={gainer.avatarUrl} alt={gainer.username} className="w-7 h-7 rounded-full object-cover shadow-sm shrink-0" referrerPolicy="no-referrer" />
                       ) : (
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-inner shrink-0 ${gainer.avatarBg}`}>
                           {gainer.avatarChar}

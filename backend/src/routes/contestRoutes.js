@@ -1,13 +1,21 @@
 import { Router } from "express";
-import { getDailyContest, getWeeklyContest, submitContestResult } from "../controllers/contestController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { getDailyContest, getWeeklyContest, submitContestResult, createContest, getAdminContests, getContestById, updateContest, deleteContest, getActiveCustomContests } from "../controllers/contestController.js";
+import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
 router.use(protect);
 
+router.get("/", getActiveCustomContests);
 router.get("/daily", getDailyContest);
 router.get("/weekly", getWeeklyContest);
 router.post("/submit", submitContestResult);
+
+// ── Admin-only Routes ─────────────────────────────────────────────────────────
+router.post("/", restrictTo("admin"), createContest);
+router.get("/admin", restrictTo("admin"), getAdminContests);
+router.get("/:id", getContestById);
+router.patch("/:id", restrictTo("admin"), updateContest);
+router.delete("/:id", restrictTo("admin"), deleteContest);
 
 export default router;

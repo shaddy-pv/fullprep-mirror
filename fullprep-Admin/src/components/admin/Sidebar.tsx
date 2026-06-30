@@ -12,6 +12,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
+  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar, useAuth } from "@/store/admin";
@@ -39,6 +40,11 @@ const NAV: Array<{
     to: "/submissions",
     label: "Submissions",
     icon: Code,
+  },
+  {
+    to: "/contests",
+    label: "Contests",
+    icon: Trophy,
   },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/problems/sync", label: "Sync Tool", icon: RefreshCcw },

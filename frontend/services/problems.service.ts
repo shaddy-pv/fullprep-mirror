@@ -21,7 +21,7 @@ function calculateAcceptance(stats: any): string {
     const correct = stats.totalSolutions - (stats.totalIncorrectSolutions || 0);
     return ((correct / stats.totalSolutions) * 100).toFixed(2) + "%";
   }
-  return "76.40%";
+  return "0.00%";
 }
 
 function formatSubmissions(stats: any): string {
@@ -32,7 +32,7 @@ function formatSubmissions(stats: any): string {
     }
     return total.toString();
   }
-  return "1.2K";
+  return "0";
 }
 
 function getStarterCode() {
@@ -217,8 +217,8 @@ export const ProblemsService = {
           starterCode,
           acceptance,
           submissions,
-          upvotes: prob.stats?.totalSolutions || 24,
-          downvotes: prob.stats?.totalIncorrectSolutions || 3,
+          upvotes: prob.stats?.upvotes || 0,
+          downvotes: prob.stats?.downvotes || 0,
         };
       }
       return undefined;
@@ -245,6 +245,16 @@ export const ProblemsService = {
     } catch (error) {
       console.error("Failed to fetch tags:", error);
       return [];
+    }
+  },
+
+  async voteProblem(slug: string, type: 'upvote' | 'downvote' | 'none'): Promise<any> {
+    try {
+      const response = await api.post<{ data: any }>(`${BASE_URL}/problems/${slug}/vote`, { type });
+      return response?.data || response || null;
+    } catch (error) {
+      console.error(`Failed to vote on problem "${slug}":`, error);
+      return null;
     }
   },
 };

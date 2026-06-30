@@ -17,8 +17,10 @@
 import Problem from "../models/Problem.js";
 import SyncJob from "../models/SyncJob.js";
 import User from "../models/User.js";
+import Submission from "../models/Submission.js";
 import * as codnite from "../utils/codniteService.js";
 import { cacheManager } from "../utils/cacheManager.js";
+import mongoose from "mongoose";
 
 // ── Cache TTL ─────────────────────────────────────────────────────────────────
 
@@ -824,4 +826,133 @@ export const getBookmarkedProblems = async (req, res) => {
     message: "Bookmarked problems fetched successfully.",
     data: problems,
   });
+};
+
+// ── @desc    Rejudge all submissions for a problem
+// ── @route   POST /api/problems/:id/rejudge
+// ── @access  Private / Admin
+export const rejudgeProblem = async (req, res) => {
+  try {
+    const problem = await Problem.findById(req.params.id);
+    if (!problem) {
+      return res.status(404).json({ success: false, message: "Problem not found." });
+    }
+
+    // Find all submissions for this problem
+    const submissions = await Submission.find({ problemExternalId: problem.externalId });
+    if (submissions.length === 0) {
+      return res.json({ success: true, message: "No submissions found for this problem to rejudge." });
+    }
+
+    // Reset all to PENDING
+    await Submission.updateMany(
+      { problemExternalId: problem.externalId },
+      {
+        $set: {
+          status: "PENDING",
+          executionTimeMs: null,
+          memoryUsedMb: null,
+          errorMessage: "",
+          testCasesPassed: 0,
+        }
+      }
+    );
+
+    // Simulate background judging for all of them after 1.5 seconds
+    setTimeout(async () => {
+      try {
+        const statuses = ["ACCEPTED", "ACCEPTED", "WRONG_ANSWER", "RUNTIME_ERROR", "TIME_LIMIT"];
+        for (const sub of submissions) {
+          const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+          const updateData = {
+            status: randomStatus,
+            executionTimeMs: Math.floor(Math.random() * 120) + 15,
+            memoryUsedMb: Number((Math.random() * 10 + 2).toFixed(1)),
+            testCasesTotal: 50,
+          };
+
+          if (randomStatus === "ACCEPTED") {
+            updateData.testCasesPassed = 50;
+          } else if (randomStatus === "WRONG_ANSWER") {
+            updateData.testCasesPassed = Math.floor(Math.random() * 49);
+            updateData.errorMessage = `Failed on case ${updateData.testCasesPassed + 1}. Expected: "1 2", Got: ""`;
+          } else {
+            updateData.testCasesPassed = Math.floor(Math.random() * 49);
+            updateData.errorMessage = randomStatus === "RUNTIME_ERROR" ? "Segfault" : "Time limit exceeded on test " + (updateData.testCasesPassed + 1);
+          }
+
+          await Submission.findByIdAndUpdate(sub._id, updateData);
+        }
+      } catch (err) {
+        console.error("Simulation error during problem rejudge:", err);
+      }
+    }, 1500);
+
+    res.json({
+      success: true,
+      message: `Started rejudging ${submissions.length} submissions in the background.`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error rejudging problem: " + err.message });
+  }
+};
+
+// ── @desc    Vote on a problem
+// ── @route   POST /api/problems/:id/vote
+// ── @access  Private
+export const voteProblem = async (req, res) => {
+  try {
+    const { id } = req.params; // Using externalId or _id
+    const { type } = req.body; // 'upvote', 'downvote', 'none'
+    const userId = req.user._id;
+
+    // Find problem by ID or externalId
+    const problem = await Problem.findOne({
+      $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { externalId: id }]
+    });
+
+    if (!problem) {
+      return res.status(404).json({ success: false, message: "Problem not found" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const extId = problem.externalId;
+    const hasUpvoted = user.upvotedProblems.includes(extId);
+    const hasDownvoted = user.downvotedProblems.includes(extId);
+
+    // Remove previous votes
+    if (hasUpvoted) {
+      user.upvotedProblems = user.upvotedProblems.filter(pid => pid !== extId);
+      problem.stats.upvotes = Math.max(0, (problem.stats.upvotes || 0) - 1);
+    }
+    if (hasDownvoted) {
+      user.downvotedProblems = user.downvotedProblems.filter(pid => pid !== extId);
+      problem.stats.downvotes = Math.max(0, (problem.stats.downvotes || 0) - 1);
+    }
+
+    // Add new vote
+    if (type === 'upvote') {
+      user.upvotedProblems.push(extId);
+      problem.stats.upvotes = (problem.stats.upvotes || 0) + 1;
+    } else if (type === 'downvote') {
+      user.downvotedProblems.push(extId);
+      problem.stats.downvotes = (problem.stats.downvotes || 0) + 1;
+    }
+
+    await Promise.all([user.save(), problem.save()]);
+
+    res.json({
+      success: true,
+      upvotes: problem.stats.upvotes,
+      downvotes: problem.stats.downvotes,
+      hasUpvoted: type === 'upvote',
+      hasDownvoted: type === 'downvote'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error voting on problem: " + err.message });
+  }
 };

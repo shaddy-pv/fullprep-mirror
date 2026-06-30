@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
 import Submission from "../models/Submission.js";
+import Contest from "../models/Contest.js";
 
 // Helper to deterministically pick problems based on date
 const getDeterministicRandoms = (seed, max, count) => {
@@ -161,6 +162,113 @@ export const submitContestResult = async (req, res) => {
     });
   } catch (error) {
     console.error("Submit contest error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ── @desc    Create a custom contest
+// ── @route   POST /api/contests
+// ── @access  Private (Admin)
+export const createContest = async (req, res) => {
+  try {
+    const contest = new Contest({
+      ...req.body,
+      createdBy: req.user.id,
+    });
+    await contest.save();
+    res.status(201).json({ success: true, data: contest });
+  } catch (error) {
+    console.error("Create contest error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server Error" });
+  }
+};
+
+// ── @desc    Get all active custom contests for frontend
+// ── @route   GET /api/contests
+// ── @access  Private
+export const getActiveCustomContests = async (req, res) => {
+  try {
+    const now = new Date();
+    // Return contests that are active, and have not yet ended (endTime >= now)
+    const contests = await Contest.find({
+      type: "custom",
+      isActive: true,
+      endTime: { $gte: now },
+    }).populate("problems", "name externalId difficulty cfRating cfTags");
+    
+    // Transform problems to include 'slug' like daily/weekly do
+    const formattedContests = contests.map((c) => {
+      const obj = c.toObject();
+      if (obj.problems) {
+        obj.problems = obj.problems.map(p => ({ ...p, slug: p.externalId }));
+      }
+      return obj;
+    });
+
+    res.status(200).json({ success: true, data: formattedContests });
+  } catch (error) {
+    console.error("Get active custom contests error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ── @desc    Get all contests for admin
+// ── @route   GET /api/contests/admin
+// ── @access  Private (Admin)
+export const getAdminContests = async (req, res) => {
+  try {
+    const contests = await Contest.find().populate("problems", "name externalId difficulty").sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: contests });
+  } catch (error) {
+    console.error("Get admin contests error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ── @desc    Get a contest by ID
+// ── @route   GET /api/contests/:id
+// ── @access  Private
+export const getContestById = async (req, res) => {
+  try {
+    const contest = await Contest.findById(req.params.id).populate("problems", "name externalId difficulty cfRating cfTags");
+    if (!contest) {
+      return res.status(404).json({ success: false, message: "Contest not found" });
+    }
+    res.status(200).json({ success: true, data: contest });
+  } catch (error) {
+    console.error("Get contest by ID error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// ── @desc    Update a contest
+// ── @route   PATCH /api/contests/:id
+// ── @access  Private (Admin)
+export const updateContest = async (req, res) => {
+  try {
+    const contest = await Contest.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!contest) {
+      return res.status(404).json({ success: false, message: "Contest not found" });
+    }
+    res.status(200).json({ success: true, data: contest });
+  } catch (error) {
+    console.error("Update contest error:", error);
+    res.status(500).json({ success: false, message: error.message || "Server Error" });
+  }
+};
+
+// ── @desc    Delete a contest
+// ── @route   DELETE /api/contests/:id
+// ── @access  Private (Admin)
+export const deleteContest = async (req, res) => {
+  try {
+    const contest = await Contest.findByIdAndDelete(req.params.id);
+    if (!contest) {
+      return res.status(404).json({ success: false, message: "Contest not found" });
+    }
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    console.error("Delete contest error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };

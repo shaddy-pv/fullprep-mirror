@@ -18,6 +18,7 @@ import {
   getSubmission,
   rejudgeSubmission,
   deleteSubmission,
+  flagSubmission,
 } from "../controllers/submissionController.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
@@ -31,6 +32,7 @@ router.post("/",     submitCode);   // Submit button — hidden tests (async + p
 router.get("/",      getSubmissions);
 router.get("/:id",   getSubmission);
 router.post("/:id/rejudge", restrictTo('admin'), rejudgeSubmission);
+router.patch("/:id/flag", restrictTo('admin'), flagSubmission);
 router.delete("/:id", restrictTo('admin'), deleteSubmission);
 
 export default router;

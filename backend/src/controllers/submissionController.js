@@ -403,3 +403,29 @@ export const deleteSubmission = async (req, res) => {
     message: "Submission deleted successfully.",
   });
 };
+
+// ── @desc    Flag a submission for manual review (Admin only)
+// ── @route   PATCH /api/submissions/:id/flag
+// ── @access  Private / Admin
+export const flagSubmission = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const submission = await Submission.findById(id);
+
+    if (!submission) {
+      return res.status(404).json({ success: false, message: "Submission not found." });
+    }
+
+    // Toggle the flag
+    submission.isFlagged = !submission.isFlagged;
+    await submission.save();
+
+    res.status(200).json({
+      success: true,
+      message: submission.isFlagged ? "Submission flagged for manual review." : "Submission unflagged.",
+      data: { isFlagged: submission.isFlagged }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error flagging submission: " + err.message });
+  }
+};

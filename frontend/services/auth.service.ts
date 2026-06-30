@@ -44,8 +44,15 @@ export const AuthService = {
       
       if (typeof window !== "undefined") {
         localStorage.removeItem("fp_token");
+        clearSessionCookie();
       }
       useAuthStore.getState().setUser(null);
+      
+      // If we got a 401, the backend token is dead. Kill NextAuth session too!
+      if (error?.status === 401) {
+        nextAuthSignOut({ redirect: false }).catch(() => {});
+      }
+      
       return null;
     }
   },
@@ -126,7 +133,7 @@ export const AuthService = {
     throw new Error(response?.user || "Registration failed.");
   },
 
-  async logout() {
+  async logout(shouldRedirect = true) {
     try {
       await api.post<any>(`${BASE_URL}/auth/logout`, {});
     } catch (error) {
@@ -138,6 +145,10 @@ export const AuthService = {
       }
       useAuthStore.getState().logout();
       await nextAuthSignOut({ redirect: false });
+      
+      if (shouldRedirect && typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
   },
 

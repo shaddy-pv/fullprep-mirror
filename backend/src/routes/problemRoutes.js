@@ -38,6 +38,8 @@ import {
   deleteProblem,
   toggleBookmark,
   getBookmarkedProblems,
+  rejudgeProblem,
+  voteProblem,
 } from "../controllers/problemController.js";
 import { protect, restrictTo, optionalProtect } from "../middleware/authMiddleware.js";
 
@@ -77,6 +79,9 @@ router.get("/:id", optionalProtect, getProblem);
 // Toggle bookmark on a problem (Private)
 router.post("/:id/bookmark", protect, toggleBookmark);
 
+// Vote on a problem (Private)
+router.post("/:id/vote", protect, voteProblem);
+
 // Public tests for a problem (optional auth — admins get private tests too)
 router.get("/:id/tests", optionalProtect, getProblemTests);
 
@@ -85,5 +90,8 @@ router.patch("/:id", protect, restrictTo("admin"), updateProblem);
 
 // Soft-delete a problem (Admin only)
 router.delete("/:id", protect, restrictTo("admin"), deleteProblem);
+
+// Rejudge a problem (Admin only)
+router.post("/:id/rejudge", protect, restrictTo("admin"), rejudgeProblem);
 
 export default router;
