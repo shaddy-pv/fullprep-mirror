@@ -292,7 +292,7 @@ export default function ProfilePage() {
   const streak = getCurrentStreak(user);
 
   const statCards = [
-    { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-white", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
+    { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-amber-600 dark:text-amber-400", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
     { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
     { label: "PROBLEMS SOLVED", value: solved.toString(), sub: "Verified solutions", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
     { label: "GLOBAL RANK", value: rank !== "-" ? `#${rank}` : "-", sub: "On the leaderboard", color: "text-[#06b6d4]", glow: "hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]" },

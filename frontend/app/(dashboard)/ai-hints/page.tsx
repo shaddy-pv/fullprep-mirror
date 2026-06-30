@@ -31,9 +31,11 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { useNotificationStore } from "@/store/notificationStore";
 import { aiService, AiMessage } from "@/services/ai.service";
+import { useAuthStore } from "@/store/authStore";
 
 export default function AIHintsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
+  const { user } = useAuthStore();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // States
@@ -262,9 +264,18 @@ export default function AIHintsPage() {
                 >
                   {/* Avatar Icon */}
                   {isUser ? (
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
-                      K
-                    </div>
+                    (user?.avatarUrl || user?.avatar) ? (
+                      <img 
+                        src={user.avatarUrl || user?.avatar} 
+                        alt={user?.name || "User"} 
+                        className="w-9 h-9 rounded-xl object-cover shadow-sm shrink-0" 
+                        referrerPolicy="no-referrer" 
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
+                    )
                   ) : (
                     <div className="w-9 h-9 rounded-xl bg-[#fff5eb] dark:bg-[#ff6a00]/10 border border-[#ff6a00]/10 flex items-center justify-center text-brand-orange shrink-0 shadow-sm">
                       <Sparkles className="w-4.5 h-4.5 fill-current" />
