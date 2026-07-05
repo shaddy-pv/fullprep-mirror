@@ -142,7 +142,7 @@ export default function LearningPathDetailPage() {
               <div key={mIdx} className="bg-card-bg border border-border-card rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-5 border-b border-border-card bg-gray-50/50 dark:bg-white/[0.01]">
                   <h3 className="text-[16px] font-bold text-text-primary mb-1">
-                    Module {mIdx + 1}: {module.title}
+                    {module.title}
                   </h3>
                   {module.description && (
                     <p className="text-[13px] text-text-secondary">{module.description}</p>
