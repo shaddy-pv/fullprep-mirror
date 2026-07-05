@@ -164,3 +164,97 @@ export const enrollInLearningPath = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error enrolling in learning path" });
   }
 };
+
+/**
+ * @desc    Create a new learning path (Admin)
+ * @route   POST /api/learning-paths
+ * @access  Private/Admin
+ */
+export const createLearningPath = async (req, res) => {
+  try {
+    const { id, title, description, level, estimatedTime, color, icon, isPro, contentType, content, modules } = req.body;
+
+    const existingPath = await LearningPath.findOne({ id });
+    if (existingPath) {
+      return res.status(400).json({ success: false, message: "Learning path with this ID already exists" });
+    }
+
+    const newPath = new LearningPath({
+      id,
+      title,
+      description,
+      level,
+      estimatedTime,
+      color,
+      icon,
+      isPro: !!isPro,
+      contentType: contentType || "problems",
+      content: content || "",
+      modules: modules || [],
+    });
+
+    await newPath.save();
+    res.status(201).json({ success: true, data: newPath });
+  } catch (error) {
+    console.error("Error creating learning path:", error);
+    res.status(500).json({ success: false, message: "Server error creating learning path" });
+  }
+};
+
+/**
+ * @desc    Update a learning path (Admin)
+ * @route   PUT /api/learning-paths/:id
+ * @access  Private/Admin
+ */
+export const updateLearningPath = async (req, res) => {
+  try {
+    const { title, description, level, estimatedTime, color, icon, isPro, contentType, content, modules } = req.body;
+
+    const path = await LearningPath.findOne({ id: req.params.id });
+    if (!path) {
+      return res.status(404).json({ success: false, message: "Learning path not found" });
+    }
+
+    if (title !== undefined) path.title = title;
+    if (description !== undefined) path.description = description;
+    if (level !== undefined) path.level = level;
+    if (estimatedTime !== undefined) path.estimatedTime = estimatedTime;
+    if (color !== undefined) path.color = color;
+    if (icon !== undefined) path.icon = icon;
+    if (isPro !== undefined) path.isPro = isPro;
+    if (contentType !== undefined) path.contentType = contentType;
+    if (content !== undefined) path.content = content;
+    if (modules !== undefined) path.modules = modules;
+
+    await path.save();
+    res.status(200).json({ success: true, data: path });
+  } catch (error) {
+    console.error("Error updating learning path:", error);
+    res.status(500).json({ success: false, message: "Server error updating learning path" });
+  }
+};
+
+/**
+ * @desc    Delete a learning path (Admin)
+ * @route   DELETE /api/learning-paths/:id
+ * @access  Private/Admin
+ */
+export const deleteLearningPath = async (req, res) => {
+  try {
+    const path = await LearningPath.findOneAndDelete({ id: req.params.id });
+    if (!path) {
+      return res.status(404).json({ success: false, message: "Learning path not found" });
+    }
+
+    // Optional: Could remove this path from users' enrolledPaths here
+    await User.updateMany(
+      { enrolledPaths: path._id },
+      { $pull: { enrolledPaths: path._id } }
+    );
+
+    res.status(200).json({ success: true, message: "Learning path deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting learning path:", error);
+    res.status(500).json({ success: false, message: "Server error deleting learning path" });
+  }
+};

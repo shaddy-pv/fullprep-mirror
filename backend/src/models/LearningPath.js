@@ -53,6 +53,15 @@ const learningPathSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // true = Paid/Pro path, false = Free path
     },
+    contentType: {
+      type: String,
+      enum: ["problems", "notes"],
+      default: "problems",
+    },
+    content: {
+      type: String, // Stores markdown/rich-text if contentType === "notes"
+      default: "",
+    },
     modules: [moduleSchema],
   },
   {

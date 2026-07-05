@@ -279,6 +279,36 @@ export const api = {
   async deleteContest(id: string) {
     await request(`/contests/${id}`, { method: "DELETE" });
   },
+
+  async listLearningPaths() {
+    const r = await request<{ data: any[] }>("/learning-paths");
+    return r.data;
+  },
+
+  async getLearningPath(id: string) {
+    const r = await request<{ data: any }>(`/learning-paths/${id}`);
+    return r.data;
+  },
+
+  async createLearningPath(payload: any) {
+    const r = await request<{ data: any }>("/learning-paths", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return r.data;
+  },
+
+  async updateLearningPath(id: string, payload: any) {
+    const r = await request<{ data: any }>(`/learning-paths/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    return r.data;
+  },
+
+  async deleteLearningPath(id: string) {
+    await request(`/learning-paths/${id}`, { method: "DELETE" });
+  },
 };
 
 export const IS_MOCK = false;

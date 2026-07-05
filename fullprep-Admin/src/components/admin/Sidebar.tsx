@@ -46,6 +46,11 @@ const NAV: Array<{
     label: "Contests",
     icon: Trophy,
   },
+  {
+    to: "/learning-paths",
+    label: "Learning Paths",
+    icon: BookOpen,
+  },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/problems/sync", label: "Sync Tool", icon: RefreshCcw },
   { to: "/settings", label: "Settings", icon: Settings },

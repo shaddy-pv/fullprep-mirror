@@ -17,12 +17,15 @@ import { Route as AdminSettingsRouteImport } from './routes/_admin.settings'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin.analytics'
 import { Route as AdminSubmissionsIndexRouteImport } from './routes/_admin.submissions.index'
 import { Route as AdminProblemsIndexRouteImport } from './routes/_admin.problems.index'
+import { Route as AdminLearningPathsIndexRouteImport } from './routes/_admin.learning-paths.index'
 import { Route as AdminContestsIndexRouteImport } from './routes/_admin.contests.index'
 import { Route as AdminUsersIdRouteImport } from './routes/_admin.users_.$id'
 import { Route as AdminSubmissionsIdRouteImport } from './routes/_admin.submissions.$id'
 import { Route as AdminProblemsSyncRouteImport } from './routes/_admin.problems.sync'
 import { Route as AdminProblemsCreateRouteImport } from './routes/_admin.problems.create'
 import { Route as AdminProblemsIdRouteImport } from './routes/_admin.problems.$id'
+import { Route as AdminLearningPathsCreateRouteImport } from './routes/_admin.learning-paths.create'
+import { Route as AdminLearningPathsIdRouteImport } from './routes/_admin.learning-paths.$id'
 import { Route as AdminContestsCreateRouteImport } from './routes/_admin.contests.create'
 import { Route as AdminContestsIdRouteImport } from './routes/_admin.contests.$id'
 
@@ -65,6 +68,11 @@ const AdminProblemsIndexRoute = AdminProblemsIndexRouteImport.update({
   path: '/problems/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLearningPathsIndexRoute = AdminLearningPathsIndexRouteImport.update({
+  id: '/learning-paths/',
+  path: '/learning-paths/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminContestsIndexRoute = AdminContestsIndexRouteImport.update({
   id: '/contests/',
   path: '/contests/',
@@ -95,6 +103,17 @@ const AdminProblemsIdRoute = AdminProblemsIdRouteImport.update({
   path: '/problems/$id',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLearningPathsCreateRoute =
+  AdminLearningPathsCreateRouteImport.update({
+    id: '/learning-paths/create',
+    path: '/learning-paths/create',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminLearningPathsIdRoute = AdminLearningPathsIdRouteImport.update({
+  id: '/learning-paths/$id',
+  path: '/learning-paths/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminContestsCreateRoute = AdminContestsCreateRouteImport.update({
   id: '/contests/create',
   path: '/contests/create',
@@ -114,12 +133,15 @@ export interface FileRoutesByFullPath {
   '/users': typeof AdminUsersRoute
   '/contests/$id': typeof AdminContestsIdRoute
   '/contests/create': typeof AdminContestsCreateRoute
+  '/learning-paths/$id': typeof AdminLearningPathsIdRoute
+  '/learning-paths/create': typeof AdminLearningPathsCreateRoute
   '/problems/$id': typeof AdminProblemsIdRoute
   '/problems/create': typeof AdminProblemsCreateRoute
   '/problems/sync': typeof AdminProblemsSyncRoute
   '/submissions/$id': typeof AdminSubmissionsIdRoute
   '/users/$id': typeof AdminUsersIdRoute
   '/contests/': typeof AdminContestsIndexRoute
+  '/learning-paths/': typeof AdminLearningPathsIndexRoute
   '/problems/': typeof AdminProblemsIndexRoute
   '/submissions/': typeof AdminSubmissionsIndexRoute
 }
@@ -131,12 +153,15 @@ export interface FileRoutesByTo {
   '/': typeof AdminIndexRoute
   '/contests/$id': typeof AdminContestsIdRoute
   '/contests/create': typeof AdminContestsCreateRoute
+  '/learning-paths/$id': typeof AdminLearningPathsIdRoute
+  '/learning-paths/create': typeof AdminLearningPathsCreateRoute
   '/problems/$id': typeof AdminProblemsIdRoute
   '/problems/create': typeof AdminProblemsCreateRoute
   '/problems/sync': typeof AdminProblemsSyncRoute
   '/submissions/$id': typeof AdminSubmissionsIdRoute
   '/users/$id': typeof AdminUsersIdRoute
   '/contests': typeof AdminContestsIndexRoute
+  '/learning-paths': typeof AdminLearningPathsIndexRoute
   '/problems': typeof AdminProblemsIndexRoute
   '/submissions': typeof AdminSubmissionsIndexRoute
 }
@@ -150,12 +175,15 @@ export interface FileRoutesById {
   '/_admin/': typeof AdminIndexRoute
   '/_admin/contests/$id': typeof AdminContestsIdRoute
   '/_admin/contests/create': typeof AdminContestsCreateRoute
+  '/_admin/learning-paths/$id': typeof AdminLearningPathsIdRoute
+  '/_admin/learning-paths/create': typeof AdminLearningPathsCreateRoute
   '/_admin/problems/$id': typeof AdminProblemsIdRoute
   '/_admin/problems/create': typeof AdminProblemsCreateRoute
   '/_admin/problems/sync': typeof AdminProblemsSyncRoute
   '/_admin/submissions/$id': typeof AdminSubmissionsIdRoute
   '/_admin/users_/$id': typeof AdminUsersIdRoute
   '/_admin/contests/': typeof AdminContestsIndexRoute
+  '/_admin/learning-paths/': typeof AdminLearningPathsIndexRoute
   '/_admin/problems/': typeof AdminProblemsIndexRoute
   '/_admin/submissions/': typeof AdminSubmissionsIndexRoute
 }
@@ -169,12 +197,15 @@ export interface FileRouteTypes {
     | '/users'
     | '/contests/$id'
     | '/contests/create'
+    | '/learning-paths/$id'
+    | '/learning-paths/create'
     | '/problems/$id'
     | '/problems/create'
     | '/problems/sync'
     | '/submissions/$id'
     | '/users/$id'
     | '/contests/'
+    | '/learning-paths/'
     | '/problems/'
     | '/submissions/'
   fileRoutesByTo: FileRoutesByTo
@@ -186,12 +217,15 @@ export interface FileRouteTypes {
     | '/'
     | '/contests/$id'
     | '/contests/create'
+    | '/learning-paths/$id'
+    | '/learning-paths/create'
     | '/problems/$id'
     | '/problems/create'
     | '/problems/sync'
     | '/submissions/$id'
     | '/users/$id'
     | '/contests'
+    | '/learning-paths'
     | '/problems'
     | '/submissions'
   id:
@@ -204,12 +238,15 @@ export interface FileRouteTypes {
     | '/_admin/'
     | '/_admin/contests/$id'
     | '/_admin/contests/create'
+    | '/_admin/learning-paths/$id'
+    | '/_admin/learning-paths/create'
     | '/_admin/problems/$id'
     | '/_admin/problems/create'
     | '/_admin/problems/sync'
     | '/_admin/submissions/$id'
     | '/_admin/users_/$id'
     | '/_admin/contests/'
+    | '/_admin/learning-paths/'
     | '/_admin/problems/'
     | '/_admin/submissions/'
   fileRoutesById: FileRoutesById
@@ -277,6 +314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProblemsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/learning-paths/': {
+      id: '/_admin/learning-paths/'
+      path: '/learning-paths'
+      fullPath: '/learning-paths/'
+      preLoaderRoute: typeof AdminLearningPathsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/contests/': {
       id: '/_admin/contests/'
       path: '/contests'
@@ -319,6 +363,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProblemsIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/learning-paths/create': {
+      id: '/_admin/learning-paths/create'
+      path: '/learning-paths/create'
+      fullPath: '/learning-paths/create'
+      preLoaderRoute: typeof AdminLearningPathsCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/learning-paths/$id': {
+      id: '/_admin/learning-paths/$id'
+      path: '/learning-paths/$id'
+      fullPath: '/learning-paths/$id'
+      preLoaderRoute: typeof AdminLearningPathsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/contests/create': {
       id: '/_admin/contests/create'
       path: '/contests/create'
@@ -343,12 +401,15 @@ interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContestsIdRoute: typeof AdminContestsIdRoute
   AdminContestsCreateRoute: typeof AdminContestsCreateRoute
+  AdminLearningPathsIdRoute: typeof AdminLearningPathsIdRoute
+  AdminLearningPathsCreateRoute: typeof AdminLearningPathsCreateRoute
   AdminProblemsIdRoute: typeof AdminProblemsIdRoute
   AdminProblemsCreateRoute: typeof AdminProblemsCreateRoute
   AdminProblemsSyncRoute: typeof AdminProblemsSyncRoute
   AdminSubmissionsIdRoute: typeof AdminSubmissionsIdRoute
   AdminUsersIdRoute: typeof AdminUsersIdRoute
   AdminContestsIndexRoute: typeof AdminContestsIndexRoute
+  AdminLearningPathsIndexRoute: typeof AdminLearningPathsIndexRoute
   AdminProblemsIndexRoute: typeof AdminProblemsIndexRoute
   AdminSubmissionsIndexRoute: typeof AdminSubmissionsIndexRoute
 }
@@ -360,12 +421,15 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminContestsIdRoute: AdminContestsIdRoute,
   AdminContestsCreateRoute: AdminContestsCreateRoute,
+  AdminLearningPathsIdRoute: AdminLearningPathsIdRoute,
+  AdminLearningPathsCreateRoute: AdminLearningPathsCreateRoute,
   AdminProblemsIdRoute: AdminProblemsIdRoute,
   AdminProblemsCreateRoute: AdminProblemsCreateRoute,
   AdminProblemsSyncRoute: AdminProblemsSyncRoute,
   AdminSubmissionsIdRoute: AdminSubmissionsIdRoute,
   AdminUsersIdRoute: AdminUsersIdRoute,
   AdminContestsIndexRoute: AdminContestsIndexRoute,
+  AdminLearningPathsIndexRoute: AdminLearningPathsIndexRoute,
   AdminProblemsIndexRoute: AdminProblemsIndexRoute,
   AdminSubmissionsIndexRoute: AdminSubmissionsIndexRoute,
 }
