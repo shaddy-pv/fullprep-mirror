@@ -1040,9 +1040,7 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                 {[
                   { label: "Default Programming Language", opt: ["Python", "C++", "Java", "TypeScript", "Go"], val: defaultLanguage, setVal: setDefaultLanguage },
-                  { label: "Practice Workspace Theme", opt: ["Coming Soon"], val: "Coming Soon", setVal: () => {}, disabled: true },
                   { label: "Editor Tab Indent Spacing", opt: ["2 Spaces", "4 Spaces"], val: tabSpacingSetting, setVal: setTabSpacingSetting },
-                  { label: "Diagnostics & Autocomplete", opt: ["Coming Soon"], val: "Coming Soon", setVal: () => {}, disabled: true },
                 ].map((item, idx) => (
                   <div key={idx} className="flex flex-col text-left">
                     <label className={labelStyle}>{item.label}</label>
@@ -1132,60 +1130,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Card 3: Profile Visibility Controls */}
-            <div className={cardBase}>
-              <div>
-                <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-brand-orange" />
-                  <span>Profile Visibility</span>
-                </h3>
-                <p className="text-sm opacity-60 text-text-secondary">
-                  Control which statistics and widgets appear on your public coder portfolio.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-5">
-                {[
-                  { id: "profile", label: "Show Public Profile", desc: "Allow other coders to search & view your profile card.", icon: User },
-                  { id: "achievements", label: "Show Achievements", desc: "Display your unlocked custom hexagon badges publicly.", icon: Award },
-                  { id: "activity", label: "Show Activity Timeline", desc: "Display solved submissions activity feed logs stream.", icon: Activity },
-                  { id: "statistics", label: "Public Statistics", desc: "Display numerical easy/medium/hard progress counts.", icon: Sliders },
-                  { id: "ratings", label: "Show Contest Ratings", desc: "Allow profile visitors to view your contest rating charts.", icon: Trophy },
-                  { id: "heatmap", label: "Show Activity Heatmap", desc: "Make your full year submission contribution grid visible.", icon: Crown },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isChecked = visibility[item.id as keyof typeof visibility];
-                  return (
-                    <div key={item.id} className="border border-slate-900/[0.06] dark:border-white/[0.04] bg-slate-900/[0.02] dark:bg-[#111217]/15 rounded-xl p-4 flex items-center justify-between gap-4 transition-all duration-300 hover:border-slate-900/10 dark:hover:border-white/[0.08]">
-                      <div className="flex items-center gap-3.5 text-left">
-                        <div className="w-9 h-9 rounded-lg bg-slate-900/5 dark:bg-white/[0.02] border border-slate-900/[0.06] dark:border-white/[0.06] flex items-center justify-center shrink-0">
-                          <Icon className="w-4.5 h-4.5 text-slate-400 dark:text-[#9ca3af]" />
-                        </div>
-                        <div className="flex flex-col leading-none text-left">
-                          <span className="text-[13px] font-bold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                            {item.label}
-                            <span className="px-1.5 py-0.5 rounded-md bg-[#111827]/5 dark:bg-white/5 border border-[#111827]/10 dark:border-white/10 text-[9px] font-bold text-[#111827]/60 dark:text-white/60 tracking-wider uppercase">
-                              Coming Soon
-                            </span>
-                          </span>
-                          <span className="text-[11px] text-slate-500 dark:text-text-secondary/70 font-medium leading-none mt-2">{item.desc}</span>
-                        </div>
-                      </div>
-                      <button
-                        disabled
-                        className={cn(
-                          "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-not-allowed opacity-50 bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
-                        )}
-                      >
-                        <span className={cn(
-                          "w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 absolute left-0.5"
-                        )} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
                 </motion.div>
           </section>
           )}
