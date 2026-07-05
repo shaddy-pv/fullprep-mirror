@@ -198,7 +198,7 @@ export default function SignupPage() {
                 setAgreeTerms(e.target.checked);
                 if (errors.agreeTerms) setErrors({ ...errors, agreeTerms: "" });
               }}
-              className="w-4.5 h-4.5 rounded border-border-card text-brand-orange focus:ring-brand-orange/20 cursor-pointer mt-0.5 accent-[#ff6a00]"
+              className="w-4.5 h-4.5 rounded border-border-card text-brand-orange focus:ring-brand-orange/20 cursor-pointer mt-0.5 accent-brand-orange"
             />
             <span>
               I agree to the{" "}

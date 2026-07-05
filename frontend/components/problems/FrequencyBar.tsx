@@ -26,7 +26,7 @@ export default function FrequencyBar({
             className={cn(
               "w-[3px] h-[12px] rounded-[1px] transition-all duration-300",
               isFilled 
-                ? "bg-brand-orange shadow-[0_0_2px_rgba(255,106,0,0.4)]" 
+                ? "bg-brand-orange shadow-[0_0_2px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.4)]" 
                 : "bg-gray-200 dark:bg-white/[0.08]"
             )}
           />

@@ -688,7 +688,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
                   </button>
                   <button 
                     onClick={handleSubmitCode}
-                    className="flex items-center gap-1.5 h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-[#ff6a00]/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30 focus:outline-none"
+                    className="flex items-center gap-1.5 h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-brand-orange/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30 focus:outline-none"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 stroke-[3.5]" />
                     <span>Submit</span>
@@ -816,7 +816,7 @@ export default function ProblemWorkspacePage({ params }: { params: Promise<{ slu
         <div className="pt-3 border-t border-white/[0.08] dark:border-white/[0.04] flex justify-end select-none">
           <button 
             onClick={() => setIsHistoryOpen(false)}
-            className="h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-[#ff6a00]/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30"
+            className="h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-brand-orange/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30"
           >
             Done
           </button>

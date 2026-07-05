@@ -4,7 +4,7 @@
  */
 
 export const THEME_COLORS = {
-  orange: "#ff6a00",
+  orange: "var(--brand-accent, #ff6a00)",
   orangeHover: "#e05d00",
   backgroundLight: "#f7f7f4",
   backgroundDark: "#0b0f17",
@@ -42,8 +42,8 @@ export const THEME_SHADOWS = {
   sm: "shadow-sm",
   md: "shadow-md",
   lg: "shadow-lg",
-  orangeGlow: "shadow-[0_4px_12px_rgba(255,106,0,0.25)]",
-  orangeGlowHover: "shadow-[0_6px_16px_rgba(255,106,0,0.35)]",
+  orangeGlow: "shadow-[0_4px_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.25)]",
+  orangeGlowHover: "shadow-[0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)]",
 } as const;
 
 export const THEME_TRANSITIONS = {

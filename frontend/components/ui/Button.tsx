@@ -19,7 +19,7 @@ export default function Button({
       className={cn(
         "px-6 py-3 rounded-xl text-[13px] font-semibold flex items-center gap-2 shadow-sm transition-all duration-300 cursor-pointer tracking-[-0.01em] select-none",
         variant === "primary" && 
-          "bg-brand-orange hover:bg-[#e05d00] text-white shadow-[0_4px_12px_rgba(255,106,0,0.25)] hover:shadow-[0_6px_16px_rgba(255,106,0,0.35)]",
+          "bg-brand-orange hover:bg-[#e05d00] text-white shadow-[0_4px_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.25)] hover:shadow-[0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)]",
         variant === "secondary" && 
           "bg-card-bg hover:bg-gray-50 dark:hover:bg-white/[0.02] text-text-primary border border-border-card",
         variant === "ghost" && 

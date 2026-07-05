@@ -457,7 +457,7 @@ export default function SettingsPage() {
         description: "Premium Subscription — 1 Month",
         image: "/logo.png",
         prefill: { name: userInfo.name, email: userInfo.email },
-        theme: { color: "#ff6a00" },
+        theme: { color: "var(--brand-accent, #ff6a00)" },
         handler: async (response: any) => {
           try {
             const result = await PaymentService.verifyPayment({
@@ -500,7 +500,7 @@ export default function SettingsPage() {
   ];
 
   const accentsList = [
-    { id: "orange", name: "Orange Glow", color: "bg-[#ff6a00]", focusGlow: "focus:border-[#ff6a00]/40 focus:ring-[#ff6a00]/20" },
+    { id: "orange", name: "Orange Glow", color: "bg-brand-orange", focusGlow: "focus:border-brand-orange/40 focus:ring-brand-orange/20" },
     { id: "purple", name: "Purple Neon", color: "bg-[#8b5cf6]", focusGlow: "focus:border-[#8b5cf6]/40 focus:ring-[#8b5cf6]/20" },
     { id: "blue", name: "Cyber Blue", color: "bg-[#3b82f6]", focusGlow: "focus:border-[#3b82f6]/40 focus:ring-[#3b82f6]/20" },
     { id: "green", name: "Emerald", color: "bg-[#10b981]", focusGlow: "focus:border-[#10b981]/40 focus:ring-[#10b981]/20" },
@@ -555,7 +555,7 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={handleSaveChanges}
-          className="flex items-center justify-center bg-brand-orange hover:bg-[#e05d00] text-white rounded-xl px-5 py-2.5 text-sm font-bold shadow-md shadow-[#ff6a00]/15 hover:shadow-[0_0_12px_rgba(255,106,0,0.3)] cursor-pointer self-start sm:self-center transition-all duration-200 leading-none h-[38px] hover:scale-[1.01]"
+          className="flex items-center justify-center bg-brand-orange hover:bg-[#e05d00] text-white rounded-xl px-5 py-2.5 text-sm font-bold shadow-md shadow-brand-orange/15 hover:shadow-[0_0_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.3)] cursor-pointer self-start sm:self-center transition-all duration-200 leading-none h-[38px] hover:scale-[1.01]"
         >
           Save Changes
         </button>
@@ -580,7 +580,7 @@ export default function SettingsPage() {
                     className={cn(
                       "w-full h-[46px] flex items-center justify-between rounded-[14px] px-[14px] text-left transition-all duration-200 cursor-pointer relative group border",
                       isActive
-                        ? "bg-brand-orange/[0.10] text-brand-orange border-brand-orange/[0.24] shadow-[inset_0_0_0_1px_rgba(255,106,0,0.05)] font-semibold"
+                        ? "bg-brand-orange/[0.10] text-brand-orange border-brand-orange/[0.24] shadow-[inset_0_0_0_1px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.05)] font-semibold"
                         : "text-[#6b7280] dark:text-white/80 hover:text-[#111827] dark:hover:text-white hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.03] border-transparent font-medium hover:-translate-y-[0.5px]"
                     )}
                   >
@@ -597,7 +597,7 @@ export default function SettingsPage() {
 
           {/* Premium "Upgrade to Pro" Card */}
           {!user?.isPremiumActive && (
-          <div className="rounded-[22px] p-[16px] border border-[#ff8c28]/20 dark:border-[#ff8c28]/16 shadow-[0_8px_24px_rgba(255,106,0,0.05)] relative overflow-hidden group transition-all duration-300 flex flex-col gap-[10px] self-stretch mt-[6px] bg-gradient-to-b from-brand-orange/[0.08] to-brand-orange/[0.02] dark:from-brand-orange/[0.10] dark:to-brand-orange/[0.04]">
+          <div className="rounded-[22px] p-[16px] border border-[#ff8c28]/20 dark:border-[#ff8c28]/16 shadow-[0_8px_24px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.05)] relative overflow-hidden group transition-all duration-300 flex flex-col gap-[10px] self-stretch mt-[6px] bg-gradient-to-b from-brand-orange/[0.08] to-brand-orange/[0.02] dark:from-brand-orange/[0.10] dark:to-brand-orange/[0.04]">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex flex-col gap-1.5 relative z-10">
               <div className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full bg-brand-orange/15 border border-brand-orange/20 text-brand-orange text-[9px] font-bold uppercase tracking-widest leading-none select-none">
@@ -613,7 +613,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={handleUpgradeToPremium}
-              className="w-full h-[36px] bg-gradient-to-r from-brand-orange to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] text-white font-bold rounded-[12px] text-[11.5px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(255,106,0,0.15)] hover:shadow-[0_0_12px_rgba(255,106,0,0.3)] transition-all duration-200 cursor-pointer leading-none border-none shrink-0"
+              className="w-full h-[36px] bg-gradient-to-r from-brand-orange to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] text-white font-bold rounded-[12px] text-[11.5px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.15)] hover:shadow-[0_0_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.3)] transition-all duration-200 cursor-pointer leading-none border-none shrink-0"
             >
               <span>Upgrade Now</span>
               <ChevronRight className="w-3.5 h-3.5 text-white" />
@@ -759,7 +759,7 @@ export default function SettingsPage() {
                   { name: "GitHub", label: "github.com/", val: github, setVal: setGithub, icon: GithubIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/15 hover:shadow-[0_4px_12px_rgba(255,255,255,0.02)]" },
                   { name: "LinkedIn", label: "linkedin.com/in/", val: linkedin, setVal: setLinkedin, icon: LinkedinIcon, borderClass: "hover:border-[#0a66c2]/10 dark:hover:border-[#0a66c2]/15 hover:shadow-[0_4px_12px_rgba(10,102,194,0.02)]" },
                   { name: "Twitter/X", label: "twitter.com/", val: twitter, setVal: setTwitter, icon: TwitterIcon, borderClass: "hover:border-slate-900/10 dark:hover:border-[#ffffff]/10 hover:shadow-[0_4px_12px_rgba(255,255,255,0.01)]" },
-                  { name: "LeetCode", label: "leetcode.com/", val: leetcode, setVal: setLeetcode, icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(255,106,0,0.02)]" },
+                  { name: "LeetCode", label: "leetcode.com/", val: leetcode, setVal: setLeetcode, icon: Code2, borderClass: "hover:border-brand-orange/10 dark:hover:border-brand-orange/15 hover:shadow-[0_4px_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.02)]" },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -1158,7 +1158,7 @@ export default function SettingsPage() {
                     }}
                     className={cn(
                       "border-2 rounded-xl p-4 flex flex-col justify-between h-[155px] cursor-pointer select-none transition-all duration-300 hover:scale-[1.01]",
-                      selectedTheme === theme.id ? "border-brand-orange shadow-[0_0_15px_rgba(255,106,0,0.15)]" : "border-white/[0.05] hover:border-white/[0.12]",
+                      selectedTheme === theme.id ? "border-brand-orange shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.15)]" : "border-white/[0.05] hover:border-white/[0.12]",
                       theme.style
                     )}
                   >
@@ -1234,7 +1234,7 @@ export default function SettingsPage() {
                         }}
                         className={cn(
                           "w-9 h-5 rounded-full p-0.5 transition-all duration-300 relative flex items-center shrink-0 cursor-pointer",
-                          pref.state ? "bg-brand-orange shadow-[0_0_6px_rgba(255,106,0,0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
+                          pref.state ? "bg-brand-orange shadow-[0_0_6px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.2)]" : "bg-slate-900/10 dark:bg-white/[0.04] border border-slate-900/[0.12] dark:border-white/[0.08]"
                         )}
                       >
                         <span className={cn(
@@ -1270,7 +1270,7 @@ export default function SettingsPage() {
                         <div className={cn(
                           "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
                           user?.isPremiumActive
-                            ? "bg-gradient-to-br from-[#ff6a00]/20 to-[#8b5cf6]/20 border border-[#ff6a00]/30"
+                            ? "bg-gradient-to-br from-brand-orange/20 to-[#8b5cf6]/20 border border-brand-orange/30"
                             : "bg-brand-orange/10 border border-brand-orange/20"
                         )}>
                           {user?.isPremiumActive ? (
@@ -1287,7 +1287,7 @@ export default function SettingsPage() {
                             <span className={cn(
                               "px-2.5 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest leading-none",
                               user?.isPremiumActive
-                                ? "bg-gradient-to-r from-[#ff6a00]/20 to-[#8b5cf6]/20 border border-[#ff6a00]/30 text-brand-orange"
+                                ? "bg-gradient-to-r from-brand-orange/20 to-[#8b5cf6]/20 border border-brand-orange/30 text-brand-orange"
                                 : "bg-white/[0.06] text-[#9ca3af] border border-white/[0.06]"
                             )}>
                               {user?.isPremiumActive ? "Active" : "Free"}
@@ -1309,7 +1309,7 @@ export default function SettingsPage() {
                         <button
                           onClick={handleUpgradeToPremium}
                           disabled={paymentLoading}
-                          className="bg-gradient-to-r from-[#ff6a00] to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[12.5px] font-bold rounded-xl px-5 py-2.5 transition-all duration-200 cursor-pointer shadow-md shadow-[#ff6a00]/20 hover:shadow-[0_0_16px_rgba(255,106,0,0.35)] h-[40px] leading-none shrink-0 flex items-center gap-2"
+                          className="bg-gradient-to-r from-brand-orange to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[12.5px] font-bold rounded-xl px-5 py-2.5 transition-all duration-200 cursor-pointer shadow-md shadow-brand-orange/20 hover:shadow-[0_0_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)] h-[40px] leading-none shrink-0 flex items-center gap-2"
                         >
                           {paymentLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1359,7 +1359,7 @@ export default function SettingsPage() {
                       <button
                         onClick={handleUpgradeToPremium}
                         disabled={paymentLoading}
-                        className="w-full mt-2 bg-gradient-to-r from-[#ff6a00] to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[13px] font-bold rounded-xl py-3.5 transition-all duration-200 cursor-pointer shadow-md shadow-[#ff6a00]/20 hover:shadow-[0_0_20px_rgba(255,106,0,0.3)] flex items-center justify-center gap-2"
+                        className="w-full mt-2 bg-gradient-to-r from-brand-orange to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[13px] font-bold rounded-xl py-3.5 transition-all duration-200 cursor-pointer shadow-md shadow-brand-orange/20 hover:shadow-[0_0_20px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.3)] flex items-center justify-center gap-2"
                       >
                         {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
                         Upgrade to Premium — ₹399 / month
@@ -1375,7 +1375,7 @@ export default function SettingsPage() {
                     </h3>
                     <div className="flex flex-col gap-5 w-full">
                       {[
-                        { label: "Daily AI Hints Used", current: user?.isPremiumActive ? 0 : 5, max: user?.isPremiumActive ? 100 : 5, pct: user?.isPremiumActive ? 0 : 100, color: "from-[#ff6a00] to-[#ff8c3a]" },
+                        { label: "Daily AI Hints Used", current: user?.isPremiumActive ? 0 : 5, max: user?.isPremiumActive ? 100 : 5, pct: user?.isPremiumActive ? 0 : 100, color: "from-brand-orange to-[#ff8c3a]" },
                         { label: "Cloud Backup Storage", current: 12.8, max: 100, pct: 12.8, unit: "MB", color: "from-[#8b5cf6] to-[#a78bfa]" },
                       ].filter(item => !user?.isPremiumActive || item.label !== "Daily AI Hints Used").map((item, idx) => (
                         <div key={idx} className="flex flex-col gap-2.5 py-0.5">

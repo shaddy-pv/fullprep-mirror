@@ -45,7 +45,7 @@ export default function StatsGrid() {
       subtextColor: "text-[#10b981]",
       icon: CheckCircle2,
       iconColor: "text-brand-orange",
-      bgColor: "bg-[#fff3eb] dark:bg-[#ff6a00]/10",
+      bgColor: "bg-brand-orange/5 dark:bg-brand-orange/10",
       path: "/submissions",
     },
     {

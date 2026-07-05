@@ -370,7 +370,7 @@ export default function Navbar() {
         >
           <Bell className="w-[18px] h-[18px] fill-transparent stroke-[1.8]" />
           {unreadCount > 0 && (
-            <span className="absolute top-[9px] right-[10px] w-2 h-2 bg-brand-orange rounded-full ring-2 ring-white dark:ring-[#0b0f17] shadow-[0_0_6px_rgba(255,106,0,0.5)]" />
+            <span className="absolute top-[9px] right-[10px] w-2 h-2 bg-brand-orange rounded-full ring-2 ring-white dark:ring-[#0b0f17] shadow-[0_0_6px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.5)]" />
           )}
         </button>
 
@@ -402,7 +402,7 @@ export default function Navbar() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute right-0 mt-3 w-56 bg-card-bg backdrop-blur-xl border border-border-card dark:border-brand-orange/15 rounded-2xl shadow-[0_10px_40px_rgba(15,23,42,0.04)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),_0_0_15px_rgba(255,106,0,0.08)] z-50 text-left p-1.5 select-none text-text-primary"
+                className="absolute right-0 mt-3 w-56 bg-card-bg backdrop-blur-xl border border-border-card dark:border-brand-orange/15 rounded-2xl shadow-[0_10px_40px_rgba(15,23,42,0.04)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),_0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.08)] z-50 text-left p-1.5 select-none text-text-primary"
               >
                 {/* Profile Items */}
                 <div className="flex flex-col gap-0.5">
@@ -423,8 +423,8 @@ export default function Navbar() {
                       isDestructive 
                         ? "text-[#f43f5e] hover:bg-[#f43f5e]/10 hover:border-[#f43f5e]/25 hover:shadow-[0_0_10px_rgba(244,63,94,0.15)]" 
                         : isActive
-                          ? "text-brand-orange bg-brand-orange/10 border-brand-orange/20 shadow-[0_0_12px_rgba(255,106,0,0.15)]"
-                          : "text-text-primary hover:text-brand-orange hover:bg-brand-orange/8 hover:border-brand-orange/15 hover:shadow-[0_0_12px_rgba(255,106,0,0.15)]"
+                          ? "text-brand-orange bg-brand-orange/10 border-brand-orange/20 shadow-[0_0_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.15)]"
+                          : "text-text-primary hover:text-brand-orange hover:bg-brand-orange/8 hover:border-brand-orange/15 hover:shadow-[0_0_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.15)]"
                     );
 
                     if (item.href) {
@@ -462,7 +462,7 @@ export default function Navbar() {
                     <span className="text-[12px] font-bold text-text-primary truncate">{user?.email || "user@example.com"}</span>
                     <span className="text-[10px] text-text-secondary/70 font-bold mt-1 select-text font-sans">@{user?.name || "user"}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md border border-brand-orange/30 bg-brand-orange/10 text-[9px] font-black text-brand-orange uppercase tracking-wider select-none leading-none shrink-0 font-sans shadow-[0_0_8px_rgba(255,106,0,0.15)]">
+                  <span className="px-2 py-0.5 rounded-md border border-brand-orange/30 bg-brand-orange/10 text-[9px] font-black text-brand-orange uppercase tracking-wider select-none leading-none shrink-0 font-sans shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.15)]">
                     {user?.role || "Coder"}
                   </span>
                 </div>

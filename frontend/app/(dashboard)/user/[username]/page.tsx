@@ -52,7 +52,7 @@ interface HexBadgeProps {
 const HexagonBadge: React.FC<HexBadgeProps> = ({ color, title, subtitle, icon: IconComponent }) => {
   const colorMap: Record<string, { stroke: string; glow: string }> = {
     gold:   { stroke: "#eab308", glow: "rgba(234,179,8,0.22)" },
-    orange: { stroke: "#ff6a00", glow: "rgba(255,106,0,0.22)" },
+    orange: { stroke: "var(--brand-accent, #ff6a00)", glow: "rgba(var(--brand-accent-rgb, 255, 106, 0),0.22)" },
     red:    { stroke: "#f43f5e", glow: "rgba(244,63,94,0.22)" },
     teal:   { stroke: "#14b8a6", glow: "rgba(20,184,166,0.22)" },
     green:  { stroke: "#10b981", glow: "rgba(16,185,129,0.22)" },
@@ -257,7 +257,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
       <div className="w-full flex flex-col gap-6 select-none max-w-[1200px] mx-auto pb-8">
         {/* Profile Header Card */}
         <div className="bg-card-bg border border-border-card rounded-[24px] overflow-hidden shadow-sm relative">
-          <div className="h-32 w-full bg-gradient-to-r from-[#ff6a00]/20 via-[#8b5cf6]/20 to-[#10b981]/20 absolute top-0 left-0 z-0" />
+          <div className="h-32 w-full bg-gradient-to-r from-brand-orange/20 via-[#8b5cf6]/20 to-[#10b981]/20 absolute top-0 left-0 z-0" />
           <div className="p-6 lg:p-8 flex flex-col md:flex-row gap-8 relative z-10 mt-6">
           {/* Avatar and Basic Info */}
           <div className="flex items-center gap-6 md:w-1/3">

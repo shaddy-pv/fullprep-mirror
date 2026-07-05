@@ -78,13 +78,13 @@ export default function ContestCard({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#11131c] border border-border-card rounded-[24px] p-6 hover:shadow-md hover:border-[#ff6a00]/30 dark:hover:border-[#ff6a00]/20 transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative select-none">
+    <div className="w-full bg-white dark:bg-[#11131c] border border-border-card rounded-[24px] p-6 hover:shadow-md hover:border-brand-orange/30 dark:hover:border-brand-orange/20 transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative select-none">
       
       {/* Left side: Icon, Details, Tags */}
       <div className="flex items-start gap-4 flex-1 min-w-0">
         
         {/* Contest Accent Icon Wrapper */}
-        <div className="w-12 h-12 rounded-2xl bg-[#fff5eb] dark:bg-[#ff6a00]/10 border border-[#ff6a00]/10 flex items-center justify-center text-brand-orange shrink-0 mt-0.5 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-[#fff5eb] dark:bg-brand-orange/10 border border-brand-orange/10 flex items-center justify-center text-brand-orange shrink-0 mt-0.5 shadow-sm">
           <CalendarDays className="w-5 h-5 stroke-[2]" />
         </div>
 
@@ -169,7 +169,7 @@ export default function ContestCard({
         <Button
           variant="primary"
           disabled={status === "upcoming" || isCompleted}
-          className="w-full sm:w-[150px] py-[10px] font-bold text-[14px] flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(255,106,0,0.25)] hover:shadow-[0_6px_16px_rgba(255,106,0,0.35)] active:shadow-none transition-all duration-200"
+          className="w-full sm:w-[150px] py-[10px] font-bold text-[14px] flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.25)] hover:shadow-[0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)] active:shadow-none transition-all duration-200"
           onClick={() => {
             if (tags.includes("Weekly")) {
               router.push(`/contests/${id}`);
@@ -187,7 +187,7 @@ export default function ContestCard({
         <Button
           variant="secondary"
           className={`py-2.5 text-center justify-center font-bold w-full ${
-            isReminderSet ? "border-brand-orange/40 text-brand-orange bg-[#ff6a00]/5" : ""
+            isReminderSet ? "border-brand-orange/40 text-brand-orange bg-brand-orange/5" : ""
           }`}
           onClick={handleReminderToggle}
         >

@@ -81,8 +81,8 @@ export default function RatingTrendChart() {
             >
               <defs>
                 <linearGradient id="ratingChartColor" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff6a00" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#ff6a00" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="var(--brand-accent, #ff6a00)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="var(--brand-accent, #ff6a00)" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="0" vertical={false} stroke={gridColor} />
@@ -110,17 +110,17 @@ export default function RatingTrendChart() {
                   fontWeight: "bold",
                   padding: "4px 8px",
                 }}
-                cursor={{ stroke: "#ff6a00", strokeWidth: 1, strokeDasharray: "3 3" }}
+                cursor={{ stroke: "var(--brand-accent, #ff6a00)", strokeWidth: 1, strokeDasharray: "3 3" }}
               />
               <Area
                 type="monotone"
                 dataKey="rating"
-                stroke="#ff6a00"
+                stroke="var(--brand-accent, #ff6a00)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#ratingChartColor)"
-                dot={{ r: 3, fill: "#ff6a00", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 1.5 }}
-                activeDot={{ r: 4.5, fill: "#ff6a00", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
+                dot={{ r: 3, fill: "var(--brand-accent, #ff6a00)", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 1.5 }}
+                activeDot={{ r: 4.5, fill: "var(--brand-accent, #ff6a00)", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

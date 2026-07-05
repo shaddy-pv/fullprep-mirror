@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
 
       {/* Success Notification Box (Fades/slides in beautifully) */}
       {success && (
-        <div className="mt-6 p-4 rounded-xl bg-[#fffaf5] dark:bg-[#201614] border border-[#ff6a00]/25 flex items-start gap-3.5 text-left transition-all duration-300 animate-fadeIn">
+        <div className="mt-6 p-4 rounded-xl bg-[#fffaf5] dark:bg-[#201614] border border-brand-orange/25 flex items-start gap-3.5 text-left transition-all duration-300 animate-fadeIn">
           <Mail className="w-5 h-5 text-brand-orange shrink-0 mt-0.5" />
           <div className="flex flex-col gap-1">
             <span className="text-[13px] font-bold text-text-primary">

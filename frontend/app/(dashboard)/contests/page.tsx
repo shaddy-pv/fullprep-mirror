@@ -22,7 +22,7 @@ import { useNotificationStore } from "@/store/notificationStore";
 
 // ── Platform colour mapping ──────────────────────────────────────────────────
 const PLATFORM_COLORS: Record<string, string> = {
-  Codnite:    "bg-[#ff6a00]/10 text-[#ff6a00] border border-[#ff6a00]/20",
+  Codnite:    "bg-brand-orange/10 text-brand-orange border border-brand-orange/20",
   Codeforces: "bg-blue-500/10 text-blue-400 border border-blue-400/20",
   LeetCode:   "bg-yellow-500/10 text-yellow-400 border border-yellow-400/20",
   AtCoder:    "bg-purple-500/10 text-purple-400 border border-purple-400/20",
@@ -184,7 +184,7 @@ export default function ContestsPage() {
       subtextColor: "text-brand-orange",
       icon: Zap,
       iconColor: "text-brand-orange",
-      bgColor: "bg-[#fff3eb] dark:bg-[#ff6a00]/10",
+      bgColor: "bg-brand-orange/5 dark:bg-brand-orange/10",
     },
     {
       title: "Global Rank",
@@ -441,7 +441,7 @@ export default function ContestsPage() {
             <div className="flex-1 min-w-0 flex flex-col gap-5">
 
               {/* Search */}
-              <div className="w-full flex items-center bg-white dark:bg-[#11131c] border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-[#ff6a00]/50 transition-all select-none">
+              <div className="w-full flex items-center bg-white dark:bg-[#11131c] border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-brand-orange/50 transition-all select-none">
                 <Search className="w-4 h-4 text-[#9ca3af] shrink-0" />
                 <input
                   type="text"

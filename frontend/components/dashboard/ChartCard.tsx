@@ -49,7 +49,7 @@ export default function ChartCard() {
 
   return (
     <DashboardCard 
-      className="h-[240px] p-5 flex flex-col justify-between hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(255,106,0,0.12)] hover:border-brand-orange/30 transition-all duration-300 cursor-pointer"
+      className="h-[240px] p-5 flex flex-col justify-between hover:scale-[1.01] hover:shadow-[0_0_20px_var(--brand-accent-15,rgba(var(--brand-accent-rgb, 255, 106, 0),0.12))] hover:border-brand-orange/30 transition-all duration-300 cursor-pointer"
       onClick={() => router.push("/stats")}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -76,8 +76,8 @@ export default function ChartCard() {
             >
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff6a00" stopOpacity={isHovered ? 0.22 : 0.15} />
-                  <stop offset="95%" stopColor="#ff6a00" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="var(--brand-accent, #ff6a00)" stopOpacity={isHovered ? 0.22 : 0.15} />
+                  <stop offset="95%" stopColor="var(--brand-accent, #ff6a00)" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid 
@@ -109,22 +109,22 @@ export default function ChartCard() {
                   fontWeight: "bold",
                   padding: "6px 10px",
                 }}
-                cursor={{ stroke: "#ff6a00", strokeWidth: 1, strokeDasharray: "3 3" }}
+                cursor={{ stroke: "var(--brand-accent, #ff6a00)", strokeWidth: 1, strokeDasharray: "3 3" }}
               />
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="#ff6a00"
+                stroke="var(--brand-accent, #ff6a00)"
                 strokeWidth={isHovered ? 2.5 : 2}
                 fillOpacity={1}
                 fill="url(#colorValue)"
                 dot={{ 
                   r: isHovered ? 4.5 : 3.5, 
-                  fill: "#ff6a00", 
+                  fill: "var(--brand-accent, #ff6a00)", 
                   stroke: isDark ? "#111827" : "#ffffff", 
                   strokeWidth: isHovered ? 2 : 1.5 
                 }}
-                activeDot={{ r: 5, fill: "#ff6a00", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: "var(--brand-accent, #ff6a00)", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

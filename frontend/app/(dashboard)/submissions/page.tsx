@@ -187,8 +187,8 @@ export default function SubmissionsPage() {
       dotBg = "bg-[#f43f5e]";
       label = "Wrong Answer";
     } else if (normalized === "TIME_LIMIT_EXCEEDED" || normalized === "TIME_LIMIT") {
-      textColor = "text-[#ff6a00]";
-      dotBg = "bg-[#ff6a00]";
+      textColor = "text-brand-orange";
+      dotBg = "bg-brand-orange";
       label = "Time Limit Exceeded";
     } else if (normalized === "RUNTIME_ERROR") {
       textColor = "text-[#8b5cf6]";
@@ -438,7 +438,7 @@ export default function SubmissionsPage() {
                     className={cn(
                       "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
                       isActive 
-                        ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                        ? "bg-brand-orange text-white shadow-md shadow-brand-orange/25 border border-brand-orange" 
                         : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                     )}
                   >

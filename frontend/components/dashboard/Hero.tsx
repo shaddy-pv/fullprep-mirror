@@ -15,7 +15,7 @@ export default function Hero() {
   return (
     <div className="w-full bg-gradient-to-r from-[#fffbf8] via-[#fffefc] to-white dark:from-[#111827] dark:via-[#161f30] dark:to-[#111827] border border-border-card rounded-[24px] p-8 flex items-center justify-between shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] relative overflow-hidden h-[240px] shrink-0 transition-colors duration-300">
       {/* Background Soft Glows */}
-      <div className="absolute top-0 right-0 w-[450px] h-[300px] bg-gradient-to-br from-[#ffece0] via-[#f5edff] to-transparent dark:from-[#ff6a00]/8 dark:via-[#7c3aed]/5 opacity-60 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20" />
+      <div className="absolute top-0 right-0 w-[450px] h-[300px] bg-gradient-to-br from-[#ffece0] via-[#f5edff] to-transparent dark:from-brand-orange/8 dark:via-[#7c3aed]/5 opacity-60 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20" />
 
       {/* Left: Texts & Actions */}
       <div className="flex flex-col justify-center max-w-[500px] z-10">
@@ -30,7 +30,7 @@ export default function Hero() {
           {/* Start Solving Button */}
           <Button 
             variant="primary" 
-            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(255,106,0,0.55),_0_6px_16px_rgba(255,106,0,0.35)]"
+            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.55),_0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)]"
             onClick={() => router.push("/problems")}
           >
             <span>Start Solving</span>
@@ -40,7 +40,7 @@ export default function Hero() {
           {/* Join Contest Button */}
           <Button 
             variant="secondary" 
-            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-[2px] active:scale-[0.98] hover:border-brand-orange/40 hover:shadow-[0_0_15px_rgba(255,106,0,0.18)]"
+            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-[2px] active:scale-[0.98] hover:border-brand-orange/40 hover:shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.18)]"
             onClick={() => router.push("/contests")}
           >
             <span>Join Contest</span>
@@ -55,11 +55,11 @@ export default function Hero() {
         style={{ perspective: "1200px" }}
       >
         {/* Soft Radial Ambient Glow */}
-        <div className="absolute inset-0 bg-radial-gradient from-[#ffeedd]/70 via-[#f0e7ff]/30 to-transparent dark:from-[#ff6a00]/15 dark:via-[#7c3aed]/5 blur-[45px] pointer-events-none" />
+        <div className="absolute inset-0 bg-radial-gradient from-[#ffeedd]/70 via-[#f0e7ff]/30 to-transparent dark:from-brand-orange/15 dark:via-[#7c3aed]/5 blur-[45px] pointer-events-none" />
 
         {/* Ambient Shadows underneath laptop base */}
         <div className="absolute bottom-[24px] left-[54px] w-[210px] h-[22px] bg-black/35 dark:bg-black/60 rounded-full blur-[14px] transform rotateX(85deg) skewX(-10deg) pointer-events-none" />
-        <div className="absolute bottom-[22px] left-[40px] w-[240px] h-[26px] bg-[#ff6a00]/12 rounded-full blur-[18px] transform rotateX(85deg) skewX(-10deg) pointer-events-none" />
+        <div className="absolute bottom-[22px] left-[40px] w-[240px] h-[26px] bg-brand-orange/12 rounded-full blur-[18px] transform rotateX(85deg) skewX(-10deg) pointer-events-none" />
 
         {/* Floating Sparkles/Stars */}
         <motion.div 
@@ -158,7 +158,7 @@ export default function Hero() {
           className="absolute left-8 top-12 z-30"
           style={{ transform: "translateZ(60px)" }}
         >
-          <div className="w-[46px] h-[46px] bg-gradient-to-br from-[#ff8b3d] via-[#ff6a00] to-[#e04f00] rounded-2xl flex items-center justify-center text-white shadow-[0_12px_24px_-4px_rgba(255,106,0,0.4)] border border-white/20 relative">
+          <div className="w-[46px] h-[46px] bg-gradient-to-br from-[#ff8b3d] via-brand-orange to-[#e04f00] rounded-2xl flex items-center justify-center text-white shadow-[0_12px_24px_-4px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.4)] border border-white/20 relative">
             {/* Specification sheen */}
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/15 to-transparent rounded-2xl pointer-events-none" />
             <Code2 className="w-5 h-5 stroke-[2.5] drop-shadow-md" />
@@ -172,7 +172,7 @@ export default function Hero() {
           className="absolute right-6 top-[72px] z-30"
           style={{ transform: "translateZ(50px)" }}
         >
-          <div className="w-[44px] h-[44px] bg-gradient-to-br from-brand-orange to-brand-orange/60 rounded-2xl flex items-center justify-center text-white font-mono font-bold text-xl shadow-[0_12px_24px_-4px_rgba(255,106,0,0.35)] border border-white/20 relative">
+          <div className="w-[44px] h-[44px] bg-gradient-to-br from-brand-orange to-brand-orange/60 rounded-2xl flex items-center justify-center text-white font-mono font-bold text-xl shadow-[0_12px_24px_-4px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)] border border-white/20 relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/15 to-transparent rounded-2xl pointer-events-none" />
             <span className="drop-shadow-md">&#123;&#125;</span>
           </div>

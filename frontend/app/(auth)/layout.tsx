@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         subtitle: "Join thousands of developers and start improving your coding skills today.",
         type: "signup",
         features: [
-          { title: "Personalized learning", desc: "Get paths tailored to your level", icon: Compass, color: "text-[#ff6a00]" },
+          { title: "Personalized learning", desc: "Get paths tailored to your level", icon: Compass, color: "text-brand-orange" },
           { title: "Track & Achieve", desc: "Set goals and track your progress", icon: Activity, color: "text-[#10b981]" },
           { title: "Community & Contests", desc: "Compete and grow together", icon: Trophy, color: "text-brand-orange" },
         ],
@@ -39,7 +39,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         features: [
           { title: "Secure", desc: "Your data is completely safe", icon: Shield, color: "text-[#3b82f6]" },
           { title: "Fast", desc: "Quick self-service recovery link", icon: Activity, color: "text-[#10b981]" },
-          { title: "Reliable", desc: "Always here to help you solve", icon: CheckCircle2, color: "text-[#ff6a00]" },
+          { title: "Reliable", desc: "Always here to help you solve", icon: CheckCircle2, color: "text-brand-orange" },
         ],
       };
     } else if (pathname.includes("/reset-password")) {
@@ -49,7 +49,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         subtitle: "Create a strong password to secure your account.",
         type: "reset",
         features: [
-          { title: "Use 8+ characters", desc: "Minimum length requirement", icon: Shield, color: "text-[#ff6a00]" },
+          { title: "Use 8+ characters", desc: "Minimum length requirement", icon: Shield, color: "text-brand-orange" },
           { title: "Include numbers", desc: "Adds numeric security depth", icon: CheckCircle2, color: "text-[#10b981]" },
           { title: "Add special chars", desc: "Requires symbols like @, #, $", icon: Shield, color: "text-brand-orange" },
         ],
@@ -62,7 +62,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         subtitle: "Sign in to access your personalized dashboard, track progress and solve more problems.",
         type: "login",
         features: [
-          { title: "Track your progress", desc: "Monitor your coding journey", icon: Compass, color: "text-[#ff6a00]" },
+          { title: "Track your progress", desc: "Monitor your coding journey", icon: Compass, color: "text-brand-orange" },
           { title: "Solve and compete", desc: "Solve problems and compete in contests", icon: Trophy, color: "text-brand-orange" },
           { title: "Learn and grow", desc: "Structured paths to master DSA", icon: Compass, color: "text-[#10b981]" },
         ],
@@ -133,7 +133,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#fffbf8] via-[#fffefc] to-white dark:from-[#111827] dark:via-[#131d2c] dark:to-[#0f1522] border-r border-border-card p-12 md:p-16 flex-col justify-between relative overflow-hidden transition-colors duration-300">
           
           {/* Ambient Glow Backdrops */}
-          <div className="absolute top-[20%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-[#ffece0]/40 via-[#f5edff]/30 to-transparent dark:from-[#ff6a00]/5 dark:via-[#7c3aed]/3 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-[20%] right-[-100px] w-[500px] h-[500px] bg-gradient-to-br from-[#ffece0]/40 via-[#f5edff]/30 to-transparent dark:from-brand-orange/5 dark:via-[#7c3aed]/3 rounded-full blur-[100px] pointer-events-none" />
           <div className="absolute bottom-[10%] left-[-150px] w-[400px] h-[400px] bg-gradient-to-tr from-[#e3f2fd]/30 via-transparent to-transparent dark:from-[#3b82f6]/4 dark:to-transparent rounded-full blur-[85px] pointer-events-none" />
 
           {/* Spacer to push branding down to match header */}
@@ -148,7 +148,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="inline-flex self-start px-3.5 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase bg-[#ffece0] text-[#ff6a00] dark:bg-[#ff6a00]/10 dark:text-[#ff6a00] mb-5 border border-[#ff6a00]/10 shadow-[0_2px_8px_rgba(255,106,0,0.06)]"
+              className="inline-flex self-start px-3.5 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase bg-[#ffece0] text-brand-orange dark:bg-brand-orange/10 dark:text-brand-orange mb-5 border border-brand-orange/10 shadow-[0_2px_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.06)]"
             >
               {config.badge}
             </motion.div>
@@ -187,7 +187,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     transition={{ duration: 0.4, delay: 0.15 + idx * 0.05 }}
                     className="flex items-start gap-4 group"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.02] border border-border-card flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] group-hover:border-[#ff6a00]/30 dark:group-hover:border-[#ff6a00]/20 transition-all duration-300 shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/[0.02] border border-border-card flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.02)] group-hover:border-brand-orange/30 dark:group-hover:border-brand-orange/20 transition-all duration-300 shrink-0">
                       <Icon className={`w-5 h-5 ${item.color} stroke-[2]`} />
                     </div>
                     <div className="flex flex-col pt-0.5">
@@ -253,7 +253,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="flex flex-col gap-2 pl-4 border-l-2 border-[#ff6a00]/30"
+                    className="flex flex-col gap-2 pl-4 border-l-2 border-brand-orange/30"
                   >
                     <p className="text-[13.5px] font-medium text-text-secondary italic leading-relaxed">
                       &ldquo;The best way to predict the future is to create it.&rdquo;
@@ -279,7 +279,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="w-full lg:w-1/2 flex items-center justify-center pt-24 pb-12 px-6 md:px-12 relative z-10">
           
           {/* Subtle Radial Glows for Light/Dark Contexts on the right side */}
-          <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] bg-gradient-to-br from-[#ffece0]/10 to-transparent dark:from-[#ff6a00]/4 dark:to-transparent rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute top-[10%] left-[10%] w-[350px] h-[350px] bg-gradient-to-br from-[#ffece0]/10 to-transparent dark:from-brand-orange/4 dark:to-transparent rounded-full blur-[80px] pointer-events-none" />
           <div className="absolute bottom-[20%] right-[10%] w-[300px] h-[300px] bg-gradient-to-tr from-[#f5edff]/10 to-transparent dark:from-[#7c3aed]/2 dark:to-transparent rounded-full blur-[70px] pointer-events-none" />
 
           {/* Child Card Content */}

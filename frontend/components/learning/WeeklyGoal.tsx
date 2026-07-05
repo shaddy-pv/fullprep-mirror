@@ -51,7 +51,7 @@ export default function WeeklyGoal({ activity = [], totalSolvedThisWeek = 0, tar
         {days.map((day, idx) => (
           <div key={idx} className="flex flex-col items-center gap-2">
             {day.done ? (
-              <div className="w-6.5 h-6.5 rounded-full bg-brand-orange text-white flex items-center justify-center shadow-[0_0_6px_rgba(255,106,0,0.3)] transition-all">
+              <div className="w-6.5 h-6.5 rounded-full bg-brand-orange text-white flex items-center justify-center shadow-[0_0_6px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.3)] transition-all">
                 <Check className="w-3 h-3 stroke-[3.5]" />
               </div>
             ) : (

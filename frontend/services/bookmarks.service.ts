@@ -27,7 +27,7 @@ export const BookmarksService = {
           const acceptance = calculateAcceptance(prob.stats);
 
           let color = "text-[#10b981]"; // Easy
-          if (difficulty === "Medium") color = "text-[#ff6a00]";
+          if (difficulty === "Medium") color = "text-brand-orange";
           if (difficulty === "Hard") color = "text-[#f43f5e]";
 
           return {

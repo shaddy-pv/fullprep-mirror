@@ -114,7 +114,7 @@ interface HexBadgeProps {
 const HexagonBadge: React.FC<HexBadgeProps> = ({ color, title, subtitle, icon: IconComponent }) => {
   const colorMap: Record<string, { stroke: string; glow: string }> = {
     gold:   { stroke: "#eab308", glow: "rgba(234,179,8,0.22)" },
-    orange: { stroke: "#ff6a00", glow: "rgba(255,106,0,0.22)" },
+    orange: { stroke: "var(--brand-accent, #ff6a00)", glow: "rgba(var(--brand-accent-rgb, 255, 106, 0),0.22)" },
     red:    { stroke: "#f43f5e", glow: "rgba(244,63,94,0.22)" },
     teal:   { stroke: "#14b8a6", glow: "rgba(20,184,166,0.22)" },
     green:  { stroke: "#10b981", glow: "rgba(16,185,129,0.22)" },
@@ -293,7 +293,7 @@ export default function ProfilePage() {
 
   const statCards = [
     { label: "LEVEL", value: `Lvl ${level}`, sub: `XP: ${xp}`, color: "text-amber-600 dark:text-amber-400", glow: "hover:shadow-[0_0_15px_rgba(255,255,255,0.06)]" },
-    { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(255,106,0,0.08)]" },
+    { label: "DAILY STREAK", value: `${streak} Days`, sub: "Consecutive days", color: "text-brand-orange", glow: "hover:shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.08)]" },
     { label: "PROBLEMS SOLVED", value: solved.toString(), sub: "Verified solutions", color: "text-[#10b981]", glow: "hover:shadow-[0_0_15px_rgba(16,185,129,0.08)]" },
     { label: "GLOBAL RANK", value: rank !== "-" ? `#${rank}` : "-", sub: "On the leaderboard", color: "text-[#06b6d4]", glow: "hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]" },
     { label: "CONTEST RATING", value: user?.contestRating?.toString() || "1200", sub: "Global Rating", color: "text-[#8b5cf6]", glow: "hover:shadow-[0_0_15px_rgba(139,92,246,0.08)]" },
@@ -347,7 +347,7 @@ export default function ProfilePage() {
 
   const difficultyStats = [
     { label: "Easy", solved: easySolved, total: easyTotal, color: "#10b981", pct: Math.round((easySolved / easyTotal) * 100) },
-    { label: "Medium", solved: mediumSolved, total: mediumTotal, color: "#ff6a00", pct: Math.round((mediumSolved / mediumTotal) * 100) },
+    { label: "Medium", solved: mediumSolved, total: mediumTotal, color: "var(--brand-accent, #ff6a00)", pct: Math.round((mediumSolved / mediumTotal) * 100) },
     { label: "Hard", solved: hardCountSolved, total: hardTotal, color: "#f43f5e", pct: Math.round((hardCountSolved / hardTotal) * 100) },
   ];
 
@@ -468,7 +468,7 @@ export default function ProfilePage() {
             {/* Name + Badge */}
             <div className="flex items-center gap-3">
               <span className="text-[22px] font-bold text-text-primary tracking-[-0.02em] font-sans">{user?.name || "User"}</span>
-              <span className="px-2.5 py-[3px] rounded-md border border-brand-orange/25 bg-brand-orange/10 text-[9px] font-bold text-brand-orange uppercase tracking-wider leading-none shadow-[0_0_8px_rgba(255,106,0,0.12)]">
+              <span className="px-2.5 py-[3px] rounded-md border border-brand-orange/25 bg-brand-orange/10 text-[9px] font-bold text-brand-orange uppercase tracking-wider leading-none shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.12)]">
                 Pro Coder
               </span>
             </div>
@@ -526,7 +526,7 @@ export default function ProfilePage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute -bottom-[16px] left-0 right-0 h-[2px] bg-brand-orange rounded-full shadow-[0_1px_4px_rgba(255,106,0,0.45)]"
+                  className="absolute -bottom-[16px] left-0 right-0 h-[2px] bg-brand-orange rounded-full shadow-[0_1px_4px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.45)]"
                 />
               )}
             </button>
@@ -709,7 +709,7 @@ export default function ProfilePage() {
                           </div>
                           <span className="text-[12px] font-semibold text-text-primary w-16 shrink-0 text-left leading-none">{lang.name}</span>
                           <div className="flex-1 h-2 bg-white/[0.03] rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-brand-orange to-[#ff8c3a] rounded-full shadow-[0_0_4px_rgba(255,106,0,0.3)]" style={{ width: `${lang.progress}%` }} />
+                            <div className="h-full bg-gradient-to-r from-brand-orange to-[#ff8c3a] rounded-full shadow-[0_0_4px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.3)]" style={{ width: `${lang.progress}%` }} />
                           </div>
                           <span className="text-[11px] font-semibold text-text-secondary/70 w-10 text-right leading-none shrink-0">{lang.progress}%</span>
                         </div>
@@ -839,7 +839,7 @@ export default function ProfilePage() {
                     const events: any[] = [];
                     const badgeColors: Record<string, string> = {
                       gold: "text-[#eab308] bg-[#eab308]/10 border-[#eab308]/20",
-                      orange: "text-[#ff6a00] bg-[#ff6a00]/10 border-[#ff6a00]/20",
+                      orange: "text-brand-orange bg-brand-orange/10 border-brand-orange/20",
                       red: "text-[#f43f5e] bg-[#f43f5e]/10 border-[#f43f5e]/20",
                       teal: "text-[#14b8a6] bg-[#14b8a6]/10 border-[#14b8a6]/20",
                       green: "text-[#10b981] bg-[#10b981]/10 border-[#10b981]/20",
@@ -1115,7 +1115,7 @@ export default function ProfilePage() {
                         showToast(err.message || "Failed to save settings.", "info");
                       }
                     }}
-                    className="bg-brand-orange hover:bg-[#e05d00] text-white rounded-xl px-5 py-2.5 text-[12px] font-semibold shadow-md shadow-[#ff6a00]/15 mt-2 self-end cursor-pointer transition-all duration-200 leading-none"
+                    className="bg-brand-orange hover:bg-[#e05d00] text-white rounded-xl px-5 py-2.5 text-[12px] font-semibold shadow-md shadow-brand-orange/15 mt-2 self-end cursor-pointer transition-all duration-200 leading-none"
                   >
                     Save Changes
                   </button>

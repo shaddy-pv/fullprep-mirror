@@ -31,7 +31,7 @@ export default function TableRow({
   return (
     <div 
       onClick={() => router.push(`/problems/${slug}`)}
-      className="flex items-center justify-between py-[10px] first:pt-1 last:pb-1 group hover:bg-[#ff6a00]/[0.03] dark:hover:bg-[#ff6a00]/[0.03] px-2 -mx-2 rounded-lg transition-all duration-300 cursor-pointer hover:shadow-[0_2px_10px_rgba(255,106,0,0.04)]"
+      className="flex items-center justify-between py-[10px] first:pt-1 last:pb-1 group hover:bg-brand-orange/[0.03] dark:hover:bg-brand-orange/[0.03] px-2 -mx-2 rounded-lg transition-all duration-300 cursor-pointer hover:shadow-[0_2px_10px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.04)]"
     >
       {/* Left Column: Icon & Title */}
       <div className="flex items-center gap-3.5 w-[250px]">

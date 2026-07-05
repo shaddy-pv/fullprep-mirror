@@ -24,7 +24,7 @@ const AuthInput = forwardRef(
             ref={ref}
             type={type}
             className={cn(
-              "w-full bg-[#fcfcfa] dark:bg-[#0f1118]/60 border border-border-card text-text-primary placeholder-[#9ca3af]/70 focus:placeholder-[#9ca3af]/40 dark:placeholder-gray-600 dark:focus:placeholder-gray-700 rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:border-[#ff6a00]/60 focus:ring-1 focus:ring-[#ff6a00]/30 transition-all duration-200",
+              "w-full bg-[#fcfcfa] dark:bg-[#0f1118]/60 border border-border-card text-text-primary placeholder-[#9ca3af]/70 focus:placeholder-[#9ca3af]/40 dark:placeholder-gray-600 dark:focus:placeholder-gray-700 rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:border-brand-orange/60 focus:ring-1 focus:ring-brand-orange/30 transition-all duration-200",
               error && "border-red-500/70 focus:border-red-500 focus:ring-red-500/20",
               rightElement ? "pr-11" : "pr-4",
               className

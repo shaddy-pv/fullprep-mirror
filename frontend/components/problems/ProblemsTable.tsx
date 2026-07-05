@@ -89,7 +89,7 @@ export default function ProblemsTable({
         className={cn(
           "w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200",
           isActive
-            ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25"
+            ? "bg-brand-orange text-white shadow-md shadow-brand-orange/25"
             : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02] shadow-sm"
         )}
       >

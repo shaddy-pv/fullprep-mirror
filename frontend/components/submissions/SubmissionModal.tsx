@@ -47,7 +47,7 @@ export default function SubmissionModal({ submissionId, onClose }: SubmissionMod
   const statusColor = 
     submission?.status === "ACCEPTED" ? "text-[#10b981]" : 
     submission?.status === "WRONG_ANSWER" ? "text-[#f43f5e]" : 
-    submission?.status === "TIME_LIMIT" ? "text-[#ff6a00]" : 
+    submission?.status === "TIME_LIMIT" ? "text-brand-orange" : 
     submission?.status === "COMPILE_ERROR" ? "text-[#9ca3af]" : 
     "text-[#8b5cf6]";
 

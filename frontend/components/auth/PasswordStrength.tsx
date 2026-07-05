@@ -31,13 +31,13 @@ export default function PasswordStrength({ password = "" }: PasswordStrengthProp
   const getBarColor = (index: number) => {
     if (index >= score) return "bg-[#e5e7eb] dark:bg-white/[0.08]";
     if (score <= 1) return "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]";
-    if (score <= 3) return "bg-[#ff6a00] shadow-[0_0_8px_rgba(255,106,0,0.4)]";
+    if (score <= 3) return "bg-brand-orange shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.4)]";
     return "bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.4)]";
   };
 
   const getLabelColor = () => {
     if (score <= 1) return "text-red-500 font-bold";
-    if (score <= 3) return "text-[#ff6a00] font-bold";
+    if (score <= 3) return "text-brand-orange font-bold";
     return "text-[#10b981] font-bold";
   };
 

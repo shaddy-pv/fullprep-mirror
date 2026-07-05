@@ -274,7 +274,7 @@ export default function LeaderboardPage() {
                 onClick={() => setActiveFilterTab(tab)}
                 className={`px-4 py-1.5 rounded-full text-[12.5px] font-semibold tracking-[-0.01em] transition-all cursor-pointer ${
                   isActive 
-                    ? "bg-[#ffece0] text-brand-orange dark:bg-[#ff6a00]/10 dark:text-[#ff6a00] border border-[#ff6a00]/15" 
+                    ? "bg-[#ffece0] text-brand-orange dark:bg-brand-orange/10 dark:text-brand-orange border border-brand-orange/15" 
                     : "bg-white dark:bg-[#11131c] border border-border-card text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -409,7 +409,7 @@ export default function LeaderboardPage() {
                       key={`${user.username}-${user.rank}`}
                       className={`group transition-all duration-150 align-middle ${
                         user.isCurrentUser 
-                          ? "bg-[#ff6a00]/5 dark:bg-[#ff6a00]/5 border-y border-brand-orange/30 font-semibold text-text-primary" 
+                          ? "bg-brand-orange/5 dark:bg-brand-orange/5 border-y border-brand-orange/30 font-semibold text-text-primary" 
                           : "hover:bg-gray-50/50 dark:hover:bg-white/[0.01]"
                       }`}
                     >
@@ -462,7 +462,7 @@ export default function LeaderboardPage() {
 
                       {/* Streak ticker */}
                       <td className="py-2 px-4 align-middle text-center">
-                        <div className="flex items-center justify-center gap-1 text-[#ff6a00] font-bold select-none text-[13.5px]">
+                        <div className="flex items-center justify-center gap-1 text-brand-orange font-bold select-none text-[13.5px]">
                           <span>{user.streak}</span>
                           <Flame className="w-3.5 h-3.5 text-brand-orange fill-brand-orange shrink-0 animate-pulse" />
                         </div>
@@ -496,7 +496,7 @@ export default function LeaderboardPage() {
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
                       currentPage === i + 1 
-                        ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                        ? "bg-brand-orange text-white shadow-md shadow-brand-orange/25 border border-brand-orange" 
                         : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                     }`}
                   >
@@ -511,7 +511,7 @@ export default function LeaderboardPage() {
                       onClick={() => setCurrentPage(Math.ceil(totalUsers / 50))}
                       className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
                         currentPage === Math.ceil(totalUsers / 50) 
-                          ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                          ? "bg-brand-orange text-white shadow-md shadow-brand-orange/25 border border-brand-orange" 
                           : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
                       }`}
                     >

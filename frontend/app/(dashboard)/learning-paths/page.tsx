@@ -146,7 +146,7 @@ function LearningPathsContent() {
                     className={cn(
                       "h-9 px-4 rounded-xl text-[13px] font-semibold transition-all duration-300 cursor-pointer select-none",
                       activeCategory === cat
-                        ? "bg-brand-orange text-white shadow-[0_4px_12px_rgba(255,106,0,0.2)]"
+                        ? "bg-brand-orange text-white shadow-[0_4px_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.2)]"
                         : "bg-card-bg hover:bg-gray-50 dark:hover:bg-white/[0.02] text-text-secondary hover:text-text-primary border border-border-card"
                     )}
                   >
@@ -193,7 +193,7 @@ function LearningPathsContent() {
 
             {/* Active Search indicators */}
             {searchVal && (
-              <div className="flex items-center gap-2 text-[12px] font-bold text-brand-orange border border-transparent px-3 py-1.5 rounded-lg bg-[#fff3eb] dark:bg-brand-orange/10 w-fit select-none">
+              <div className="flex items-center gap-2 text-[12px] font-bold text-brand-orange border border-transparent px-3 py-1.5 rounded-lg bg-brand-orange/5 dark:bg-brand-orange/10 w-fit select-none">
                 <span>Filtered by search: &quot;{searchVal}&quot;</span>
                 <button
                   onClick={() => {

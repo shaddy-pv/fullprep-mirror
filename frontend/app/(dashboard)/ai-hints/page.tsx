@@ -285,7 +285,7 @@ export default function AIHintsPage() {
                       </div>
                     )
                   ) : (
-                    <div className="w-9 h-9 rounded-xl bg-[#fff5eb] dark:bg-[#ff6a00]/10 border border-[#ff6a00]/10 flex items-center justify-center text-brand-orange shrink-0 shadow-sm">
+                    <div className="w-9 h-9 rounded-xl bg-[#fff5eb] dark:bg-brand-orange/10 border border-brand-orange/10 flex items-center justify-center text-brand-orange shrink-0 shadow-sm">
                       <Sparkles className="w-4.5 h-4.5 fill-current" />
                     </div>
                   )}
@@ -305,7 +305,7 @@ export default function AIHintsPage() {
                     {/* Chat Bubble Body (mockup styled user amber bubble) */}
                     <div className={`p-4 rounded-2xl text-[13.5px] font-medium leading-relaxed tracking-[-0.015em] ${
                       isUser 
-                        ? "bg-[#ff6a00]/5 border border-[#ff6a00]/20 text-brand-orange dark:text-[#ffece0] rounded-tr-none" 
+                        ? "bg-brand-orange/5 border border-brand-orange/20 text-brand-orange dark:text-[#ffece0] rounded-tr-none" 
                         : "bg-[#fcfcfa] dark:bg-[#0f1118]/60 border border-border-card text-text-primary rounded-tl-none"
                     }`}>
                       <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -502,7 +502,7 @@ export default function AIHintsPage() {
           <div className="p-4 border-t border-border-card bg-[#fcfcfa] dark:bg-[#11131c]/40 flex flex-col gap-3.5 shrink-0">
             
             {/* Unified Input Container */}
-            <div className="relative w-full flex items-center bg-white dark:bg-[#0f1118]/80 border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-[#ff6a00]/50 transition-all">
+            <div className="relative w-full flex items-center bg-white dark:bg-[#0f1118]/80 border border-border-card rounded-xl px-4 py-3 shadow-sm focus-within:border-brand-orange/50 transition-all">
               
               {/* Custom Language Dropdown */}
               <div className="relative mr-3 shrink-0">
@@ -583,7 +583,7 @@ export default function AIHintsPage() {
               </span>
               
               <button className="flex items-center gap-1 bg-card-bg border border-border-card px-2.5 py-1 rounded-lg text-[10px] font-bold text-text-primary shadow-sm hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer">
-                <span className="px-1 py-0.5 rounded bg-[#fff5eb] text-brand-orange font-bold text-[8.5px] uppercase dark:bg-[#ff6a00]/10">
+                <span className="px-1 py-0.5 rounded bg-[#fff5eb] text-brand-orange font-bold text-[8.5px] uppercase dark:bg-brand-orange/10">
                   {hintsRemaining === null
                     ? "LOADING..."
                     : hintsRemaining === "Unlimited"
@@ -633,7 +633,7 @@ export default function AIHintsPage() {
                       setInputVal(tool.title);
                       showToast(`Tool "${tool.title}" loaded.`, "info");
                     }}
-                    className="flex items-center justify-between p-2 rounded-xl bg-white hover:bg-bg-page dark:bg-[#11131c] dark:hover:bg-white/[0.02] border border-border-card hover:border-[#ff6a00]/30 transition-all duration-200 cursor-pointer"
+                    className="flex items-center justify-between p-2 rounded-xl bg-white hover:bg-bg-page dark:bg-[#11131c] dark:hover:bg-white/[0.02] border border-border-card hover:border-brand-orange/30 transition-all duration-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-8.5 h-8.5 rounded-lg bg-bg-page border border-border-card/50 flex items-center justify-center shrink-0">

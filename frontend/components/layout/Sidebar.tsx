@@ -137,7 +137,7 @@ export default function Sidebar() {
                   isSidebarCollapsed ? "justify-center h-11 w-11 mx-auto px-0" : "justify-between px-4 py-2.5",
                   isActive
                     ? cn(
-                        "text-text-primary dark:text-white border border-brand-orange/20 shadow-[0_0_14px_rgba(255,106,0,0.12)] bg-brand-orange/6",
+                        "text-text-primary dark:text-white border border-brand-orange/20 shadow-[0_0_14px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.12)] bg-brand-orange/6",
                         isSidebarCollapsed 
                           ? "before:absolute before:left-1 before:top-2 before:bottom-2 before:w-[3px] before:bg-brand-orange before:rounded-r-md"
                           : "before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-[3px] before:bg-brand-orange before:rounded-r-md"
@@ -174,7 +174,7 @@ export default function Sidebar() {
                       </Badge>
                     ) : (
                       /* Glowing Purple Dot for Collapsed State with reduced glow intensity */
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-orange rounded-full ring-2 ring-[#111217] dark:ring-[#06090f] shadow-[0_0_4px_rgba(255,106,0,0.45)] transition-all duration-300" />
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-orange rounded-full ring-2 ring-[#111217] dark:ring-[#06090f] shadow-[0_0_4px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.45)] transition-all duration-300" />
                     )}
                   </>
                 )}
@@ -212,7 +212,7 @@ export default function Sidebar() {
               {dynamicStreakDays.map((day: { label: string; status: string }, idx: number) => (
                 <div key={idx} className="flex flex-col items-center gap-1.5">
                   {day.status === "completed" ? (
-                    <div className="w-[10px] h-[10px] rounded-full bg-brand-orange shadow-[0_0_8px_rgba(255,106,0,0.6)]" />
+                    <div className="w-[10px] h-[10px] rounded-full bg-brand-orange shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.6)]" />
                   ) : day.status === "partial" ? (
                     <div className="w-[10px] h-[10px] rounded-full relative overflow-hidden bg-black/5 dark:bg-[#2d2e38] border border-black/5 dark:border-white/[0.1]">
                       <div className="absolute top-0 left-0 w-1/2 h-full bg-brand-orange" />
@@ -230,7 +230,7 @@ export default function Sidebar() {
         {/* Upgrade to Premium Card (Only visible on /ai-hints path when sidebar is expanded, swaps with Streak Card) */}
         {!isSidebarCollapsed && pathname === "/ai-hints" && !user?.isPremiumActive && (
           <div className="bg-[#f1f5f9] dark:bg-[#11131c] border border-black/[0.04] dark:border-white/[0.04] rounded-2xl p-4.5 text-left shadow-lg relative overflow-hidden select-none my-4">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff6a00]/10 to-transparent blur-xl rounded-full" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-orange/10 to-transparent blur-xl rounded-full" />
             <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5 text-brand-orange fill-brand-orange" />
               <span>Upgrade to Premium</span>
@@ -240,7 +240,7 @@ export default function Sidebar() {
             </p>
             <button 
               onClick={() => router.push("/settings#billing")}
-              className="w-full py-2 bg-brand-orange hover:bg-[#e05d00] text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(255,106,0,0.2)] transition-all duration-300 cursor-pointer"
+              className="w-full py-2 bg-brand-orange hover:bg-[#e05d00] text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.2)] transition-all duration-300 cursor-pointer"
             >
               <span>Upgrade Now</span>
               <ChevronRight className="w-3.5 h-3.5 text-white" />
@@ -257,7 +257,7 @@ export default function Sidebar() {
               exit={isSidebarCollapsed ? { opacity: 0, scale: 0.95, x: -10 } : { opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
-                "bg-white/95 dark:bg-[#06090f]/95 backdrop-blur-xl border border-brand-orange/15 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1),_0_0_15px_rgba(255,106,0,0.08)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),_0_0_15px_rgba(255,106,0,0.08)] z-50 text-left p-4 select-none absolute",
+                "bg-white/95 dark:bg-[#06090f]/95 backdrop-blur-xl border border-brand-orange/15 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1),_0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.08)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),_0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.08)] z-50 text-left p-4 select-none absolute",
                 isSidebarCollapsed ? "bottom-4 left-[86px] w-[230px]" : "bottom-[72px] left-4 right-4"
               )}
             >
@@ -302,14 +302,14 @@ export default function Sidebar() {
                 <Link 
                   href="/profile" 
                   onClick={() => setShowMiniPanel(false)}
-                  className="flex-1 py-2 border border-black/[0.04] dark:border-white/[0.04] bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-orange/10 hover:border-brand-orange/30 hover:text-brand-orange text-[10.5px] font-bold text-text-primary dark:text-white rounded-lg text-center transition-all duration-200 cursor-pointer select-none leading-none font-sans hover:shadow-[0_0_10px_rgba(255,106,0,0.1)]"
+                  className="flex-1 py-2 border border-black/[0.04] dark:border-white/[0.04] bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-orange/10 hover:border-brand-orange/30 hover:text-brand-orange text-[10.5px] font-bold text-text-primary dark:text-white rounded-lg text-center transition-all duration-200 cursor-pointer select-none leading-none font-sans hover:shadow-[0_0_10px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.1)]"
                 >
                   Profile
                 </Link>
                 <Link 
                   href="/profile?tab=settings" 
                   onClick={() => setShowMiniPanel(false)}
-                  className="flex-1 py-2 border border-black/[0.04] dark:border-white/[0.04] bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-orange/10 hover:border-brand-orange/30 hover:text-brand-orange text-[10.5px] font-bold text-text-primary dark:text-white rounded-lg text-center transition-all duration-200 cursor-pointer select-none leading-none font-sans hover:shadow-[0_0_10px_rgba(255,106,0,0.1)]"
+                  className="flex-1 py-2 border border-black/[0.04] dark:border-white/[0.04] bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-orange/10 hover:border-brand-orange/30 hover:text-brand-orange text-[10.5px] font-bold text-text-primary dark:text-white rounded-lg text-center transition-all duration-200 cursor-pointer select-none leading-none font-sans hover:shadow-[0_0_10px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.1)]"
                 >
                   Settings
                 </Link>
@@ -331,7 +331,7 @@ export default function Sidebar() {
             "flex items-center bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/[0.04] rounded-xl cursor-pointer shadow-sm transition-all duration-300 transform active:scale-[0.98]",
             isSidebarCollapsed ? "p-1 justify-center w-11 h-11 mx-auto" : "p-3 justify-between",
             showMiniPanel 
-              ? "border-brand-orange/40 bg-black/[0.05] dark:bg-white/[0.05] shadow-[0_0_12px_rgba(255,106,0,0.12)]" 
+              ? "border-brand-orange/40 bg-black/[0.05] dark:bg-white/[0.05] shadow-[0_0_12px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.12)]" 
               : "hover:bg-black/[0.06] dark:hover:bg-white/[0.06] hover:border-brand-orange/20 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
           )}
         >

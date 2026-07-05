@@ -17,7 +17,7 @@ export default function DifficultyBadge({
       case "Easy":
         return "bg-[#eafaf1] dark:bg-[#10b981]/10 text-[#10b981]";
       case "Medium":
-        return "bg-[#fff3eb] dark:bg-brand-orange/10 text-brand-orange";
+        return "bg-brand-orange/5 dark:bg-brand-orange/10 text-brand-orange";
       case "Hard":
         return "bg-[#fff1f2] dark:bg-[#f43f5e]/10 text-[#f43f5e]";
       default:

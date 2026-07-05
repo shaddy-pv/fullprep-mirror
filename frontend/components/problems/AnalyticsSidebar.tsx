@@ -77,7 +77,7 @@ export default function AnalyticsSidebar() {
 
   const pieData = [
     { name: "Easy",   value: easyCount,   color: "#10b981", percentage: totalDiffSolved ? `${Math.round(easyCount / totalDiffSolved * 100)}%` : "0%" },
-    { name: "Medium", value: mediumCount, color: "#ff6a00", percentage: totalDiffSolved ? `${Math.round(mediumCount / totalDiffSolved * 100)}%` : "0%" },
+    { name: "Medium", value: mediumCount, color: "var(--brand-accent, #ff6a00)", percentage: totalDiffSolved ? `${Math.round(mediumCount / totalDiffSolved * 100)}%` : "0%" },
     { name: "Hard",   value: hardCount,   color: "#ef4444", percentage: totalDiffSolved ? `${Math.round(hardCount / totalDiffSolved * 100)}%` : "0%" },
   ];
 
@@ -160,7 +160,7 @@ export default function AnalyticsSidebar() {
           {streakDots.map((day: any, idx: number) => (
             <div key={idx} className="flex flex-col items-center gap-1">
               {day.status === "completed" ? (
-                <div className="w-2 h-2 rounded-full bg-brand-orange shadow-[0_0_8px_rgba(255,106,0,0.6)]" />
+                <div className="w-2 h-2 rounded-full bg-brand-orange shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.6)]" />
               ) : day.status === "partial" ? (
                 <div className="w-2 h-2 rounded-full relative overflow-hidden bg-[#2d2e38] border border-white/[0.1]">
                   <div className="absolute top-0 left-0 w-1/2 h-full bg-brand-orange" />
@@ -244,8 +244,8 @@ export default function AnalyticsSidebar() {
               >
                 <defs>
                   <linearGradient id="problemsChartColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#ff6a00" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#ff6a00" stopOpacity={0.0}  />
+                    <stop offset="5%"  stopColor="var(--brand-accent, #ff6a00)" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="var(--brand-accent, #ff6a00)" stopOpacity={0.0}  />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="0" vertical={false} stroke={gridColor} />
@@ -274,18 +274,18 @@ export default function AnalyticsSidebar() {
                     fontWeight: "bold",
                     padding: "4px 8px",
                   }}
-                  cursor={{ stroke: "#ff6a00", strokeWidth: 1, strokeDasharray: "3 3" }}
+                  cursor={{ stroke: "var(--brand-accent, #ff6a00)", strokeWidth: 1, strokeDasharray: "3 3" }}
                   formatter={(value: any, name: any) => [value, name === "value" ? "Submissions" : name]}
                 />
                 <Area
                   type="monotone"
                   dataKey="value"
-                  stroke="#ff6a00"
+                  stroke="var(--brand-accent, #ff6a00)"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#problemsChartColor)"
-                  dot={{ r: 3, fill: "#ff6a00", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 1.5 }}
-                  activeDot={{ r: 4.5, fill: "#ff6a00", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
+                  dot={{ r: 3, fill: "var(--brand-accent, #ff6a00)", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 1.5 }}
+                  activeDot={{ r: 4.5, fill: "var(--brand-accent, #ff6a00)", stroke: isDark ? "#111827" : "#ffffff", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

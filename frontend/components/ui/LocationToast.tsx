@@ -46,10 +46,10 @@ export default function LocationToast() {
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="fixed bottom-6 right-6 z-[9999] pointer-events-auto"
         >
-          <div className="relative flex items-center gap-3.5 rounded-2xl border border-[#ff6a00]/25 bg-[#0c0d16]/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,106,0,0.08)] px-4 py-3.5 max-w-[320px]">
+          <div className="relative flex items-center gap-3.5 rounded-2xl border border-brand-orange/25 bg-[#0c0d16]/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.08)] px-4 py-3.5 max-w-[320px]">
             {/* Left glow dot */}
-            <div className="w-9 h-9 rounded-xl bg-[#ff6a00]/15 border border-[#ff6a00]/20 flex items-center justify-center shrink-0">
-              <MapPin className="w-4 h-4 text-[#ff6a00]" />
+            <div className="w-9 h-9 rounded-xl bg-brand-orange/15 border border-brand-orange/20 flex items-center justify-center shrink-0">
+              <MapPin className="w-4 h-4 text-brand-orange" />
             </div>
 
             <div className="flex flex-col gap-1 flex-1 min-w-0">
@@ -63,14 +63,14 @@ export default function LocationToast() {
 
             <button
               onClick={() => router.push("/settings")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#ff6a00] hover:bg-[#e05d00] text-white text-[11px] font-bold transition-all duration-200 shrink-0 cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-orange hover:bg-[#e05d00] text-white text-[11px] font-bold transition-all duration-200 shrink-0 cursor-pointer"
             >
               Go
               <ArrowRight className="w-3 h-3" />
             </button>
 
             {/* Subtle bottom glow line */}
-            <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[#ff6a00]/30 to-transparent rounded-full" />
+            <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-brand-orange/30 to-transparent rounded-full" />
           </div>
         </motion.div>
       )}

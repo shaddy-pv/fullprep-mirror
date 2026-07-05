@@ -148,7 +148,7 @@ export default function NotificationsPage() {
                 key={item._id}
                 onClick={() => toggleRead(item._id, item.isRead)}
                 className={`p-5 flex items-start gap-4.5 transition-all duration-300 hover:scale-[1.01] hover:border-brand-orange/20 cursor-pointer ${
-                  item.isRead ? "opacity-75" : "border-l-2 border-l-brand-orange shadow-[0_0_15px_rgba(255,106,0,0.04)]"
+                  item.isRead ? "opacity-75" : "border-l-2 border-l-brand-orange shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.04)]"
                 }`}
               >
                 {/* Type Icon indicator */}
@@ -173,7 +173,7 @@ export default function NotificationsPage() {
 
                 {/* Read indicator */}
                 {!item.isRead && (
-                  <span className="w-2.5 h-2.5 bg-brand-orange rounded-full mt-1.5 shadow-[0_0_8px_rgba(255,106,0,0.6)]" />
+                  <span className="w-2.5 h-2.5 bg-brand-orange rounded-full mt-1.5 shadow-[0_0_8px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.6)]" />
                 )}
               </DashboardCard>
             ))}

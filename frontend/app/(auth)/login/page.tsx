@@ -141,7 +141,7 @@ function LoginForm() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4.5 h-4.5 rounded border-border-card text-brand-orange focus:ring-brand-orange/20 cursor-pointer accent-[#ff6a00]"
+              className="w-4.5 h-4.5 rounded border-border-card text-brand-orange focus:ring-brand-orange/20 cursor-pointer accent-brand-orange"
             />
             <span>Remember me</span>
           </label>

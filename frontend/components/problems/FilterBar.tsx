@@ -315,7 +315,7 @@ export default function FilterBar({
       {/* Bottom Filter Chips Row */}
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2 mt-1">
-          <span className="text-[12px] font-bold text-brand-orange border border-transparent px-2.5 py-1.2 rounded-lg bg-[#fff3eb] dark:bg-brand-orange/10 select-none tracking-[-0.01em]">
+          <span className="text-[12px] font-bold text-brand-orange border border-transparent px-2.5 py-1.2 rounded-lg bg-brand-orange/5 dark:bg-brand-orange/10 select-none tracking-[-0.01em]">
             Active Filters
           </span>
 

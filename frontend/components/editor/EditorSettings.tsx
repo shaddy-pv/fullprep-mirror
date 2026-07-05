@@ -156,7 +156,7 @@ export default function EditorSettings({
       <div className="pt-4 border-t border-white/[0.08] dark:border-white/[0.04] flex justify-end select-none">
         <button
           onClick={onClose}
-          className="h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-[#ff6a00]/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30"
+          className="h-9 px-5 bg-brand-orange text-white hover:bg-[#e05e00] rounded-xl text-[12.5px] font-bold shadow-md shadow-brand-orange/15 transition duration-200 cursor-pointer border border-[#ff7a1a]/30"
         >
           Done
         </button>

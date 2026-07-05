@@ -99,8 +99,8 @@ export default function CreatePasswordModal() {
           >
             <div className="relative w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0c0d16] shadow-[0_24px_64px_rgba(0,0,0,0.6)] overflow-hidden">
               {/* Top glow */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#ff6a00]/40 to-transparent" />
-              <div className="absolute top-0 left-1/4 w-1/2 h-[80px] bg-[#ff6a00]/[0.06] blur-2xl rounded-full" />
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-orange/40 to-transparent" />
+              <div className="absolute top-0 left-1/4 w-1/2 h-[80px] bg-brand-orange/[0.06] blur-2xl rounded-full" />
 
               <div className="relative p-7">
                 {done ? (
@@ -124,15 +124,15 @@ export default function CreatePasswordModal() {
                   <>
                     {/* Header */}
                     <div className="flex items-start gap-4 mb-6">
-                      <div className="w-11 h-11 rounded-xl bg-[#ff6a00]/15 border border-[#ff6a00]/20 flex items-center justify-center shrink-0">
-                        <Lock className="w-5 h-5 text-[#ff6a00]" />
+                      <div className="w-11 h-11 rounded-xl bg-brand-orange/15 border border-brand-orange/20 flex items-center justify-center shrink-0">
+                        <Lock className="w-5 h-5 text-brand-orange" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h2 className="text-[17px] font-bold text-white leading-tight">
                             Secure Your Account
                           </h2>
-                          <span className="px-2 py-0.5 rounded-md bg-[#ff6a00]/15 border border-[#ff6a00]/20 text-[10px] font-bold text-[#ff6a00] uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-md bg-brand-orange/15 border border-brand-orange/20 text-[10px] font-bold text-brand-orange uppercase tracking-wider">
                             Required
                           </span>
                         </div>
@@ -154,7 +154,7 @@ export default function CreatePasswordModal() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#ff6a00]/40 focus:ring-1 focus:ring-[#ff6a00]/20 pr-10 transition-all"
+                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-brand-orange/40 focus:ring-1 focus:ring-brand-orange/20 pr-10 transition-all"
                           />
                           <button
                             type="button"
@@ -199,7 +199,7 @@ export default function CreatePasswordModal() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#ff6a00]/40 focus:ring-1 focus:ring-[#ff6a00]/20 pr-10 transition-all"
+                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-brand-orange/40 focus:ring-1 focus:ring-brand-orange/20 pr-10 transition-all"
                           />
                           <button
                             type="button"
@@ -230,7 +230,7 @@ export default function CreatePasswordModal() {
                       <button
                         type="submit"
                         disabled={loading || !newPassword || !confirmPassword}
-                        className="mt-1 w-full bg-[#ff6a00] hover:bg-[#e05d00] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,106,0,0.2)] hover:shadow-[0_0_28px_rgba(255,106,0,0.35)] cursor-pointer text-sm"
+                        className="mt-1 w-full bg-brand-orange hover:bg-[#e05d00] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.2)] hover:shadow-[0_0_28px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)] cursor-pointer text-sm"
                       >
                         {loading ? (
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
