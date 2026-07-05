@@ -29,8 +29,10 @@ import aiRoutes from "./routes/aiRoutes.js";
 import learningPathRoutes from "./routes/learningPathRoutes.js";
 import contestRoutes from "./routes/contestRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 const app = express();
+
 
 // Trust all reverse proxies (Render often uses multiple hops)
 app.set("trust proxy", true);
@@ -129,6 +131,7 @@ app.use("/api/ai",           aiRoutes);
 app.use("/api/learning-paths", learningPathRoutes);
 app.use("/api/contests",      contestRoutes);
 app.use("/api/friends",       friendRoutes);
+app.use("/api/payment",       paymentRoutes);
 
 // ── Fallback 404 Handler ───────────────────────────────────────────────────────────────
 

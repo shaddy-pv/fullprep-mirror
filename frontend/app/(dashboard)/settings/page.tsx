@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   User,
   Settings,
@@ -28,13 +28,18 @@ import {
   Activity,
   Crown,
   Laptop,
-  Key
+  Key,
+  Star,
+  Calendar,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useAuthStore } from "@/store/authStore";
 import { AuthService } from "@/services/auth.service";
+import { PaymentService } from "@/services/payment.service";
 import { cn } from "@/lib/utils";
 import { DESIGN_SYSTEM_TOKENS } from "@/constants/design-system";
 
@@ -90,11 +95,13 @@ const parseUserAgent = (ua: string) => {
 
 export default function SettingsPage() {
   const showToast = useNotificationStore((state) => state.showToast);
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const isScrollingRef = useRef(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
 
   const compressImage = (
     file: File,
@@ -325,9 +332,6 @@ export default function SettingsPage() {
     return () => observer.disconnect();
   }, [mounted]);
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-[#f5f7fb] dark:bg-[#060816]" />;
-  }
 
   // Smooth scroll handler
   const scrollToSection = (id: string) => {
@@ -380,6 +384,10 @@ export default function SettingsPage() {
       }
 
       showToast("Changes saved successfully to your FullPrep profile!", "success");
+      // Dispatch location event so the LocationToast hides when location is set
+      if (location && location.trim()) {
+        window.dispatchEvent(new Event("fp-location-set"));
+      }
     } catch (err: any) {
       console.error(err);
       showToast(err.message || "Failed to save profile changes.", "info");
@@ -411,6 +419,88 @@ export default function SettingsPage() {
       showToast(err.message || "Failed to update password.", "info");
     }
   };
+
+  // For OAuth-only users: set password for the first time (no old password needed)
+  const handleCreatePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      showToast("Please fill in both password fields.", "info");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast("Passwords do not match.", "info");
+      return;
+    }
+    if (newPassword.length < 8) {
+      showToast("Password must be at least 8 characters long.", "info");
+      return;
+    }
+    showToast("Creating password...", "info");
+    try {
+      await AuthService.createPassword(newPassword, confirmPassword);
+      showToast("Password created! You can now log in with email.", "success");
+      setNewPassword("");
+      setConfirmPassword("");
+      if (user) setUser({ ...user, isOAuthUser: false });
+    } catch (err: any) {
+      showToast(err.message || "Failed to create password.", "info");
+    }
+  };
+
+  // Razorpay payment handler
+  const handleUpgradeToPremium = useCallback(async () => {
+    if (paymentLoading) return;
+    setPaymentLoading(true);
+    try {
+      const { order, key, user: userInfo } = await PaymentService.createOrder();
+      // Load Razorpay SDK dynamically
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+          document.body.appendChild(script);
+        });
+      }
+      const rzp = new (window as any).Razorpay({
+        key,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        name: "FullPrep Premium",
+        description: "Premium Subscription — 1 Month",
+        image: "/logo.png",
+        prefill: { name: userInfo.name, email: userInfo.email },
+        theme: { color: "#ff6a00" },
+        handler: async (response: any) => {
+          try {
+            const result = await PaymentService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            // Update auth store with the new premium user data
+            if (result.user) setUser(result.user);
+            showToast("Welcome to FullPrep Premium! ", "success");
+          } catch (err: any) {
+            showToast(err.message || "Payment verification failed.", "info");
+          }
+        },
+        modal: { ondismiss: () => setPaymentLoading(false) },
+      });
+      rzp.open();
+    } catch (err: any) {
+      showToast(err.message || "Could not start payment. Try again.", "info");
+      setPaymentLoading(false);
+    }
+  }, [paymentLoading, setUser, showToast]);
+
+  // Load payment history when billing tab is active
+  useEffect(() => {
+    if (activeTab === "billing" && user) {
+      PaymentService.getPaymentHistory().then(setPaymentHistory);
+    }
+  }, [activeTab, user]);
 
   const tabsList = [
     { id: "profile", name: "Profile Settings", icon: User },
@@ -455,6 +545,10 @@ export default function SettingsPage() {
   const inputStyle = cn(DESIGN_SYSTEM_TOKENS.forms.input, activeAccent.focusGlow);
   const textareaStyle = cn(DESIGN_SYSTEM_TOKENS.forms.textarea, activeAccent.focusGlow);
   const labelStyle = DESIGN_SYSTEM_TOKENS.typography.label;
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#f5f7fb] dark:bg-[#060816]" />;
+  }
 
   return (
     <ContentContainer className="pb-16 min-h-screen text-text-primary font-sans antialiased select-none max-w-[1600px] mx-auto px-6 xl:px-8 relative overflow-x-hidden">
@@ -516,6 +610,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Premium "Upgrade to Pro" Card */}
+          {!user?.isPremiumActive && (
           <div className="rounded-[22px] p-[16px] border border-[#ff8c28]/20 dark:border-[#ff8c28]/16 shadow-[0_8px_24px_rgba(255,106,0,0.05)] relative overflow-hidden group transition-all duration-300 flex flex-col gap-[10px] self-stretch mt-[6px] bg-gradient-to-b from-brand-orange/[0.08] to-brand-orange/[0.02] dark:from-brand-orange/[0.10] dark:to-brand-orange/[0.04]">
             <div className="absolute top-0 right-0 w-24 h-24 bg-brand-orange/5 blur-2xl rounded-full pointer-events-none group-hover:scale-125 transition-transform duration-500" />
             <div className="flex flex-col gap-1.5 relative z-10">
@@ -531,13 +626,14 @@ export default function SettingsPage() {
               </p>
             </div>
             <button
-              onClick={() => showToast("Redirecting to Stripe premium portal...", "info")}
+              onClick={handleUpgradeToPremium}
               className="w-full h-[36px] bg-gradient-to-r from-brand-orange to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] text-white font-bold rounded-[12px] text-[11.5px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(255,106,0,0.15)] hover:shadow-[0_0_12px_rgba(255,106,0,0.3)] transition-all duration-200 cursor-pointer leading-none border-none shrink-0"
             >
               <span>Upgrade Now</span>
               <ChevronRight className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: Scrollable Unified Settings Content */}
@@ -744,46 +840,89 @@ export default function SettingsPage() {
                 <div className="border border-white/[0.04] rounded-xl p-4 bg-slate-900/[0.02] dark:bg-[#111217]/15 flex flex-col gap-4">
                   <h4 className="text-[12.5px] font-bold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-1.5">
                     <Key className="w-3.5 h-3.5 text-brand-orange" />
-                    <span>Change Secure Password</span>
+                    <span>{user?.isOAuthUser ? "Set Account Password" : "Change Secure Password"}</span>
+                    {user?.isOAuthUser && (
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/20 text-[9px] font-bold text-blue-400 uppercase tracking-wider ml-1">Google Account</span>
+                    )}
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-1.5">
-                    <div className="flex flex-col text-left">
-                      <label className={labelStyle}>Current Password</label>
-                      <input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className={inputStyle} 
-                      />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <label className={labelStyle}>New Secure Password</label>
-                      <input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className={inputStyle} 
-                      />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <label className={labelStyle}>Confirm New Password</label>
-                      <input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={inputStyle} 
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleUpdatePassword}
-                    className="bg-brand-orange/10 hover:bg-brand-orange/15 dark:bg-brand-orange/15 dark:hover:bg-brand-orange/20 border border-brand-orange/20 dark:border-brand-orange/30 text-brand-orange text-[11px] font-bold rounded-lg px-4 py-2 self-end transition-all duration-200 cursor-pointer h-[32px] leading-none"
-                  >
-                    Change Password
-                  </button>
+                  {user?.isOAuthUser ? (
+                    // OAuth-only users: no current password needed
+                    <>
+                      <p className="text-[11.5px] text-slate-500 dark:text-white/50 leading-relaxed -mt-1">
+                        You signed up with Google. Set a password to enable email + password login as an additional option.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                        <div className="flex flex-col text-left">
+                          <label className={labelStyle}>New Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className={inputStyle}
+                          />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <label className={labelStyle}>Confirm Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={inputStyle}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleCreatePassword}
+                        className="bg-brand-orange/10 hover:bg-brand-orange/15 dark:bg-brand-orange/15 dark:hover:bg-brand-orange/20 border border-brand-orange/20 dark:border-brand-orange/30 text-brand-orange text-[11px] font-bold rounded-lg px-4 py-2 self-end transition-all duration-200 cursor-pointer h-[32px] leading-none"
+                      >
+                        Set Password
+                      </button>
+                    </>
+                  ) : (
+                    // Regular users: need current password
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-1.5">
+                        <div className="flex flex-col text-left">
+                          <label className={labelStyle}>Current Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className={inputStyle}
+                          />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <label className={labelStyle}>New Secure Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className={inputStyle}
+                          />
+                        </div>
+                        <div className="flex flex-col text-left">
+                          <label className={labelStyle}>Confirm New Password</label>
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={inputStyle}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleUpdatePassword}
+                        className="bg-brand-orange/10 hover:bg-brand-orange/15 dark:bg-brand-orange/15 dark:hover:bg-brand-orange/20 border border-brand-orange/20 dark:border-brand-orange/30 text-brand-orange text-[11px] font-bold rounded-lg px-4 py-2 self-end transition-all duration-200 cursor-pointer h-[32px] leading-none"
+                      >
+                        Change Password
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -1053,11 +1192,21 @@ export default function SettingsPage() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="overflow-hidden flex flex-col gap-4 w-full relative group pointer-events-none select-none"
+                    className={cn("overflow-hidden flex flex-col gap-4 w-full relative group", !user?.isPremiumActive && "pointer-events-none select-none")}
                   >
-                    <div className="absolute inset-0 bg-[#060816]/50 backdrop-blur-[3px] z-50 flex items-center justify-center opacity-100 transition-opacity duration-300 rounded-2xl">
-                      <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                    </div>
+                    {!user?.isPremiumActive && (
+                      <div className="absolute inset-0 bg-[#060816]/60 backdrop-blur-[4px] z-50 flex flex-col items-center justify-center gap-3 opacity-100 transition-opacity duration-300 rounded-2xl">
+                        <Crown className="w-8 h-8 text-brand-orange" />
+                        <span className="px-3 py-1.5 rounded-lg bg-card-bg border border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Premium Feature</span>
+                        <p className="text-[11px] text-white/50 text-center max-w-[200px]">Upgrade to Premium to unlock custom themes and accents.</p>
+                        <button
+                          onClick={() => scrollToSection("billing")}
+                          className="pointer-events-auto px-4 py-2 rounded-lg bg-brand-orange text-white text-[11px] font-bold cursor-pointer hover:bg-[#e05d00] transition-all"
+                        >
+                          Go to Billing
+                        </button>
+                      </div>
+                    )}
                     {/* Card 1: Theme Select Grid */}
                   <div className={cardBase}>
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
@@ -1184,61 +1333,166 @@ export default function SettingsPage() {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden flex flex-col gap-4 w-full relative group"
+                  className="overflow-hidden flex flex-col gap-4 w-full"
                 >
-                  <div className="absolute inset-0 bg-[#f5f7fb]/70 dark:bg-[#060816]/70 backdrop-blur-[4px] z-10 flex items-center justify-center opacity-100 transition-opacity duration-300 rounded-[20px]">
-                    <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-card-bg border border-slate-900/[0.08] dark:border-border-card text-[12px] font-bold text-brand-orange shadow-lg">Coming Soon</span>
-                  </div>
-                  {/* Card 1: Current Plan Details */}
-                  <div className={cn(cardBase, "opacity-50 pointer-events-none")}>
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-start gap-4 text-left leading-none">
-                  <div className="w-12 h-12 rounded-xl bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center shrink-0">
-                    <Crown className="w-6 h-6 text-brand-orange" />
-                  </div>
-                  <div className="flex flex-col justify-center leading-none">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[15.5px] font-bold text-[#111827] dark:text-white leading-none">FullPrep Free Plan</span>
-                      <span className="px-2.5 py-1 rounded bg-white/[0.06] text-[9px] font-extrabold text-[#9ca3af] uppercase tracking-widest leading-none">Current</span>
+                  {/* Card 1: Current Plan */}
+                  <div className={cardBase}>
+                    <div className="flex items-center justify-between w-full flex-wrap gap-4">
+                      <div className="flex items-start gap-4 text-left leading-none">
+                        <div className={cn(
+                          "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                          user?.isPremiumActive
+                            ? "bg-gradient-to-br from-[#ff6a00]/20 to-[#8b5cf6]/20 border border-[#ff6a00]/30"
+                            : "bg-brand-orange/10 border border-brand-orange/20"
+                        )}>
+                          {user?.isPremiumActive ? (
+                            <Star className="w-6 h-6 text-brand-orange" />
+                          ) : (
+                            <Crown className="w-6 h-6 text-brand-orange" />
+                          )}
+                        </div>
+                        <div className="flex flex-col justify-center leading-none gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[15.5px] font-bold text-[#111827] dark:text-white leading-none">
+                              {user?.isPremiumActive ? "FullPrep Premium" : "FullPrep Free Plan"}
+                            </span>
+                            <span className={cn(
+                              "px-2.5 py-1 rounded text-[9px] font-extrabold uppercase tracking-widest leading-none",
+                              user?.isPremiumActive
+                                ? "bg-gradient-to-r from-[#ff6a00]/20 to-[#8b5cf6]/20 border border-[#ff6a00]/30 text-brand-orange"
+                                : "bg-white/[0.06] text-[#9ca3af] border border-white/[0.06]"
+                            )}>
+                              {user?.isPremiumActive ? "Active" : "Free"}
+                            </span>
+                          </div>
+                          {user?.isPremiumActive && user.proExpiresAt ? (
+                            <div className="flex items-center gap-1.5 text-[11.5px] text-white/55 font-medium">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>Active until {new Date(user.proExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-slate-500 dark:text-white/60 font-medium leading-relaxed">
+                              Enjoy unlimited practice problems, competitive leaderboards, and weekly performance insights.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {!user?.isPremiumActive && (
+                        <button
+                          onClick={handleUpgradeToPremium}
+                          disabled={paymentLoading}
+                          className="bg-gradient-to-r from-[#ff6a00] to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[12.5px] font-bold rounded-xl px-5 py-2.5 transition-all duration-200 cursor-pointer shadow-md shadow-[#ff6a00]/20 hover:shadow-[0_0_16px_rgba(255,106,0,0.35)] h-[40px] leading-none shrink-0 flex items-center gap-2"
+                        >
+                          {paymentLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Star className="w-4 h-4" />
+                          )}
+                          Upgrade to Premium — ₹399/mo
+                        </button>
+                      )}
+                      {user?.isPremiumActive && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/20">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span className="text-[11px] font-bold text-emerald-400">Premium Active</span>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-sm text-slate-500 dark:text-white/60 font-medium mt-2.5 leading-relaxed">
-                      Enjoy unlimited practice problems, competitive leaderboards, and weekly performance insights.
-                    </p>
                   </div>
-                </div>
-                <button
-                  onClick={() => showToast("Redirecting to premium plans portal...", "info")}
-                  className="bg-brand-orange hover:bg-[#e05d00] text-white text-[12.5px] font-bold rounded-xl px-5 py-2.5 transition-all duration-200 cursor-pointer shadow-md shadow-[#ff6a00]/15 hover:shadow-[0_0_12px_rgba(255,106,0,0.3)] h-[38px] leading-none shrink-0"
-                >
-                  Upgrade Plan
-                </button>
-              </div>
-            </div>
 
-            {/* Card 2: Usage statistics progress bars */}
-            <div className={cn(cardBase, "opacity-50 pointer-events-none")}>
-              <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-brand-orange" />
-                <span>Resource Allocation & Billing Usage</span>
-              </h3>
-              <div className="flex flex-col gap-5 w-full">
-                {[
-                  { label: "Monthly AI Diagnosis Hints Used", current: 15, max: 30, pct: 50, color: "from-[#ff6a00] to-[#ff8c3a]" },
-                  { label: "Cloud Backup Storage Used", current: 12.8, max: 100, pct: 12.8, unit: "MB", color: "from-[#8b5cf6] to-[#a78bfa]" },
-                  { label: "API Solved Solutions Check Requests", current: 420, max: 1000, pct: 42, color: "from-[#3b82f6] to-[#60a5fa]" },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex flex-col gap-2.5 py-0.5">
-                    <div className="flex items-center justify-between text-[12.5px] font-bold text-[#111827] dark:text-white leading-none">
-                      <span>{item.label}</span>
-                      <span className="text-brand-orange font-semibold">{item.current} / {item.max} {item.unit || ""}</span>
+                  {/* Card 2: What you get with Premium */}
+                  {!user?.isPremiumActive && (
+                    <div className={cardBase}>
+                      <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-brand-orange" />
+                        <span>What&apos;s included in Premium</span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+                        {[
+                          { icon: Zap, label: "Unlimited AI Hints", desc: "No daily limits on Gemini AI hints" },
+                          { icon: Palette, label: "Custom Themes & Accents", desc: "Unlock all appearance customizations" },
+                          { icon: Activity, label: "Advanced Analytics", desc: "Detailed performance insights and trends" },
+                          { icon: Crown, label: "Priority Support", desc: "Faster response from the FullPrep team" },
+                        ].map((feat) => {
+                          const Icon = feat.icon;
+                          return (
+                            <div key={feat.label} className="flex items-start gap-3 p-3 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                              <div className="w-8 h-8 rounded-lg bg-brand-orange/10 border border-brand-orange/20 flex items-center justify-center shrink-0">
+                                <Icon className="w-4 h-4 text-brand-orange" />
+                              </div>
+                              <div>
+                                <div className="text-[12.5px] font-bold text-white leading-none">{feat.label}</div>
+                                <div className="text-[11px] text-white/50 mt-1 leading-none">{feat.desc}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button
+                        onClick={handleUpgradeToPremium}
+                        disabled={paymentLoading}
+                        className="w-full mt-2 bg-gradient-to-r from-[#ff6a00] to-[#e05d00] hover:from-[#e05d00] hover:to-[#cc5200] disabled:opacity-60 text-white text-[13px] font-bold rounded-xl py-3.5 transition-all duration-200 cursor-pointer shadow-md shadow-[#ff6a00]/20 hover:shadow-[0_0_20px_rgba(255,106,0,0.3)] flex items-center justify-center gap-2"
+                      >
+                        {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                        Upgrade to Premium — ₹399 / month
+                      </button>
                     </div>
-                    <div className="w-full h-2 bg-slate-900/5 dark:bg-[#111219] border border-slate-900/[0.08] dark:border-white/[0.04] rounded-full overflow-hidden">
-                      <div className={cn("h-full bg-gradient-to-r rounded-full shadow-[0_0_8px_rgba(255,106,0,0.2)]", item.color)} style={{ width: `${item.pct}%` }} />
+                  )}
+
+                  {/* Card 3: Usage stats */}
+                  <div className={cn(cardBase)}>
+                    <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-brand-orange" />
+                      <span>Resource Allocation &amp; Billing Usage</span>
+                    </h3>
+                    <div className="flex flex-col gap-5 w-full">
+                      {[
+                        { label: "Daily AI Hints Used", current: user?.isPremiumActive ? 0 : 5, max: user?.isPremiumActive ? 100 : 5, pct: user?.isPremiumActive ? 0 : 100, color: "from-[#ff6a00] to-[#ff8c3a]" },
+                        { label: "Cloud Backup Storage", current: 12.8, max: 100, pct: 12.8, unit: "MB", color: "from-[#8b5cf6] to-[#a78bfa]" },
+                      ].filter(item => !user?.isPremiumActive || item.label !== "Daily AI Hints Used").map((item, idx) => (
+                        <div key={idx} className="flex flex-col gap-2.5 py-0.5">
+                          <div className="flex items-center justify-between text-[12.5px] font-bold text-[#111827] dark:text-white leading-none">
+                            <span>{item.label}</span>
+                            <span className="text-brand-orange font-semibold">{item.current} / {item.max} {item.unit || ""}</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-900/5 dark:bg-[#111219] border border-slate-900/[0.08] dark:border-white/[0.04] rounded-full overflow-hidden">
+                            <div className={cn("h-full bg-gradient-to-r rounded-full", item.color)} style={{ width: `${item.pct}%` }} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  {/* Card 4: Payment History */}
+                  {paymentHistory.length > 0 && (
+                    <div className={cardBase}>
+                      <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-brand-orange" />
+                        <span>Payment History</span>
+                      </h3>
+                      <div className="flex flex-col gap-2">
+                        {paymentHistory.map((payment: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              </div>
+                              <div>
+                                <div className="text-[12px] font-bold text-white leading-none">Premium Subscription</div>
+                                <div className="text-[10px] text-white/40 mt-1 font-mono">{payment.razorpayPaymentId}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[12px] font-bold text-emerald-400">₹{(payment.amount / 100).toFixed(0)}</div>
+                              <div className="text-[10px] text-white/40 mt-0.5">
+                                {new Date(payment.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
           </section>
           )}

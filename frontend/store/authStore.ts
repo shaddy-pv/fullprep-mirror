@@ -34,6 +34,12 @@ interface UserProfile {
   notifs?: any;
   visibility?: any;
   twoFactor?: boolean;
+  // Premium subscription
+  subscriptionTier?: "free" | "premium";
+  proExpiresAt?: string | null;
+  isPremiumActive?: boolean;
+  // OAuth
+  isOAuthUser?: boolean;
 }
 
 interface AuthState {

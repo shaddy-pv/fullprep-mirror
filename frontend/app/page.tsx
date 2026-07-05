@@ -5,6 +5,8 @@ import { useAuthStore } from "@/store/authStore";
 import DashboardPage from "./(dashboard)/dashboard-page";
 import LandingPage from "./(public)/landing-page";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import LocationToast from "@/components/ui/LocationToast";
+import CreatePasswordModal from "@/components/ui/CreatePasswordModal";
 
 export default function RootPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -20,9 +22,12 @@ export default function RootPage() {
     return (
       <DashboardLayout>
         <DashboardPage />
+        <LocationToast />
+        <CreatePasswordModal />
       </DashboardLayout>
     );
   }
 
   return <LandingPage />;
+
 }

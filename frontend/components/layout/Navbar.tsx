@@ -384,11 +384,11 @@ export default function Navbar() {
               <img 
                 src={user.avatar} 
                 alt={user?.name || "User"} 
-                className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-md shadow-black/5 select-none shrink-0" 
+                className={cn("w-9 h-9 rounded-full object-cover shadow-md shadow-black/5 select-none shrink-0 transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#0b0f17]" : "border border-white/[0.1]")} 
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-md shadow-black/5 select-none font-mono">
+              <div className={cn("w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white shadow-md shadow-black/5 select-none font-mono transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#0b0f17]" : "border border-white/[0.1]")}>
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}

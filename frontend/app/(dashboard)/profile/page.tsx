@@ -455,9 +455,9 @@ export default function ProfilePage() {
           {/* Avatar */}
           <div className="relative shrink-0">
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user?.name || "User"} className="w-20 h-20 rounded-full object-cover shadow-lg shrink-0" referrerPolicy="no-referrer" />
+              <img src={user.avatarUrl} alt={user?.name || "User"} className={cn("w-20 h-20 rounded-full object-cover shadow-lg shrink-0 transition-all duration-300", user?.isPremiumActive ? "ring-4 ring-brand-orange ring-offset-4 dark:ring-offset-[#0c0d16]" : "")} referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[28px] text-white border border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 font-sans">
+              <div className={cn("w-20 h-20 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[28px] text-white shadow-lg shadow-purple-500/10 shrink-0 font-sans transition-all duration-300", user?.isPremiumActive ? "ring-4 ring-brand-orange ring-offset-4 dark:ring-offset-[#0c0d16]" : "border border-white/[0.08]")}>
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}

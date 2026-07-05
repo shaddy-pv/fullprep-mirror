@@ -197,13 +197,13 @@ export const AuthService = {
     );
   },
 
-  async getLeaderboard(mainTab: string = 'Global', filterTab: string = 'Overall') {
+  async getLeaderboard(mainTab: string = 'Global', filterTab: string = 'Overall', page: number = 1) {
     try {
-      const response = await api.get<{ success: boolean; data: any[] }>(`${BASE_URL}/auth/leaderboard?main=${encodeURIComponent(mainTab)}&filter=${encodeURIComponent(filterTab)}`);
+      const response = await api.get<{ success: boolean; data: any[], totalUsers?: number }>(`${BASE_URL}/auth/leaderboard?main=${encodeURIComponent(mainTab)}&filter=${encodeURIComponent(filterTab)}&page=${page}`);
       if (response && response.success && response.data) {
-        return response.data;
+        return { users: response.data, totalUsers: response.totalUsers || response.data.length };
       }
-      return [];
+      return { users: [], totalUsers: 0 };
     } catch (error) {
       console.warn("Failed to fetch leaderboard:", error);
       throw error;
@@ -262,5 +262,16 @@ export const AuthService = {
       console.error("Failed to export data:", error);
       return null;
     }
-  }
+  },
+
+  async createPassword(newPassword: string, confirmPassword: string): Promise<void> {
+    const response = await api.post<{ success: boolean; message: string }>(
+      `${BASE_URL}/auth/create-password`,
+      { newPassword, confirmPassword }
+    );
+    if (!response?.success) {
+      throw new Error(response?.message || "Failed to create password.");
+    }
+  },
 };
+

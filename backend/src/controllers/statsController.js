@@ -63,7 +63,13 @@ export const getUserStats = async (req, res) => {
 
     // 5. Global rank: how many active users have MORE XP than this user
     // Rank = (active users with more XP) + 1
-    User.countDocuments({ isActive: true, xp: { $gt: req.user.xp ?? 0 } }),
+    User.countDocuments({
+      isActive: true,
+      $or: [
+        { xp: { $gt: req.user.xp ?? 0 } },
+        { xp: req.user.xp ?? 0, createdAt: { $lt: req.user.createdAt || new Date() } }
+      ]
+    }),
 
     // 6. Recent submissions for the last 7 days (for the graph) - grouped in memory to respect server timezone
     Submission.find({

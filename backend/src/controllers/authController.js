@@ -276,7 +276,10 @@ export const getMe = async (req, res) => {
   // Calculate global contest rank dynamically
   const rankCount = await User.countDocuments({ 
     isActive: true, 
-    contestRating: { $gt: req.user.contestRating || 0 } 
+    $or: [
+      { contestRating: { $gt: req.user.contestRating || 0 } },
+      { contestRating: req.user.contestRating || 0, createdAt: { $lt: req.user.createdAt || new Date() } }
+    ]
   });
   publicUser.globalRank = rankCount + 1;
 
@@ -489,13 +492,14 @@ export const oauthSignIn = async (req, res) => {
     });
   }
 
-  // Find by OAuth provider ID first, then fall back to email
   let user = await User.findOne({
     $or: [
       { [`oauth.${provider}.id`]: providerId },
       { email: email.toLowerCase() },
     ],
-  });
+  }).select("+oauth");
+
+  let isNewUser = false;
 
   if (user) {
     // Update OAuth link and avatar if not already set
@@ -504,6 +508,7 @@ export const oauthSignIn = async (req, res) => {
         ...user.oauth,
         [provider]: { id: providerId },
       };
+      user.markModified("oauth");
     }
     if (avatar && !user.avatar) user.avatar = avatar;
     user.isEmailVerified = true; // OAuth emails are pre-verified
@@ -518,6 +523,7 @@ export const oauthSignIn = async (req, res) => {
       isEmailVerified: true, // OAuth emails are pre-verified by Google/GitHub
       oauth: { [provider]: { id: providerId } },
     });
+    isNewUser = true;
   }
 
   // ── 3. Create Session ─────────────────────────────────────────
@@ -527,7 +533,26 @@ export const oauthSignIn = async (req, res) => {
     ipAddress: req.body.ipAddress || req.ip || req.connection.remoteAddress || "Unknown IP"
   });
 
-  sendTokenResponse(user, 200, res, `Signed in with ${provider} successfully! 🎉`, session._id);
+  // Generate token
+  const { generateToken } = await import("../utils/generateToken.js");
+  const token = generateToken(user._id, user.role, session._id);
+
+  // Set cookie
+  const cookieOptions = {
+    expires: new Date(Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRES_IN) || 7) * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    secure: process.env.NODE_ENV === "production",
+  };
+  res.cookie("token", token, cookieOptions);
+
+  res.status(200).json({
+    success: true,
+    message: `Signed in with ${provider} successfully! 🎉`,
+    token,
+    isNewUser, // Frontend uses this to show Create Password modal
+    user: user.toPublicJSON(),
+  });
 };
 
 // ── @desc    Generate a password reset token and send email / log it
@@ -650,7 +675,10 @@ export const resetPassword = async (req, res) => {
 // ── @access  Private
 export const getLeaderboard = async (req, res) => {
   try {
-    const { main = 'Global', filter = 'Overall' } = req.query;
+    const { main = 'Global', filter = 'Overall', page = 1 } = req.query;
+    const pageNum = parseInt(page) || 1;
+    const limit = 50;
+    const skip = (pageNum - 1) * limit;
     
     // Determine the user's details for Friends/Country filtering
     let currentUser = null;
@@ -658,14 +686,16 @@ export const getLeaderboard = async (req, res) => {
       currentUser = await User.findById(req.user?._id).lean();
     }
     
-    const cacheKey = `leaderboard_${main}_${filter}_${main !== 'Global' ? req.user?._id : 'all'}`;
+    const cacheKey = `leaderboard_${main}_${filter}_${main !== 'Global' ? req.user?._id : 'all'}_page_${pageNum}`;
     const cachedData = await cacheManager.get(cacheKey);
     
     if (cachedData) {
+      const isArray = Array.isArray(cachedData);
       return res.status(200).json({
         success: true,
         message: "Leaderboard fetched successfully (cached).",
-        data: cachedData,
+        data: isArray ? cachedData : cachedData.leaderboard,
+        totalUsers: isArray ? cachedData.length : cachedData.totalUsers
       });
     }
 
@@ -682,6 +712,8 @@ export const getLeaderboard = async (req, res) => {
         matchQuery._id = currentUser._id;
       }
     }
+
+    const totalUsers = await User.countDocuments(matchQuery);
 
     let users = [];
 
@@ -703,7 +735,8 @@ export const getLeaderboard = async (req, res) => {
         { $group: { _id: { user: "$user", prob: "$problemExternalId" } } },
         { $group: { _id: "$_id.user", count: { $sum: 1 } } },
         { $sort: { count: -1 } },
-        { $limit: 100 }
+        { $skip: skip },
+        { $limit: limit }
       ]);
 
       const topUserIds = recentSolvedCounts.map(s => s._id);
@@ -714,12 +747,13 @@ export const getLeaderboard = async (req, res) => {
       recentSolvedCounts.forEach(s => countMap[s._id.toString()] = s.count);
       
       topUsersRaw.sort((a, b) => (countMap[b._id.toString()] || 0) - (countMap[a._id.toString()] || 0));
-      users = topUsersRaw.slice(0, 50);
+      users = topUsersRaw;
     } else {
       // Overall / All Time
       users = await User.find(matchQuery)
-        .sort({ xp: -1 })
-        .limit(50);
+        .sort({ xp: -1, createdAt: 1 })
+        .skip(skip)
+        .limit(limit);
     }
 
     // Total lifetime solved for ALL users for display
@@ -738,7 +772,7 @@ export const getLeaderboard = async (req, res) => {
     const leaderboard = users.map((u, index) => {
       const solved = solvedMap[u._id.toString()] || 0;
       return {
-        rank: index + 1,
+        rank: skip + index + 1,
         username: u.name,
         xp: u.xp || 0,
         streak: u.streak || 0,
@@ -749,12 +783,16 @@ export const getLeaderboard = async (req, res) => {
       };
     });
 
-    await cacheManager.set(cacheKey, leaderboard, 10); // 10 seconds TTL
+    const responseData = { leaderboard, totalUsers };
+    
+    // Cache for 5 minutes
+    await cacheManager.set(cacheKey, responseData, 300);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Leaderboard fetched successfully.",
-      data: leaderboard,
+      data: responseData.leaderboard,
+      totalUsers: responseData.totalUsers
     });
   } catch (err) {
     console.error("Leaderboard fetch error:", err.message);
@@ -909,4 +947,43 @@ export const getPublicProfile = async (req, res) => {
     console.error("Public Profile Error:", error);
     res.status(500).json({ success: false, message: "Server Error" });
   }
+};
+
+// ── @desc    Create password for the first time (OAuth-only users)
+// ── @route   POST /api/auth/create-password
+// ── @access  Private (JWT required)
+export const createPassword = async (req, res) => {
+  const { newPassword, confirmPassword } = req.body;
+
+  if (!newPassword || !confirmPassword) {
+    return res.status(400).json({ success: false, message: "Please provide both newPassword and confirmPassword." });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ success: false, message: "Passwords do not match." });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+  }
+
+  // Fetch user with password field to verify they don't already have one
+  const user = await User.findById(req.user._id).select("+password");
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found." });
+  }
+
+  if (user.password) {
+    return res.status(400).json({
+      success: false,
+      message: "You already have a password. Use 'Change Password' instead.",
+    });
+  }
+
+  // Set the password — pre-save hook will hash it
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Password created successfully! You can now log in with your email and password.",
+  });
 };

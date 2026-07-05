@@ -52,6 +52,7 @@ export default function AIHintsPage() {
   const [hintsRemaining, setHintsRemaining] = useState<number | "Unlimited" | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("C++");
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [recentConversations, setRecentConversations] = useState<any[]>([]);
 
   // Fetch history on mount
   useEffect(() => {
@@ -87,7 +88,12 @@ export default function AIHintsPage() {
       }
       setIsLoading(false);
     };
+    const fetchRecent = async () => {
+      const recent = await aiService.getRecentConversations();
+      setRecentConversations(recent);
+    };
     fetchHistory();
+    fetchRecent();
   }, []);
 
 
@@ -114,14 +120,16 @@ export default function AIHintsPage() {
     { title: "Understand Complexity", desc: "Analyze algorithm complexity", icon: Cpu, color: "text-brand-orange" },
   ];
 
-  // Conversations history
-  const recentConversations = [
-    { title: "Two Sum optimal approach", time: "10:24 AM" },
-    { title: "Binary Tree Inorder Traversal", time: "Yesterday" },
-    { title: "Dynamic Programming basics", time: "2 days ago" },
-    { title: "Graph BFS explanation", time: "3 days ago" },
-    { title: "LRU Cache implementation", time: "5 days ago" },
-  ];
+  // Format relative time
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diff / (1000 * 3600 * 24));
+    if (diffDays === 0) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+  };
 
   // Copy Code to Clipboard
   const handleCopyCode = (codeText: string) => {
@@ -659,7 +667,7 @@ export default function AIHintsPage() {
             </div>
 
             <div className="flex flex-col gap-3 mt-0.5">
-              {recentConversations.map((conv, idx) => (
+              {recentConversations.length > 0 ? recentConversations.map((conv, idx) => (
                 <div 
                   key={idx}
                   onClick={() => {
@@ -675,10 +683,12 @@ export default function AIHintsPage() {
                     </span>
                   </div>
                   <span className="text-[10.5px] text-text-secondary shrink-0 pl-2 font-medium">
-                    {conv.time}
+                    {formatTime(conv.updatedAt)}
                   </span>
                 </div>
-              ))}
+              )) : (
+                <span className="text-[12px] text-text-secondary italic mt-2">No recent conversations found.</span>
+              )}
             </div>
           </DashboardCard>
 

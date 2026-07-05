@@ -227,18 +227,21 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* Upgrade to Pro Card (Only visible on /ai-hints path when sidebar is expanded, swaps with Streak Card) */}
-        {!isSidebarCollapsed && pathname === "/ai-hints" && (
+        {/* Upgrade to Premium Card (Only visible on /ai-hints path when sidebar is expanded, swaps with Streak Card) */}
+        {!isSidebarCollapsed && pathname === "/ai-hints" && !user?.isPremiumActive && (
           <div className="bg-[#f1f5f9] dark:bg-[#11131c] border border-black/[0.04] dark:border-white/[0.04] rounded-2xl p-4.5 text-left shadow-lg relative overflow-hidden select-none my-4">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff6a00]/10 to-transparent blur-xl rounded-full" />
             <div className="flex items-center gap-1.5 text-[10px] text-brand-orange font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-3.5 h-3.5 text-brand-orange fill-brand-orange" />
-              <span>Upgrade to Pro</span>
+              <span>Upgrade to Premium</span>
             </div>
             <p className="text-[11px] text-text-secondary/90 dark:text-[#9ca3af]/90 font-medium leading-normal mb-3.5">
               Unlock unlimited AI hints, advanced explanations and more.
             </p>
-            <button className="w-full py-2 bg-brand-orange hover:bg-[#e05d00] text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(255,106,0,0.2)] transition-all duration-300 cursor-pointer">
+            <button 
+              onClick={() => router.push("/settings#billing")}
+              className="w-full py-2 bg-brand-orange hover:bg-[#e05d00] text-white font-bold rounded-xl text-[11px] flex items-center justify-center gap-1 shadow-[0_2px_8px_rgba(255,106,0,0.2)] transition-all duration-300 cursor-pointer"
+            >
               <span>Upgrade Now</span>
               <ChevronRight className="w-3.5 h-3.5 text-white" />
             </button>
@@ -337,11 +340,11 @@ export default function Sidebar() {
               <img 
                 src={user.avatar} 
                 alt={user?.name || "User"} 
-                className="w-9 h-9 rounded-full object-cover border border-white/[0.1] shadow-inner shrink-0 select-none" 
+                className={cn("w-9 h-9 rounded-full object-cover shadow-inner shrink-0 select-none transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#11131c]" : "border border-white/[0.1]")} 
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white border border-white/[0.1] shadow-inner shrink-0 select-none font-mono">
+              <div className={cn("w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white shadow-inner shrink-0 select-none font-mono transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#11131c]" : "border border-white/[0.1]")}>
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}

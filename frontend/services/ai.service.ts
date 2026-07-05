@@ -28,7 +28,27 @@ export interface AiChatResponse {
   hintsRemaining: number | "Unlimited";
 }
 
+export interface RecentConversation {
+  _id: string;
+  title: string;
+  updatedAt: string;
+  problemExternalId?: string;
+}
+
 export const aiService = {
+  getRecentConversations: async (): Promise<RecentConversation[]> => {
+    try {
+      const response: any = await api.get(`${BASE_URL}/ai/history`);
+      if (response && response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching recent AI conversations:", error);
+      return [];
+    }
+  },
+
   getChatHistory: async (problemId: string): Promise<{ messages: AiMessage[]; hintsRemaining: number | "Unlimited" } | null> => {
     try {
       const response: any = await api.get(`${BASE_URL}/ai/chat/${problemId}`);

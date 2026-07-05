@@ -68,6 +68,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const data = await res.json();
             // Store our own backend JWT inside the NextAuth JWT token
             token.backendToken = data.token;
+            // Track if this is a brand new user (to show Create Password modal)
+            token.isNewUser = data.isNewUser === true;
             
             // Strip large fields (base64 avatar, solved problems list, bookmarks)
             // to keep the NextAuth session cookie small and prevent HTTP 431 (Header Too Large)
@@ -97,9 +99,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.backendToken) {
         (session as any).backendToken = token.backendToken;
         (session as any).backendUser = token.backendUser;
+        (session as any).isNewUser = token.isNewUser;
       }
       return session;
     },
+
   },
 
   pages: {

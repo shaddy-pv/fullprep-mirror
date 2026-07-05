@@ -152,8 +152,30 @@ const userSchema = new mongoose.Schema(
 
     subscriptionTier: {
       type: String,
-      enum: ["free", "pro"],
+      enum: ["free", "premium"],
       default: "free",
+    },
+
+    // Date when Premium expires (null = never activated)
+    proExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Payment history for billing section
+    paymentHistory: {
+      type: [
+        {
+          razorpayOrderId:   { type: String, default: "" },
+          razorpayPaymentId: { type: String, default: "" },
+          amount:            { type: Number, default: 0 },
+          currency:          { type: String, default: "INR" },
+          status:            { type: String, default: "" },
+          createdAt:         { type: Date, default: Date.now },
+        }
+      ],
+      default: [],
+      select: false,  // Don't expose by default; send only when needed
     },
 
     aiHintsUsed: {
@@ -330,10 +352,19 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
  * @returns {object}
  */
 userSchema.methods.toPublicJSON = function () {
-  const obj = this.toObject();
+  const obj = this.toObject({ virtuals: true });
   delete obj.password;
   delete obj.__v;
   delete obj.passwordChangedAt;
+  delete obj.paymentHistory; // Never expose in profile responses
+  
+  // Expose computed isOAuthUser flag so frontend knows
+  obj.isOAuthUser = !!(this.oauth && Object.keys(this.oauth || {}).length > 0 && !this.password);
+  
+  delete obj.oauth; // Clean up internal oauth object after using it
+
+  // Expose whether Premium is currently active
+  obj.isPremiumActive = !!(this.subscriptionTier === 'premium' && this.proExpiresAt && new Date(this.proExpiresAt) > new Date());
   return obj;
 };
 
@@ -341,9 +372,22 @@ userSchema.methods.toPublicJSON = function () {
 
 userSchema.virtual("avatarUrl").get(function () {
   if (this.avatar) return this.avatar;
-  // Gravatar-style initials fallback using UI Avatars
   const encoded = encodeURIComponent(this.name || "FP");
   return `https://ui-avatars.com/api/?name=${encoded}&background=6366f1&color=fff&size=128`;
+});
+
+// ── Virtual: isOAuthUser ──────────────────────────────────────────────────────
+// True if user signed up via OAuth and has never set a password
+
+userSchema.virtual("isOAuthUser").get(function () {
+  return !!(this.oauth && Object.keys(this.oauth || {}).length > 0 && !this.password);
+});
+
+// ── Virtual: isPremiumActive ──────────────────────────────────────────────────
+// True only when subscriptionTier is premium AND expiry is in the future
+
+userSchema.virtual("isPremiumActive").get(function () {
+  return !!(this.subscriptionTier === 'premium' && this.proExpiresAt && new Date(this.proExpiresAt) > new Date());
 });
 
 const User = mongoose.model("User", userSchema);

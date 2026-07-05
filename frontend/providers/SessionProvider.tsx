@@ -60,6 +60,7 @@ function SessionSync({ children }: { children: React.ReactNode }) {
         if (session && (session as any).backendToken) {
           const backendToken = (session as any).backendToken;
           const backendUser = (session as any).backendUser;
+          const isNewUser = (session as any).isNewUser;
 
           // Persist backend token to localStorage so fetcher.ts can use it
           if (typeof window !== "undefined") {
@@ -67,6 +68,10 @@ function SessionSync({ children }: { children: React.ReactNode }) {
             // Also set cookie so middleware can read it server-side
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
             document.cookie = `fp_session=${backendToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+            // Set flag for new OAuth users so CreatePasswordModal can trigger
+            if (isNewUser) {
+              localStorage.setItem("fp_new_oauth_user", "1");
+            }
           }
 
           // Sync user to Zustand store

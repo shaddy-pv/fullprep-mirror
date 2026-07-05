@@ -78,6 +78,8 @@ export default function LeaderboardPage() {
   const [countdownSeconds, setCountdownSeconds] = useState(37475); // 10:24:35 in seconds
 
   const [users, setUsers] = useState<any[]>([]);
+  const [top3Users, setTop3Users] = useState<any[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [userStats, setUserStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -104,11 +106,15 @@ export default function LeaderboardPage() {
       setLoading(true);
       try {
         const [leaderboardData, statsData] = await Promise.all([
-          AuthService.getLeaderboard(activeMainTab, activeFilterTab),
+          AuthService.getLeaderboard(activeMainTab, activeFilterTab, currentPage),
           AuthService.getStats()
         ]);
         if (leaderboardData) {
-          setUsers(leaderboardData);
+          setUsers(leaderboardData.users);
+          setTotalUsers(leaderboardData.totalUsers);
+          if (currentPage === 1) {
+            setTop3Users(leaderboardData.users.slice(0, 3));
+          }
         }
         if (statsData) {
           setUserStats(statsData);
@@ -121,7 +127,7 @@ export default function LeaderboardPage() {
       }
     }
     loadData();
-  }, [showToast, activeMainTab, activeFilterTab]);
+  }, [showToast, activeMainTab, activeFilterTab, currentPage]);
 
   const getAvatarBg = (index: number) => {
     const bgs = [
@@ -142,9 +148,13 @@ export default function LeaderboardPage() {
   );
 
   // Dynamic Podium Data
-  const firstUser = filteredUsers[0];
-  const secondUser = filteredUsers[1];
-  const thirdUser = filteredUsers[2];
+  // Keep the podium consistent across pages using top3Users state
+  const isPageOne = currentPage === 1;
+  const tableStartIndex = isPageOne ? 3 : 0;
+  
+  const firstUser = top3Users[0];
+  const secondUser = top3Users[1];
+  const thirdUser = top3Users[2];
 
   const podiumData = {
     first: firstUser ? {
@@ -177,7 +187,7 @@ export default function LeaderboardPage() {
   };
 
   // Remaining users mapped to table rows
-  const leaderboardUsers: LeaderboardUser[] = filteredUsers.slice(3).map((u, idx) => ({
+  const leaderboardUsers: LeaderboardUser[] = filteredUsers.slice(tableStartIndex).map((u, idx) => ({
     rank: u.rank || idx + 4,
     username: u.username,
     rating: u.xp,
@@ -464,68 +474,62 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Clickable interactive Pagination row */}
-            <div className="p-4 border-t border-border-card flex items-center justify-center gap-1.5 select-none bg-[#fcfcfa] dark:bg-white/[0.01] shrink-0">
-              <button 
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`w-8 h-8 rounded-lg border border-border-card bg-card-bg text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-colors duration-200 ${
-                  currentPage === 1 ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+            <div className="p-4 border-t border-border-card/50 flex items-center justify-between">
+              <span className="text-[12px] font-semibold text-text-secondary select-none">
+                Page {currentPage} of {Math.ceil(totalUsers / 50) || 1}
+              </span>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`w-8 h-8 rounded-lg border border-border-card bg-card-bg text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-colors duration-200 ${
+                    currentPage === 1 ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                
+                {Array.from({ length: Math.min(3, Math.ceil(totalUsers / 50)) }).map((_, i) => (
+                  <button 
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                      currentPage === i + 1 
+                        ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                        : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                
+                {Math.ceil(totalUsers / 50) > 3 && (
+                  <>
+                    <span className="text-[13px] text-text-secondary font-bold px-1 select-none">...</span>
+                    <button 
+                      onClick={() => setCurrentPage(Math.ceil(totalUsers / 50))}
+                      className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                        currentPage === Math.ceil(totalUsers / 50) 
+                          ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
+                          : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      {Math.ceil(totalUsers / 50)}
+                    </button>
+                  </>
+                )}
 
-              <button 
-                onClick={() => setCurrentPage(1)}
-                className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
-                  currentPage === 1 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                1
-              </button>
-              <button 
-                onClick={() => setCurrentPage(2)}
-                className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
-                  currentPage === 2 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                2
-              </button>
-              <button 
-                onClick={() => setCurrentPage(3)}
-                className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
-                  currentPage === 3 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                3
-              </button>
-              <span className="text-[13px] text-text-secondary font-bold px-1 select-none">...</span>
-              <button 
-                onClick={() => setCurrentPage(100)}
-                className={`w-8 h-8 rounded-lg text-[13px] font-semibold flex items-center justify-center cursor-pointer transition-all duration-200 ${
-                  currentPage === 100 
-                    ? "bg-brand-orange text-white shadow-md shadow-[#ff6a00]/25 border border-brand-orange" 
-                    : "border border-border-card bg-card-bg text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                100
-              </button>
-
-              <button 
-                onClick={() => setCurrentPage((prev) => Math.min(100, prev + 1))}
-                disabled={currentPage === 100}
-                className={`w-8 h-8 rounded-lg border border-border-card bg-card-bg text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-colors duration-200 ${
-                  currentPage === 100 ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
-                }`}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                <button 
+                  onClick={() => setCurrentPage((prev) => Math.min(Math.ceil(totalUsers / 50), prev + 1))}
+                  disabled={currentPage === Math.ceil(totalUsers / 50) || Math.ceil(totalUsers / 50) === 0}
+                  className={`w-8 h-8 rounded-lg border border-border-card bg-card-bg text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-colors duration-200 ${
+                    currentPage === Math.ceil(totalUsers / 50) || Math.ceil(totalUsers / 50) === 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02]"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
           </div>
@@ -555,7 +559,7 @@ export default function LeaderboardPage() {
                   {userStats?.globalRank ? `#${userStats.globalRank.toLocaleString()}` : "Not Ranked"}
                 </span>
                 <span className="text-[11.5px] text-text-secondary font-medium mt-1.5 leading-none">
-                  of {users.length.toLocaleString()} users
+                  of {totalUsers.toLocaleString()} users
                 </span>
               </div>
             </div>

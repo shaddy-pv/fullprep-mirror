@@ -61,10 +61,10 @@ export const getChatHistory = async (req, res) => {
   const freshUserForHistory = await User.findById(req.user._id).select("role subscriptionTier aiHintsUsed aiHintsLastReset");
   const isAdmin = freshUserForHistory?.role === "admin";
   let hintsRemaining;
-  if (isAdmin || freshUserForHistory?.subscriptionTier === "pro") {
+  if (isAdmin) {
     hintsRemaining = "Unlimited";
   } else {
-    const limit = 5;
+    const limit = freshUserForHistory?.subscriptionTier === "premium" ? 100 : 5;
     const now = new Date();
     const lastReset = new Date(freshUserForHistory?.aiHintsLastReset || 0);
     const usedToday = now.getTime() - lastReset.getTime() > 24 * 60 * 60 * 1000 ? 0 : (freshUserForHistory?.aiHintsUsed || 0);
@@ -203,19 +203,18 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
     // Increment usage limit only for non-admin users
     const freshUser = await User.findById(req.user._id).select("aiHintsUsed subscriptionTier role");
     const isAdminUser = freshUser?.role === "admin";
-    const isProUser = freshUser?.subscriptionTier === "pro";
+    const isProUser = freshUser?.subscriptionTier === "premium";
 
     if (!isAdminUser) {
       await incrementLimit(req.user._id);
     }
 
     const updatedUser = isAdminUser ? freshUser : await User.findById(req.user._id).select("aiHintsUsed subscriptionTier");
-    const FREE_LIMIT = 5;
     let hintsRemaining;
-    if (isAdminUser || isProUser) {
+    if (isAdminUser) {
       hintsRemaining = "Unlimited";
     } else {
-      const limit = FREE_LIMIT;
+      const limit = isProUser ? 100 : 5;
       hintsRemaining = Math.max(0, limit - (updatedUser?.aiHintsUsed || 0));
     }
     console.log("[AI DEBUG] After increment - DB state:", {
@@ -236,6 +235,29 @@ Respond ONLY with valid JSON. Do not include markdown \`\`\`json wrappers.`;
     res.status(500).json({
       success: false,
       message: "The AI assistant encountered an error. Please try again.",
+    });
+  }
+};
+
+// @desc    Get user's recent AI conversations
+// @route   GET /api/ai/history
+// @access  Private
+export const getRecentHistory = async (req, res) => {
+  try {
+    const chats = await AiChat.find({ user: req.user._id })
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .select("title updatedAt problemExternalId");
+
+    res.status(200).json({
+      success: true,
+      data: chats
+    });
+  } catch (error) {
+    console.error("Get Recent History Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch recent AI conversations."
     });
   }
 };

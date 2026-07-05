@@ -27,6 +27,7 @@ import {
   resetPassword,
   getLeaderboard,
   updatePassword,
+  createPassword,
   getSessions,
   revokeSession,
   exportData,
@@ -64,6 +65,7 @@ router.delete("/sessions/:id", revokeSession);
 router.get("/export", exportData);
 router.post("/resend-verification", resendVerification);
 router.post("/sync-verification", syncVerification);
+router.post("/create-password", createPassword); // OAuth-only users setting password for first time
 
 // ── Example Admin-only Route ──────────────────────────────────────────────────
 // Demonstrates combining protect + restrictTo for RBAC

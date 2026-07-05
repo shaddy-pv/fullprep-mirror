@@ -177,7 +177,13 @@ export const getAdminUserStats = async (req, res) => {
     return res.status(404).json({ success: false, message: "User not found" });
   }
 
-  const realGlobalRank = await User.countDocuments({ isActive: true, xp: { $gt: user.xp ?? 0 } });
+  const realGlobalRank = await User.countDocuments({
+    isActive: true,
+    $or: [
+      { xp: { $gt: user.xp ?? 0 } },
+      { xp: user.xp ?? 0, createdAt: { $lt: user.createdAt || new Date() } }
+    ]
+  });
 
   // 6. Daily submission activity for the last 7 days
   const dailyActivityReal = await Submission.aggregate([
