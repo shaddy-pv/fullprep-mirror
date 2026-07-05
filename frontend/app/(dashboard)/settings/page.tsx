@@ -4,12 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   User,
   Settings,
-  Sliders,
   Bell,
   Lock,
   Link2,
   Palette,
-  CreditCard,
   Download,
   AlertTriangle,
   Upload,
@@ -23,9 +21,12 @@ import {
   Sparkles,
   MapPin,
   ChevronDown,
+  Info,
   Trophy,
   Award,
   Activity,
+  CreditCard,
+  Sliders,
   Crown,
   Laptop,
   Key,
@@ -192,19 +193,8 @@ export default function SettingsPage() {
 
   // Preferences States
   const [defaultLanguage, setDefaultLanguage] = useState("Python");
-  const [editorThemeSetting, setEditorThemeSetting] = useState("Monaco Dark Space");
   const [tabSpacingSetting, setTabSpacingSetting] = useState("2 Spaces");
-  const [diagnosticsSetting, setDiagnosticsSetting] = useState("Enabled (Full Diagnostic)");
 
-  // Profile Toggles
-  const [visibility, setVisibility] = useState({
-    profile: true,
-    achievements: true,
-    activity: true,
-    statistics: true,
-    ratings: true,
-    heatmap: true,
-  });
 
   // Notifications Toggles
   const [notifs, setNotifs] = useState({
@@ -231,9 +221,6 @@ export default function SettingsPage() {
       setLeetcode(user.socialLinks?.leetcode || "");
       setBackupEmail(user.backupEmail || "");
 
-      if (user.visibility) {
-        setVisibility((v) => ({ ...v, ...user.visibility }));
-      }
       if (user.notifs) {
         setNotifs((n) => ({ ...n, ...user.notifs }));
       }
@@ -258,12 +245,6 @@ export default function SettingsPage() {
           const parsed = JSON.parse(rawSettings);
           if (parsed.tabSize === 2) setTabSpacingSetting("2 Spaces");
           else if (parsed.tabSize === 4) setTabSpacingSetting("4 Spaces");
-          
-          if (parsed.editorTheme === "vs-dark") setEditorThemeSetting("Monaco Dark Space");
-          else if (parsed.editorTheme === "hc-black") setEditorThemeSetting("Monaco Midnight Velvet");
-          
-          if (parsed.diagnostics === false) setDiagnosticsSetting("Disabled");
-          else setDiagnosticsSetting("Enabled (Full Diagnostic)");
         } catch {}
       }
     }
@@ -374,7 +355,6 @@ export default function SettingsPage() {
         location,
         backupEmail,
         notifs,
-        visibility,
         twoFactor
       });
 
@@ -384,9 +364,7 @@ export default function SettingsPage() {
         localStorage.setItem("fullprep_default_language", langMap[defaultLanguage] || "python");
 
         const settingsToSave = {
-          tabSize: tabSpacingSetting === "2 Spaces" ? 2 : 4,
-          editorTheme: editorThemeSetting === "Monaco Midnight Velvet" ? "hc-black" : "vs-dark",
-          diagnostics: diagnosticsSetting === "Enabled (Full Diagnostic)"
+          tabSize: tabSpacingSetting === "2 Spaces" ? 2 : 4
         };
         localStorage.setItem("fullprep_editor_settings", JSON.stringify(settingsToSave));
       }
@@ -1048,18 +1026,16 @@ export default function SettingsPage() {
                       <select 
                         value={item.val}
                         onChange={(e) => item.setVal(e.target.value)}
-                        disabled={item.disabled}
                         className={cn(
                           "w-full border border-slate-900/[0.08] dark:border-white/[0.05] rounded-xl bg-white dark:bg-[#0a0b12]/60 px-3.5 text-sm font-medium text-[#111827] dark:text-white focus:outline-none appearance-none h-10 leading-none cursor-pointer",
-                          activeAccent.focusGlow,
-                          item.disabled && "opacity-50 cursor-not-allowed"
+                          activeAccent.focusGlow
                         )}
                       >
                         {item.opt.map((o) => (
                           <option key={o} value={o} className="bg-white text-[#111827] dark:bg-[#111217] dark:text-white">{o}</option>
                         ))}
                       </select>
-                      <ChevronDown className={cn("w-4 h-4 absolute right-4 top-[12px] pointer-events-none", item.disabled ? "text-slate-400/50" : "text-slate-400 dark:text-text-secondary/50")} />
+                      <ChevronDown className="w-4 h-4 absolute right-4 top-[12px] pointer-events-none text-slate-400 dark:text-text-secondary/50" />
                     </div>
                   </div>
                 ))}
