@@ -85,7 +85,7 @@ test.describe("Problems Page E2E Tests", () => {
     await problemsPage.verifyProblemsCountVisible();
 
     // Scroll down to pagination footer
-    const nextBtn = page.locator("button:has(svg.lucide-chevron-right)").first();
+    const nextBtn = page.locator("div.flex.items-center.gap-1.shrink-0 button:has(svg.lucide-chevron-right)").first();
     await nextBtn.scrollIntoViewIfNeeded();
 
     // Go to next page

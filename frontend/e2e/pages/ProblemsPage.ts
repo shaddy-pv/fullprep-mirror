@@ -81,14 +81,16 @@ export class ProblemsPage extends BasePage {
   }
 
   async clickNextPage() {
-    const nextBtn = this.page.locator("button:has(svg.lucide-chevron-right)").first();
+    // Specifically target the button inside the pagination container
+    const nextBtn = this.page.locator("div.flex.items-center.gap-1.shrink-0 button:has(svg.lucide-chevron-right)").first();
     await expect(nextBtn).toBeVisible();
     await nextBtn.click();
     await this.page.waitForTimeout(300);
   }
 
   async clickPrevPage() {
-    const prevBtn = this.page.locator("button:has(svg.lucide-chevron-left)").first();
+    // Specifically target the button inside the pagination container
+    const prevBtn = this.page.locator("div.flex.items-center.gap-1.shrink-0 button:has(svg.lucide-chevron-left)").first();
     await expect(prevBtn).toBeVisible();
     await prevBtn.click();
     await this.page.waitForTimeout(300);
