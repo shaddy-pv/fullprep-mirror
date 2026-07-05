@@ -500,7 +500,7 @@ export default function SettingsPage() {
   ];
 
   const accentsList = [
-    { id: "orange", name: "Orange Glow", color: "bg-brand-orange", focusGlow: "focus:border-brand-orange/40 focus:ring-brand-orange/20" },
+    { id: "orange", name: "Orange Glow", color: "bg-[#ff6a00]", focusGlow: "focus:border-[#ff6a00]/40 focus:ring-[#ff6a00]/20" },
     { id: "purple", name: "Purple Neon", color: "bg-[#8b5cf6]", focusGlow: "focus:border-[#8b5cf6]/40 focus:ring-[#8b5cf6]/20" },
     { id: "blue", name: "Cyber Blue", color: "bg-[#3b82f6]", focusGlow: "focus:border-[#3b82f6]/40 focus:ring-[#3b82f6]/20" },
     { id: "green", name: "Emerald", color: "bg-[#10b981]", focusGlow: "focus:border-[#10b981]/40 focus:ring-[#10b981]/20" },
@@ -1187,7 +1187,7 @@ export default function SettingsPage() {
             <div className={cardBase}>
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-brand-orange" />
-                <span>Accent Highlight Highlights</span>
+                <span>Accent Highlights</span>
                 <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-brand-orange/20 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
                   Pro Tier
                 </span>

@@ -937,6 +937,7 @@ export const getPublicProfile = async (req, res) => {
         contestsParticipated: user.contestsParticipated,
         highestRating: user.highestRating,
         joinedAt: user.createdAt,
+        subscriptionTier: user.subscriptionTier,
         solvedCount,
         activityMap,
         difficultyBreakdown,

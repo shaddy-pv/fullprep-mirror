@@ -261,12 +261,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
           <div className="p-6 lg:p-8 flex flex-col md:flex-row gap-8 relative z-10 mt-6">
           {/* Avatar and Basic Info */}
           <div className="flex items-center gap-6 md:w-1/3">
-            <div className="relative">
+            <div className="relative shrink-0 aspect-square">
               {profile.avatar ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={profile.avatar} alt={profile.name} className="w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover border-4 border-card-bg shadow-lg" referrerPolicy="no-referrer" />
+                <img src={profile.avatar} alt={profile.name} className={cn("w-24 h-24 lg:w-32 lg:h-32 rounded-full object-cover shadow-lg", profile.subscriptionTier === "premium" ? "border-2 border-brand-orange ring-4 ring-brand-orange/20 ring-offset-4 ring-offset-card-bg" : "border-4 border-card-bg")} referrerPolicy="no-referrer" />
               ) : (
-                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-br from-brand-orange to-amber-500 flex items-center justify-center text-white text-3xl lg:text-4xl font-bold shadow-lg">
+                <div className={cn("w-24 h-24 lg:w-32 lg:h-32 rounded-full bg-gradient-to-br from-brand-orange to-amber-500 flex items-center justify-center text-white text-3xl lg:text-4xl font-bold shadow-lg", profile.subscriptionTier === "premium" ? "border-2 border-brand-orange ring-4 ring-brand-orange/20 ring-offset-4 ring-offset-card-bg" : "border-4 border-card-bg")}>
                   {getAvatarFallback(profile.name)}
                 </div>
               )}
