@@ -3,7 +3,7 @@
 
 @theme {
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --color-brand-orange: #ff6a00;
+  --color-brand-orange: var(--brand-accent, #ff6a00);
   
   --color-bg-page: var(--background);
   --color-border-card: var(--border-card);
@@ -23,6 +23,7 @@
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
   --font-inter: "Inter", sans-serif;
+  --brand-accent: #ff6a00;
 }
 
 .dark {
@@ -33,6 +34,27 @@
   --text-secondary: rgba(255, 255, 255, 0.6);
   --text-muted: rgba(255, 255, 255, 0.4);
 }
+
+/* Custom Themes (applied via HTML classes) */
+.theme-midnight.dark {
+  --background: #05060b;
+  --card-bg: #08090d;
+  --border-card: rgba(255, 255, 255, 0.03);
+}
+
+.theme-neon.dark {
+  --background: #0b0c16;
+  --card-bg: #120822;
+  --border-card: rgba(168, 85, 247, 0.15);
+}
+
+/* Custom Accents */
+.accent-orange { --brand-accent: #ff6a00; }
+.accent-purple { --brand-accent: #8b5cf6; }
+.accent-blue { --brand-accent: #3b82f6; }
+.accent-green { --brand-accent: #10b981; }
+.accent-pink { --brand-accent: #ec4899; }
+
 
 body {
   background-color: var(--background);

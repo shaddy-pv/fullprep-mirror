@@ -116,7 +116,7 @@ export default function AIHintsPage() {
     { title: "Explain This Code", desc: "Get line-by-line explanation", icon: FileText, color: "text-[#3b82f6]" },
     { title: "Find Bugs", desc: "Detect issues in your code", icon: AlertTriangle, color: "text-brand-orange" },
     { title: "Optimize Code", desc: "Improve time & space complexity", icon: Zap, color: "text-[#10b981]" },
-    { title: "Generate Code", desc: "Generate boilerplate or solution", icon: Code2, color: "text-[#8b5cf6]" },
+    { title: "Generate Code", desc: "Generate boilerplate or solution", icon: Code2, color: "text-brand-orange" },
     { title: "Understand Complexity", desc: "Analyze algorithm complexity", icon: Cpu, color: "text-brand-orange" },
   ];
 
@@ -280,7 +280,7 @@ export default function AIHintsPage() {
                         referrerPolicy="no-referrer" 
                       />
                     ) : (
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-orange to-brand-orange/60 flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </div>
                     )
@@ -426,7 +426,7 @@ export default function AIHintsPage() {
                             showToast("Follow-up question populated in input slot.", "info");
                           }}
                         >
-                          <HelpCircle className="w-3 h-3 text-[#8b5cf6]" />
+                          <HelpCircle className="w-3 h-3 text-brand-orange" />
                           <span>Follow Up</span>
                         </Button>
                       </div>

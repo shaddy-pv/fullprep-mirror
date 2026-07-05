@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { AppearanceProvider } from "@/providers/AppearanceProvider";
 import { SessionProvider } from "@/providers/SessionProvider";
 import ToastNotification from "@/components/ui/ToastNotification";
 
@@ -29,10 +30,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-bg-page text-text-primary transition-colors duration-300 antialiased selection:bg-brand-orange/30">
         <ThemeProvider>
-          <SessionProvider>
-            {children}
-            <ToastNotification />
-          </SessionProvider>
+          <AppearanceProvider>
+            <SessionProvider>
+              {children}
+              <ToastNotification />
+            </SessionProvider>
+          </AppearanceProvider>
         </ThemeProvider>
       </body>
     </html>

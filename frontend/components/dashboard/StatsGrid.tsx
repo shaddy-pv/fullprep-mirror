@@ -64,8 +64,8 @@ export default function StatsGrid() {
       subtext: streak > 0 ? "Keep it up!" : "Start solving!",
       subtextColor: "text-brand-orange",
       icon: Flame,
-      iconColor: "text-[#8b5cf6]",
-      bgColor: "bg-[#f5f3ff] dark:bg-[#8b5cf6]/10",
+      iconColor: "text-brand-orange",
+      bgColor: "bg-brand-orange/5 dark:bg-brand-orange/10",
       path: "/activity",
     },
     {

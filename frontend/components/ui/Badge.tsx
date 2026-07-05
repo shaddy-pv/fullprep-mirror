@@ -21,7 +21,7 @@ export default function Badge({
         variant === "easy" && "bg-[#eafaf1] dark:bg-[#10b981]/10 text-[#10b981]",
         variant === "medium" && "bg-[#fff3eb] dark:bg-brand-orange/10 text-brand-orange",
         variant === "hard" && "bg-[#fff1f2] dark:bg-[#f43f5e]/10 text-[#f43f5e]",
-        variant === "ai" && "bg-[#8b5cf6] text-white px-1.5 py-0.5 rounded font-bold tracking-wider uppercase scale-90",
+        variant === "ai" && "bg-brand-orange text-white px-1.5 py-0.5 rounded font-bold tracking-wider uppercase scale-90",
         variant === "default" && "bg-[#f3f4f6] dark:bg-white/[0.04] text-text-secondary border border-border-card",
         className
       )}

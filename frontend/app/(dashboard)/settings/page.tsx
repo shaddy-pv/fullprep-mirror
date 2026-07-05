@@ -38,6 +38,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ContentContainer from "@/components/layout/ContentContainer";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useAuthStore } from "@/store/authStore";
+import { useAppearanceStore } from "@/store/appearanceStore";
 import { AuthService } from "@/services/auth.service";
 import { PaymentService } from "@/services/payment.service";
 import { cn } from "@/lib/utils";
@@ -269,11 +270,18 @@ export default function SettingsPage() {
   }, []);
 
   // Appearance & Theme Configuration
-  const [selectedTheme, setSelectedTheme] = useState("dark");
-  const [selectedAccent, setSelectedAccent] = useState("orange");
-  const [compactMode, setCompactMode] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [uiAnimations, setUiAnimations] = useState(true);
+  const {
+    theme: selectedTheme,
+    accent: selectedAccent,
+    compactMode,
+    sidebarCollapsedDefault: sidebarCollapsed,
+    uiAnimations,
+    setTheme: setSelectedTheme,
+    setAccent: setSelectedAccent,
+    setCompactMode,
+    setSidebarCollapsedDefault: setSidebarCollapsed,
+    setUiAnimations
+  } = useAppearanceStore();
 
   // Connected Sessions
   const [sessions, setSessions] = useState<any[]>([]);
@@ -671,7 +679,7 @@ export default function SettingsPage() {
                     {user?.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user?.name || "User"} className="w-24 h-24 rounded-full object-cover shadow-lg shrink-0 border border-slate-900/[0.08] dark:border-white/[0.08]" referrerPolicy="no-referrer" />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#c084fc] via-[#8b5cf6] to-[#6366f1] flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-purple-500/10 shrink-0 select-none relative overflow-hidden">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-brand-orange to-brand-orange/60 flex items-center justify-center font-bold text-[36px] text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-lg shadow-brand-orange/10 shrink-0 select-none relative overflow-hidden">
                         <span className="group-hover:scale-95 transition-transform duration-300">{(user?.name || "U").charAt(0).toUpperCase()}</span>
                       </div>
                     )}
@@ -1212,7 +1220,7 @@ export default function SettingsPage() {
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <Palette className="w-4 h-4 text-brand-orange" />
                 <span>Customize Platform Theme</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-[#8b5cf6]/10 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
+                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-brand-orange/20 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
                   Pro Tier
                 </span>
               </h3>
@@ -1260,7 +1268,7 @@ export default function SettingsPage() {
               <h3 className="text-[15px] font-semibold text-[#111827] dark:text-white tracking-tight leading-none flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-brand-orange" />
                 <span>Accent Highlight Highlights</span>
-                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-[#8b5cf6]/10 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
+                <span className="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-orange/10 to-brand-orange/20 border border-brand-orange/20 text-[9px] font-bold text-brand-orange tracking-wider uppercase ml-1">
                   Pro Tier
                 </span>
               </h3>

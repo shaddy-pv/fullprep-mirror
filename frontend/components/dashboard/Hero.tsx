@@ -172,7 +172,7 @@ export default function Hero() {
           className="absolute right-6 top-[72px] z-30"
           style={{ transform: "translateZ(50px)" }}
         >
-          <div className="w-[44px] h-[44px] bg-gradient-to-br from-[#b195ff] via-[#8b5cf6] to-[#6d3ae3] rounded-2xl flex items-center justify-center text-white font-mono font-bold text-xl shadow-[0_12px_24px_-4px_rgba(139,92,246,0.35)] border border-white/20 relative">
+          <div className="w-[44px] h-[44px] bg-gradient-to-br from-brand-orange to-brand-orange/60 rounded-2xl flex items-center justify-center text-white font-mono font-bold text-xl shadow-[0_12px_24px_-4px_rgba(255,106,0,0.35)] border border-white/20 relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/15 to-transparent rounded-2xl pointer-events-none" />
             <span className="drop-shadow-md">&#123;&#125;</span>
           </div>

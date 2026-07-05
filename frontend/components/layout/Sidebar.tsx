@@ -174,7 +174,7 @@ export default function Sidebar() {
                       </Badge>
                     ) : (
                       /* Glowing Purple Dot for Collapsed State with reduced glow intensity */
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#8b5cf6] rounded-full ring-2 ring-[#111217] dark:ring-[#06090f] shadow-[0_0_4px_rgba(139,92,246,0.45)] transition-all duration-300" />
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-orange rounded-full ring-2 ring-[#111217] dark:ring-[#06090f] shadow-[0_0_4px_rgba(255,106,0,0.45)] transition-all duration-300" />
                     )}
                   </>
                 )}
@@ -271,7 +271,7 @@ export default function Sidebar() {
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-orange to-brand-orange/60 flex items-center justify-center font-bold text-base text-white border border-white/[0.1] shadow-md shadow-black/5 shrink-0 font-mono">
                     {user?.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                 )}
@@ -293,7 +293,7 @@ export default function Sidebar() {
                 </div>
                 <div className="flex flex-col gap-1 items-center justify-center leading-none">
                   <span className="text-[9px] text-text-secondary/80 dark:text-[#9ca3af]/80 font-bold leading-none select-none uppercase tracking-wider">XP</span>
-                  <span className="text-[13px] font-extrabold text-[#8b5cf6] leading-none mt-1.5 font-sans select-none">{user?.xp || 0}</span>
+                  <span className="text-[13px] font-extrabold text-brand-orange leading-none mt-1.5 font-sans select-none">{user?.xp || 0}</span>
                 </div>
               </div>
 
@@ -344,7 +344,7 @@ export default function Sidebar() {
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className={cn("w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-sm text-white shadow-inner shrink-0 select-none font-mono transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#11131c]" : "border border-white/[0.1]")}>
+              <div className={cn("w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-brand-orange/60 flex items-center justify-center font-bold text-sm text-white shadow-inner shrink-0 select-none font-mono transition-all duration-300", user?.isPremiumActive ? "ring-2 ring-brand-orange ring-offset-2 dark:ring-offset-[#11131c]" : "border border-white/[0.1]")}>
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}

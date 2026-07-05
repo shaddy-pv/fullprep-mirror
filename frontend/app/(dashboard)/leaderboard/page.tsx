@@ -427,7 +427,7 @@ export default function LeaderboardPage() {
                             <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" referrerPolicy="no-referrer" />
                           ) : (
                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${
-                              user.isCurrentUser ? "from-brand-orange to-[#8b5cf6]" : user.avatarBg
+                              user.isCurrentUser ? "from-brand-orange to-brand-orange/60" : user.avatarBg
                             } flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0`}>
                               {user.avatarChar}
                             </div>
@@ -550,7 +550,7 @@ export default function LeaderboardPage() {
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user?.name || "User"} className="w-12 h-12 rounded-full object-cover shadow-md shrink-0" referrerPolicy="no-referrer" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-orange to-[#8b5cf6] flex items-center justify-center font-bold text-lg text-white border border-white/20 shadow-md shadow-black/5 shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-orange to-brand-orange/60 flex items-center justify-center font-bold text-lg text-white border border-white/20 shadow-md shadow-black/5 shrink-0">
                   {user?.name?.charAt(0).toUpperCase() || "U"}
                 </div>
               )}

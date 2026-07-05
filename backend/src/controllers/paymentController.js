@@ -9,17 +9,20 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import User from "../models/User.js";
 
-// Initialize Razorpay client
-const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+// Initialize Razorpay client only if keys are present to prevent CI crashes
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id:     process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+}
 
 // -- @desc    Create a Razorpay order for Premium subscription
 // -- @route   POST /api/payment/create-order
 // -- @access  Private (JWT required)
 export const createOrder = async (req, res) => {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  if (!razorpay || !process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
     return res.status(503).json({
       success: false,
       message: "Payment gateway is not configured. Please contact support.",

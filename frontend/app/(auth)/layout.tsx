@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         features: [
           { title: "Personalized learning", desc: "Get paths tailored to your level", icon: Compass, color: "text-[#ff6a00]" },
           { title: "Track & Achieve", desc: "Set goals and track your progress", icon: Activity, color: "text-[#10b981]" },
-          { title: "Community & Contests", desc: "Compete and grow together", icon: Trophy, color: "text-[#8b5cf6]" },
+          { title: "Community & Contests", desc: "Compete and grow together", icon: Trophy, color: "text-brand-orange" },
         ],
       };
     } else if (pathname.includes("/forgot-password")) {
@@ -51,7 +51,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         features: [
           { title: "Use 8+ characters", desc: "Minimum length requirement", icon: Shield, color: "text-[#ff6a00]" },
           { title: "Include numbers", desc: "Adds numeric security depth", icon: CheckCircle2, color: "text-[#10b981]" },
-          { title: "Add special chars", desc: "Requires symbols like @, #, $", icon: Shield, color: "text-[#8b5cf6]" },
+          { title: "Add special chars", desc: "Requires symbols like @, #, $", icon: Shield, color: "text-brand-orange" },
         ],
       };
     } else {
@@ -63,7 +63,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         type: "login",
         features: [
           { title: "Track your progress", desc: "Monitor your coding journey", icon: Compass, color: "text-[#ff6a00]" },
-          { title: "Solve and compete", desc: "Solve problems and compete in contests", icon: Trophy, color: "text-[#8b5cf6]" },
+          { title: "Solve and compete", desc: "Solve problems and compete in contests", icon: Trophy, color: "text-brand-orange" },
           { title: "Learn and grow", desc: "Structured paths to master DSA", icon: Compass, color: "text-[#10b981]" },
         ],
       };
