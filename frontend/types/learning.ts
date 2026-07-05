@@ -16,6 +16,8 @@ export interface LearningPath {
   isPro?: boolean;
   isEnrolled?: boolean;
   solvedCount?: number;
+  contentType?: "problems" | "notes";
+  content?: string;
   modules?: Array<{
     _id?: string;
     title: string;
