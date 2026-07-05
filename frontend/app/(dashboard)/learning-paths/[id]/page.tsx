@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import { LearningPathsService } from "@/services/learning-paths.service";
 import { LearningPath } from "@/types/learning";
 import * as Icons from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 export default function LearningPathDetailPage() {
   const params = useParams();
@@ -127,64 +128,74 @@ export default function LearningPathDetailPage() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-text-primary mb-4">Roadmap</h2>
-        
-        {path.modules?.map((module, mIdx) => (
-          <div key={mIdx} className="bg-card-bg border border-border-card rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-border-card bg-gray-50/50 dark:bg-white/[0.01]">
-              <h3 className="text-[16px] font-bold text-text-primary mb-1">
-                Module {mIdx + 1}: {module.title}
-              </h3>
-              {module.description && (
-                <p className="text-[13px] text-text-secondary">{module.description}</p>
-              )}
+        {path.contentType === "notes" ? (
+          <div className="bg-card-bg border border-border-card rounded-2xl overflow-hidden shadow-sm p-8 lg:p-10">
+            <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-brand-primary prose-img:rounded-xl">
+              <ReactMarkdown>{path.content || "This learning path is currently empty."}</ReactMarkdown>
             </div>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold text-text-primary mb-4">Roadmap</h2>
             
-            <div className="flex flex-col divide-y divide-border-card">
-              {module.problems.map((prob, pIdx) => (
-                <Link 
-                  key={prob.externalId} 
-                  href={`/problems/${prob.externalId}`}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-text-secondary/50 font-bold text-[13px] w-6">
-                      {mIdx + 1}.{pIdx + 1}
-                    </span>
-                    {prob.status === "SOLVED" ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-text-secondary/40 group-hover:text-text-secondary/70 transition-colors" />
-                    )}
-                    <span className={`font-semibold text-[14px] ${prob.status === "SOLVED" ? "text-text-primary" : "text-text-primary/90"}`}>
-                      {prob.title}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-md
-                      ${prob.difficulty === "EASY" ? "bg-emerald-500/10 text-emerald-500" : 
-                        prob.difficulty === "MEDIUM" ? "bg-amber-500/10 text-amber-500" : 
-                        "bg-red-500/10 text-red-500"}`}>
-                      {prob.difficulty}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-              
-              {module.problems.length === 0 && (
-                <div className="p-6 text-center text-text-secondary text-[13px]">
-                  No problems in this module yet.
+            {path.modules?.map((module, mIdx) => (
+              <div key={mIdx} className="bg-card-bg border border-border-card rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-5 border-b border-border-card bg-gray-50/50 dark:bg-white/[0.01]">
+                  <h3 className="text-[16px] font-bold text-text-primary mb-1">
+                    Module {mIdx + 1}: {module.title}
+                  </h3>
+                  {module.description && (
+                    <p className="text-[13px] text-text-secondary">{module.description}</p>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
-        
-        {(!path.modules || path.modules.length === 0) && (
-          <div className="py-10 text-center text-text-secondary text-[14px]">
-            This learning path is currently empty.
-          </div>
+                
+                <div className="flex flex-col divide-y divide-border-card">
+                  {module.problems.map((prob, pIdx) => (
+                    <Link 
+                      key={prob.externalId} 
+                      href={`/problems/${prob.externalId}`}
+                      className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-text-secondary/50 font-bold text-[13px] w-6">
+                          {mIdx + 1}.{pIdx + 1}
+                        </span>
+                        {prob.status === "SOLVED" ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-text-secondary/40 group-hover:text-text-secondary/70 transition-colors" />
+                        )}
+                        <span className={`font-semibold text-[14px] ${prob.status === "SOLVED" ? "text-text-primary" : "text-text-primary/90"}`}>
+                          {prob.title}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-md
+                          ${prob.difficulty === "EASY" ? "bg-emerald-500/10 text-emerald-500" : 
+                            prob.difficulty === "MEDIUM" ? "bg-amber-500/10 text-amber-500" : 
+                            "bg-red-500/10 text-red-500"}`}>
+                          {prob.difficulty}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                  
+                  {module.problems.length === 0 && (
+                    <div className="p-6 text-center text-text-secondary text-[13px]">
+                      No problems in this module yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {(!path.modules || path.modules.length === 0) && (
+              <div className="py-10 text-center text-text-secondary text-[14px]">
+                This learning path is currently empty.
+              </div>
+            )}
+          </>
         )}
       </div>
     </ContentContainer>
