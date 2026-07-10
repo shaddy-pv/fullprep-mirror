@@ -70,7 +70,17 @@ function ContestsPage() {
       ),
       sortValue: (c) => new Date(c.endTime),
     },
-    { key: "active", header: "Status", cell: (c) => <StatusBadge active={c.isActive} /> },
+    { 
+      key: "active", 
+      header: "Status", 
+      cell: (c) => {
+        const isEnded = new Date(c.endTime) < new Date();
+        if (isEnded) {
+          return <Pill tone="neutral" dot>Completed</Pill>;
+        }
+        return <StatusBadge active={c.isActive} />;
+      }
+    },
     {
       key: "actions",
       header: "",

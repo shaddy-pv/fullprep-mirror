@@ -117,7 +117,13 @@ export function Sidebar() {
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="space-y-1">
-            {NAV.map((item) => {
+            {NAV.filter(item => {
+              if (user?.role === "mentor") {
+                const allowedPrefixes = ["/problems", "/contests", "/submissions", "/learning-paths", "/jobs"];
+                return allowedPrefixes.some(prefix => item.to.startsWith(prefix));
+              }
+              return true;
+            }).map((item) => {
               const active = item.exact
                 ? pathname === item.to
                 : pathname === item.to || pathname.startsWith(item.to + "/");

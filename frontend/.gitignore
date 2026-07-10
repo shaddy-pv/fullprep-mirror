@@ -48,3 +48,6 @@ next-env.d.ts
 /test-results
 /eslint_log.txt
 /eslint_log_utf8.txt
+
+.vercel
+.env*

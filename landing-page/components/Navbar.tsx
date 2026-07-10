@@ -16,7 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Home",         href: "#home",         id: "home" },
   { label: "Why FullPrep", href: "#why-fullprep",  id: "why-fullprep" },
-  { label: "About",        href: "#about",         id: "about" },
+  { label: "About",        href: "#features",      id: "features" },
   { label: "Contact",      href: "#contact",       id: "contact" },
 ];
 
