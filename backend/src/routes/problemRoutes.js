@@ -58,15 +58,15 @@ router.get("/random", getRandomProblem);
 // Main listing
 router.get("/", listProblems);
 
-// ── Admin-only Routes (JWT + role=admin required) ─────────────────────────────
+// ── Admin and Mentor Routes (JWT + role=admin/mentor required) ─────────────────────────────
 
 // NOTE: Order matters
-router.post("/sync", protect, restrictTo("admin"), syncProblems);
-router.get("/sync/status", protect, restrictTo("admin"), getSyncStatus);
-router.get("/sync/history", protect, restrictTo("admin"), getSyncHistory);
+router.post("/sync", protect, restrictTo("admin", "mentor"), syncProblems);
+router.get("/sync/status", protect, restrictTo("admin", "mentor"), getSyncStatus);
+router.get("/sync/history", protect, restrictTo("admin", "mentor"), getSyncHistory);
 
 // Create a custom problem manually
-router.post("/", protect, restrictTo("admin"), createProblem);
+router.post("/", protect, restrictTo("admin", "mentor"), createProblem);
 
 // ── Dynamic /:id Routes ───────────────────────────────────────────────────────
 
@@ -85,13 +85,13 @@ router.post("/:id/vote", protect, voteProblem);
 // Public tests for a problem (optional auth — admins get private tests too)
 router.get("/:id/tests", optionalProtect, getProblemTests);
 
-// Update a problem (Admin only)
-router.patch("/:id", protect, restrictTo("admin"), updateProblem);
+// Update a problem (Admin or Mentor only)
+router.patch("/:id", protect, restrictTo("admin", "mentor"), updateProblem);
 
-// Soft-delete a problem (Admin only)
-router.delete("/:id", protect, restrictTo("admin"), deleteProblem);
+// Soft-delete a problem (Admin or Mentor only)
+router.delete("/:id", protect, restrictTo("admin", "mentor"), deleteProblem);
 
-// Rejudge a problem (Admin only)
-router.post("/:id/rejudge", protect, restrictTo("admin"), rejudgeProblem);
+// Rejudge a problem (Admin or Mentor only)
+router.post("/:id/rejudge", protect, restrictTo("admin", "mentor"), rejudgeProblem);
 
 export default router;

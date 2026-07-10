@@ -18,9 +18,9 @@ router.get("/:id", optionalProtect, getLearningPathById);
 // Requires auth
 router.post("/:id/enroll", protect, enrollInLearningPath);
 
-// Admin only
-router.post("/", protect, restrictTo("admin"), createLearningPath);
-router.put("/:id", protect, restrictTo("admin"), updateLearningPath);
-router.delete("/:id", protect, restrictTo("admin"), deleteLearningPath);
+// Admin and Mentor only
+router.post("/", protect, restrictTo("admin", "mentor"), createLearningPath);
+router.put("/:id", protect, restrictTo("admin", "mentor"), updateLearningPath);
+router.delete("/:id", protect, restrictTo("admin", "mentor"), deleteLearningPath);
 
 export default router;

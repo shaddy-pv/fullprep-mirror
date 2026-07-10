@@ -4,6 +4,6 @@ import { protect, restrictTo } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getJobs).post(protect, restrictTo("admin"), createJob);
+router.route("/").get(getJobs).post(protect, restrictTo("admin", "mentor"), createJob);
 
 export default router;

@@ -11,11 +11,11 @@ router.get("/daily", getDailyContest);
 router.get("/weekly", getWeeklyContest);
 router.post("/submit", submitContestResult);
 
-// ── Admin-only Routes ─────────────────────────────────────────────────────────
-router.post("/", restrictTo("admin"), createContest);
-router.get("/admin", restrictTo("admin"), getAdminContests);
+// ── Admin and Mentor Routes ─────────────────────────────────────────────────────────
+router.post("/", restrictTo("admin", "mentor"), createContest);
+router.get("/admin", restrictTo("admin", "mentor"), getAdminContests);
 router.get("/:id", getContestById);
-router.patch("/:id", restrictTo("admin"), updateContest);
-router.delete("/:id", restrictTo("admin"), deleteContest);
+router.patch("/:id", restrictTo("admin", "mentor"), updateContest);
+router.delete("/:id", restrictTo("admin", "mentor"), deleteContest);
 
 export default router;

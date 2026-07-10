@@ -69,7 +69,7 @@ router.post("/create-password", createPassword); // OAuth-only users setting pas
 
 // ── Example Admin-only Route ──────────────────────────────────────────────────
 // Demonstrates combining protect + restrictTo for RBAC
-router.get("/admin-check", restrictTo("admin"), (req, res) => {
+router.get("/admin-check", restrictTo("admin", "mentor"), (req, res) => {
   res.status(200).json({
     success: true,
     message: `Welcome, Admin ${req.user.name}! 🛡️`,
@@ -77,4 +77,3 @@ router.get("/admin-check", restrictTo("admin"), (req, res) => {
 });
 
 export default router;
-
