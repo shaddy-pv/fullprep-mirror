@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { useAppearanceStore } from "@/store/appearanceStore";
 import { signOut as nextAuthSignOut } from "next-auth/react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL && process.env.NEXT_PUBLIC_API_BASE_URL !== "" && process.env.NEXT_PUBLIC_API_BASE_URL !== "/" ? process.env.NEXT_PUBLIC_API_BASE_URL : "https://fullprep-frontend-mirror.onrender.com/api";
@@ -144,6 +145,7 @@ export const AuthService = {
         clearSessionCookie();
       }
       useAuthStore.getState().logout();
+      useAppearanceStore.getState().setAccent("orange");
       await nextAuthSignOut({ redirect: false });
       
       if (shouldRedirect && typeof window !== "undefined" && window.location.pathname !== "/login") {
