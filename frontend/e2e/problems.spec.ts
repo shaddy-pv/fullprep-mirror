@@ -85,7 +85,7 @@ test.describe("Problems Page E2E Tests", () => {
     await problemsPage.verifyProblemsCountVisible();
 
     // Scroll down to pagination footer
-    const nextBtn = page.locator("div.flex.items-center.gap-1.shrink-0 button:has(svg.lucide-chevron-right)").first();
+    const nextBtn = page.locator(".flex.items-center button:has(svg.lucide-chevron-right)").first();
     await nextBtn.scrollIntoViewIfNeeded();
 
     // If there are fewer than 10 problems in DB, the button is disabled. Skip test.

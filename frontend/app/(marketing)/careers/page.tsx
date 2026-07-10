@@ -4,7 +4,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Briefcase, ChevronRight, Loader2, ChevronDown, X, UploadCloud, CheckCircle2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import PremiumPageWrapper from "@/components/ui/PremiumPageWrapper";
 
 interface Job {
@@ -127,7 +127,7 @@ export default function CareersPage() {
   const uniqueRoles = ["All", ...Array.from(new Set(jobs.map((j) => j.role)))];
   const uniqueLocations = ["All", ...Array.from(new Set(jobs.map((j) => j.country)))];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -135,7 +135,7 @@ export default function CareersPage() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
   };
