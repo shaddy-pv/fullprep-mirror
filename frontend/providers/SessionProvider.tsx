@@ -68,9 +68,11 @@ function SessionSync({ children }: { children: React.ReactNode }) {
             // Also set cookie so middleware can read it server-side
             const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
             document.cookie = `fp_session=${backendToken}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-            // Set flag for new OAuth users so CreatePasswordModal can trigger
-            if (isNewUser) {
+            // Set flag for new OAuth users so CreatePasswordModal can trigger, unless they already set it
+            if (isNewUser && !backendUser.hasPassword) {
               localStorage.setItem("fp_new_oauth_user", "1");
+            } else if (backendUser.hasPassword) {
+              localStorage.removeItem("fp_new_oauth_user");
             }
           }
 

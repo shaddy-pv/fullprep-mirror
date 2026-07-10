@@ -58,7 +58,16 @@ export default function CreatePasswordModal() {
       }
       setTimeout(() => setVisible(false), 1800);
     } catch (err: any) {
-      setError(err.message || "Failed to set password. Please try again.");
+      if (err.message && err.message.toLowerCase().includes("already have a password")) {
+        setDone(true);
+        localStorage.removeItem("fp_new_oauth_user");
+        if (user) {
+          setUser({ ...user, isOAuthUser: false });
+        }
+        setTimeout(() => setVisible(false), 1800);
+      } else {
+        setError(err.message || "Failed to set password. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
