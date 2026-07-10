@@ -62,11 +62,11 @@ const DiscordIcon = ({ size, ...props }: IconProps) => (
 const CURRENT_YEAR = new Date().getFullYear();
 
 const SOCIAL_LINKS: SocialLink[] = [
-  { icon: GithubIcon,   href: "https://github.com/fullprep",            label: "GitHub" },
-  { icon: LinkedinIcon, href: "https://linkedin.com/company/fullprep",  label: "LinkedIn" },
-  { icon: DiscordIcon,  href: "https://discord.gg/fullprep",            label: "Discord" },
-  { icon: YoutubeIcon,  href: "https://youtube.com/c/fullprep",         label: "YouTube" },
-  { icon: TwitterXIcon, href: "https://x.com/fullprep",                 label: "X (Twitter)" },
+  { icon: GithubIcon, href: "https://github.com/fullprep", label: "GitHub" },
+  { icon: LinkedinIcon, href: "https://linkedin.com/company/fullprep", label: "LinkedIn" },
+  { icon: DiscordIcon, href: "https://discord.gg/fullprep", label: "Discord" },
+  { icon: YoutubeIcon, href: "https://youtube.com/c/fullprep", label: "YouTube" },
+  { icon: TwitterXIcon, href: "https://x.com/fullprep", label: "X (Twitter)" },
 ];
 
 const FOOTER_COLUMNS: FooterColumn[] = [
@@ -74,37 +74,38 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Company",
     links: [
       { label: "About Us",    href: "#about" },
-      { label: "Careers",     href: "#" },
-      { label: "Our Team",    href: "#" },
-      { label: "Contact Us",  href: "#contact" },
+      { label: "Features",    href: "#features" },
+      { label: "Careers",     href: "/careers" },
+      { label: "Our Team", href: "/team" },
+      { label: "Contact Us", href: "#contact" },
     ],
   },
   {
     title: "Resources",
     links: [
-      { label: "Problems",       href: "#" },
-      { label: "Contests",       href: "#" },
-      { label: "Learning Paths", href: "#" },
-      { label: "AI Hints",       href: "#" },
-      { label: "Blog",           href: "#" },
+      { label: "Problems", href: "/signup" },
+      { label: "Contests", href: "/signup" },
+      { label: "Learning Paths", href: "/signup" },
+      { label: "AI Hints", href: "/signup" },
+      { label: "Blog", href: "/signup" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Terms & Conditions", href: "#" },
-      { label: "Privacy Policy",     href: "#" },
-      { label: "Cookie Policy",      href: "#" },
-      { label: "Refund Policy",      href: "#" },
+      { label: "Terms & Conditions", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Cookie Policy", href: "/cookie-policy" },
+      { label: "Refund Policy", href: "/refund-policy" },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Help Center",  href: "#" },
-      { label: "FAQs",         href: "#" },
-      { label: "Community",    href: "#" },
-      { label: "Report a Bug", href: "#" },
+      { label: "Help Center", href: "/help" },
+      { label: "FAQs", href: "/faq" },
+      { label: "Community", href: "/community" },
+      { label: "Report a Bug", href: "mailto:support@fullprep.com" },
     ],
   },
 ];

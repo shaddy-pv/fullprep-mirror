@@ -82,11 +82,7 @@ function LearningPathsPage() {
     {
       key: "level",
       header: "Level",
-      cell: (p) => (
-        <span className="text-xs font-semibold text-text-secondary">
-          {p.level}
-        </span>
-      ),
+      cell: (p) => <span className="text-xs font-semibold text-text-secondary">{p.level}</span>,
     },
     {
       key: "actions",
@@ -110,7 +106,9 @@ function LearningPathsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Learning Paths</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            Learning Paths
+          </h1>
           <p className="text-sm text-text-muted">
             {filtered.length} of {data.length} courses
           </p>

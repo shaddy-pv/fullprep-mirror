@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, MessageSquare, MapPin, Send } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface FormData {
@@ -34,8 +35,8 @@ const CONTACT_LINKS: ContactLink[] = [
   {
     icon: Mail,
     label: "Email",
-    display: "support@fullprep.dev",
-    href: "mailto:support@fullprep.dev",
+    display: "shivkush512@gmail.com",
+    href: "mailto:shivkush512@gmail.com",
   },
   {
     icon: MessageSquare,
@@ -78,6 +79,14 @@ const itemVariants = {
 export default function Contact() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const subjectParam = searchParams.get("subject");
+    if (subjectParam) {
+      setFormData((prev) => ({ ...prev, subject: subjectParam }));
+    }
+  }, [searchParams]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,13 +96,22 @@ export default function Contact() {
     []
   );
 
-  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setTimeout(() => {
-      setSubmitted(true);
-      setFormData(INITIAL_FORM);
-    }, 800);
-  }, []);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+      await fetch(`${baseUrl}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+    } catch (err) {
+      console.error("Failed to send contact message", err);
+    }
+
+    setSubmitted(true);
+    setFormData(INITIAL_FORM);
+  }, [formData]);
 
   const resetForm = useCallback(() => setSubmitted(false), []);
 

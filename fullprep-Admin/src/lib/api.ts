@@ -149,7 +149,6 @@ export const api = {
     return r;
   },
 
-
   async listSubmissions(params?: {
     userId?: string;
     problemExternalId?: string;
@@ -181,9 +180,12 @@ export const api = {
   },
 
   async flagSubmission(id: string) {
-    const r = await request<{ data: { isFlagged: boolean }; message: string }>(`/submissions/${id}/flag`, {
-      method: "PATCH",
-    });
+    const r = await request<{ data: { isFlagged: boolean }; message: string }>(
+      `/submissions/${id}/flag`,
+      {
+        method: "PATCH",
+      },
+    );
     return r;
   },
 
@@ -308,6 +310,17 @@ export const api = {
 
   async deleteLearningPath(id: string) {
     await request(`/learning-paths/${id}`, { method: "DELETE" });
+  },
+
+  async getJobs() {
+    return await request<any[]>("/jobs");
+  },
+
+  async createJob(payload: any) {
+    return await request<any>("/jobs", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
 };
 

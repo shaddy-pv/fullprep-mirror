@@ -59,7 +59,6 @@ function CreateProblemPage() {
 
   useEffect(() => {
     if (sourceProblem) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, externalId, createdAt, lastSyncedAt, ...rest } = sourceProblem as any;
       setForm(isEditing ? { ...rest, _id, externalId } : rest);
     }

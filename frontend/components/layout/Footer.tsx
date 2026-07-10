@@ -51,48 +51,48 @@ export default function Footer() {
       title: "Platform",
       links: [
         { label: "Overview", href: "/" },
-        { label: "Problems", href: "/problems" },
-        { label: "Contests", href: "/contests" },
-        { label: "AI Hints", href: "/ai-hints" },
-        { label: "Learning Paths", href: "/learning-paths" },
-        { label: "Submissions", href: "/submissions" },
-        { label: "Leaderboard", href: "/leaderboard" }
+        { label: "Problems", href: "/signup" },
+        { label: "Contests", href: "/signup" },
+        { label: "AI Hints", href: "/signup" },
+        { label: "Learning Paths", href: "/signup" },
+        { label: "Submissions", href: "/signup" },
+        { label: "Leaderboard", href: "/signup" }
       ]
     },
     {
       title: "Resources",
       links: [
-        { label: "Blog", href: "#" },
-        { label: "Documentation", href: "#" },
-        { label: "Editorials", href: "#" },
-        { label: "Roadmap", href: "#" },
-        { label: "Changelog", href: "#" },
-        { label: "Status", href: "#" },
-        { label: "Help Center", href: "#" }
+        { label: "Blog", href: "/signup" },
+        { label: "Documentation", href: "/signup" },
+        { label: "Editorials", href: "/signup" },
+        { label: "Roadmap", href: "/signup" },
+        { label: "Changelog", href: "/signup" },
+        { label: "Status", href: "/signup" },
+        { label: "Help Center", href: "/help" }
       ]
     },
     {
       title: "Community",
       links: [
-        { label: "Discussions", href: "#" },
-        { label: "Discord Server", href: "#" },
-        { label: "Top Contributors", href: "/leaderboard" },
-        { label: "Hall of Fame", href: "#" },
-        { label: "Community Rules", href: "#" },
-        { label: "Events", href: "#" },
-        { label: "Feedback", href: "#" }
+        { label: "Discussions", href: "/community" },
+        { label: "Discord Server", href: "/community" },
+        { label: "Top Contributors", href: "/signup" },
+        { label: "Hall of Fame", href: "/community" },
+        { label: "Community Rules", href: "/community" },
+        { label: "Events", href: "/community" },
+        { label: "Feedback", href: "mailto:support@fullprep.com" }
       ]
     },
     {
       title: "Legal",
       links: [
-        { label: "Privacy Policy", href: "#" },
-        { label: "Terms of Service", href: "#" },
-        { label: "Cookie Policy", href: "#" },
-        { label: "Code of Conduct", href: "#" },
-        { label: "Refund Policy", href: "#" },
-        { label: "DMCA", href: "#" },
-        { label: "Contact Us", href: "#" }
+        { label: "Privacy Policy", href: "/privacy" },
+        { label: "Terms of Service", href: "/terms" },
+        { label: "Cookie Policy", href: "/cookie-policy" },
+        { label: "Code of Conduct", href: "/terms" },
+        { label: "Refund Policy", href: "/refund-policy" },
+        { label: "DMCA", href: "/terms" },
+        { label: "Contact Us", href: "mailto:support@fullprep.com" }
       ]
     }
   ];

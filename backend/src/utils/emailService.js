@@ -13,7 +13,7 @@ import nodemailer from "nodemailer";
  * @param {string} options.subject - Email subject
  * @param {string} options.html - HTML body content
  */
-export const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async ({ to, subject, html, attachments }) => {
   try {
     if (process.env.NODE_ENV === "test" || process.env.FAST_BCRYPT === "true" || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn("⚠️  Email skipped: running in test/dev mode or SMTP credentials missing.");
@@ -38,6 +38,7 @@ export const sendEmail = async ({ to, subject, html }) => {
       to,
       subject,
       html,
+      attachments,
     };
 
     const info = await transporter.sendMail(mailOptions);

@@ -30,6 +30,9 @@ import learningPathRoutes from "./routes/learningPathRoutes.js";
 import contestRoutes from "./routes/contestRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
 
 const app = express();
 
@@ -132,6 +135,9 @@ app.use("/api/learning-paths", learningPathRoutes);
 app.use("/api/contests",      contestRoutes);
 app.use("/api/friends",       friendRoutes);
 app.use("/api/payment",       paymentRoutes);
+app.use("/api/jobs",          jobRoutes);
+app.use("/api/team",          teamRoutes);
+app.use("/api/contact",       contactRoutes);
 
 // ── Fallback 404 Handler ───────────────────────────────────────────────────────────────
 

@@ -12,7 +12,15 @@ export const Route = createFileRoute("/_admin/contests/$id")({
   component: EditContestPage,
 });
 
-const PLATFORMS = ["Codnite", "Codeforces", "LeetCode", "AtCoder", "HackerRank", "CodeChef", "Other"];
+const PLATFORMS = [
+  "Codnite",
+  "Codeforces",
+  "LeetCode",
+  "AtCoder",
+  "HackerRank",
+  "CodeChef",
+  "Other",
+];
 
 function EditContestPage() {
   const { id } = Route.useParams();
@@ -133,7 +141,8 @@ function EditContestPage() {
     return <div className="p-12 text-center text-text-muted">Loading contest details...</div>;
   }
 
-  const inputCls = "w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30";
+  const inputCls =
+    "w-full rounded-lg border border-border-card bg-background/60 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30";
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -198,7 +207,9 @@ function EditContestPage() {
                 className={inputCls}
               >
                 {PLATFORMS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
                 ))}
               </select>
             </label>

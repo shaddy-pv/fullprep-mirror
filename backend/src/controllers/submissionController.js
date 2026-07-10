@@ -250,9 +250,11 @@ export const getSubmissions = async (req, res) => {
 
   const filter = {};
   // Always default to current user's submissions.
-  // Admins can view any user's submissions by passing ?userId=xxx (for admin dashboard).
-  if (req.user.role === "admin" && req.query.userId) {
-    filter.user = req.query.userId;
+  // Admins can view any user's submissions by passing ?userId=xxx, or view all if no userId is provided.
+  if (req.user.role === "admin") {
+    if (req.query.userId) {
+      filter.user = req.query.userId;
+    }
   } else {
     filter.user = req.user._id;
   }

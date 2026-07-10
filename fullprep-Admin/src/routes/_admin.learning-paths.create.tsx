@@ -41,9 +41,12 @@ function CreateLearningPathPage() {
   const filteredProblems = useMemo(() => {
     if (!search.trim()) return [];
     const term = search.toLowerCase();
-    return allProblems.filter((p: any) =>
-      p.name.toLowerCase().includes(term) || p.externalId.toLowerCase().includes(term)
-    ).slice(0, 5);
+    return allProblems
+      .filter(
+        (p: any) =>
+          p.name.toLowerCase().includes(term) || p.externalId.toLowerCase().includes(term),
+      )
+      .slice(0, 5);
   }, [search, allProblems]);
 
   const { mutate, isPending } = useMutation({
@@ -60,7 +63,10 @@ function CreateLearningPathPage() {
   const addModule = () => {
     setForm((prev) => ({
       ...prev,
-      modules: [...prev.modules, { title: `Module ${prev.modules.length + 1}`, description: "", problems: [] }],
+      modules: [
+        ...prev.modules,
+        { title: `Module ${prev.modules.length + 1}`, description: "", problems: [] },
+      ],
     }));
   };
 
@@ -93,7 +99,9 @@ function CreateLearningPathPage() {
   const removeProblemFromModule = (problemId: string, moduleIndex: number) => {
     setForm((prev) => {
       const updated = [...prev.modules];
-      updated[moduleIndex].problems = updated[moduleIndex].problems.filter(id => id !== problemId);
+      updated[moduleIndex].problems = updated[moduleIndex].problems.filter(
+        (id) => id !== problemId,
+      );
       return { ...prev, modules: updated };
     });
   };
@@ -104,7 +112,8 @@ function CreateLearningPathPage() {
     mutate(form);
   };
 
-  const inputCls = "w-full rounded-lg border border-border-card bg-background/60 px-3 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors";
+  const inputCls =
+    "w-full rounded-lg border border-border-card bg-background/60 px-3 py-2 text-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary transition-colors";
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -116,7 +125,9 @@ function CreateLearningPathPage() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Create Learning Path</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            Create Learning Path
+          </h1>
           <p className="text-sm text-text-muted">Build a new premium or free course.</p>
         </div>
       </div>
@@ -131,7 +142,11 @@ function CreateLearningPathPage() {
           }`}
         >
           <div>
-            <div className={`font-semibold ${!form.isPro ? "text-green-500" : "text-text-primary"}`}>Free Course</div>
+            <div
+              className={`font-semibold ${!form.isPro ? "text-green-500" : "text-text-primary"}`}
+            >
+              Free Course
+            </div>
             <div className="text-xs text-text-muted mt-0.5">Available to all users</div>
           </div>
         </button>
@@ -144,7 +159,11 @@ function CreateLearningPathPage() {
           }`}
         >
           <div>
-            <div className={`font-semibold ${form.isPro ? "text-brand-orange" : "text-text-primary"}`}>Premium Course</div>
+            <div
+              className={`font-semibold ${form.isPro ? "text-brand-orange" : "text-text-primary"}`}
+            >
+              Premium Course
+            </div>
             <div className="text-xs text-text-muted mt-0.5">Requires Pro Subscription</div>
           </div>
         </button>
@@ -159,10 +178,14 @@ function CreateLearningPathPage() {
               : "border-border-card bg-surface hover:border-text-muted"
           }`}
         >
-          <BookOpen className={`h-5 w-5 ${form.contentType === "problems" ? "text-brand-primary" : "text-text-muted"}`} />
+          <BookOpen
+            className={`h-5 w-5 ${form.contentType === "problems" ? "text-brand-primary" : "text-text-muted"}`}
+          />
           <div>
             <div className="font-semibold text-text-primary">Learning Path (Problems)</div>
-            <div className="text-xs text-text-muted mt-0.5">Build modules with interactive problems</div>
+            <div className="text-xs text-text-muted mt-0.5">
+              Build modules with interactive problems
+            </div>
           </div>
         </button>
         <button
@@ -173,10 +196,14 @@ function CreateLearningPathPage() {
               : "border-border-card bg-surface hover:border-text-muted"
           }`}
         >
-          <FileText className={`h-5 w-5 ${form.contentType === "notes" ? "text-brand-primary" : "text-text-muted"}`} />
+          <FileText
+            className={`h-5 w-5 ${form.contentType === "notes" ? "text-brand-primary" : "text-text-muted"}`}
+          />
           <div>
             <div className="font-semibold text-text-primary">Markdown Notes</div>
-            <div className="text-xs text-text-muted mt-0.5">Provide a rich text/markdown course</div>
+            <div className="text-xs text-text-muted mt-0.5">
+              Provide a rich text/markdown course
+            </div>
           </div>
         </button>
       </div>
@@ -193,7 +220,9 @@ function CreateLearningPathPage() {
               <input
                 required
                 value={form.id}
-                onChange={(e) => updateForm("id", e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                onChange={(e) =>
+                  updateForm("id", e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                }
                 className={inputCls}
                 placeholder="e.g. top-100-system-design"
               />
@@ -280,7 +309,10 @@ function CreateLearningPathPage() {
             </div>
 
             {form.modules.map((mod, modIdx) => (
-              <div key={modIdx} className="border border-border-card rounded-xl p-4 bg-background/30 space-y-4">
+              <div
+                key={modIdx}
+                className="border border-border-card rounded-xl p-4 bg-background/30 space-y-4"
+              >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 space-y-3">
                     <input
@@ -309,16 +341,21 @@ function CreateLearningPathPage() {
 
                 <div className="mt-4 pt-4 border-t border-border-card/50">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-semibold text-text-secondary uppercase">Problems ({mod.problems.length})</span>
+                    <span className="text-xs font-semibold text-text-secondary uppercase">
+                      Problems ({mod.problems.length})
+                    </span>
                     <button
                       type="button"
-                      onClick={() => { setActiveModuleIndex(modIdx); setIsModalOpen(true); }}
+                      onClick={() => {
+                        setActiveModuleIndex(modIdx);
+                        setIsModalOpen(true);
+                      }}
                       className="text-xs font-medium text-brand-primary hover:underline flex items-center gap-1"
                     >
                       <Plus className="h-3 w-3" /> Create New Problem
                     </button>
                   </div>
-                  
+
                   {/* Search Existing */}
                   <div className="relative mb-3">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-text-muted" />
@@ -354,7 +391,10 @@ function CreateLearningPathPage() {
                     {mod.problems.map((pid, idx) => {
                       const prob = allProblems.find((p: any) => p.externalId === pid);
                       return (
-                        <div key={pid} className="flex items-center justify-between p-2.5 rounded-lg border border-border-card bg-background/50">
+                        <div
+                          key={pid}
+                          className="flex items-center justify-between p-2.5 rounded-lg border border-border-card bg-background/50"
+                        >
                           <div className="flex items-center gap-3">
                             <span className="text-xs font-mono text-text-muted">{idx + 1}.</span>
                             <span className="font-medium text-sm">{prob ? prob.name : pid}</span>
@@ -398,7 +438,10 @@ function CreateLearningPathPage() {
 
       {isModalOpen && activeModuleIndex !== null && (
         <InlineProblemModal
-          onClose={() => { setIsModalOpen(false); setActiveModuleIndex(null); }}
+          onClose={() => {
+            setIsModalOpen(false);
+            setActiveModuleIndex(null);
+          }}
           onSuccess={(newProblemId) => {
             const problem = allProblems.find((p: any) => p._id === newProblemId);
             addProblemToModule(problem?.externalId || newProblemId, activeModuleIndex);

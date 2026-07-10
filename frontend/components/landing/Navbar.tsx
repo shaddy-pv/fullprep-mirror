@@ -15,9 +15,10 @@ interface NavItem {
 // ─── Static data hoisted to module scope (G2: zero re-computation on render) ───
 const NAV_ITEMS: NavItem[] = [
   { label: "Home",         href: "#home",         id: "home" },
-  { label: "Why FullPrep", href: "#why-fullprep",  id: "why-fullprep" },
-  { label: "About",        href: "#about",         id: "about" },
-  { label: "Contact",      href: "#contact",       id: "contact" },
+  { label: "Why FullPrep", href: "#why-fullprep", id: "why-fullprep" },
+  { label: "Features",     href: "#features",     id: "features" },
+  { label: "About Us",     href: "#about",        id: "about" },
+  { label: "Contact",      href: "#contact",      id: "contact" },
 ];
 
 export default function Navbar() {
@@ -101,11 +102,10 @@ export default function Navbar() {
               <button
                 key={item.id}
                 onClick={() => scrollTo(item.id)}
-                className={`relative flex items-center text-sm font-medium transition-colors duration-200 cursor-pointer h-full ${
-                  activeSection === item.id
+                className={`relative flex items-center text-sm font-medium transition-colors duration-200 cursor-pointer h-full ${activeSection === item.id
                     ? "text-[#FF6B00]"
                     : "text-[#0F172A]/70 dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white"
-                }`}
+                  }`}
               >
                 <span>{item.label}</span>
                 {activeSection === item.id && (
@@ -128,7 +128,7 @@ export default function Navbar() {
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <a 
+            <a
               href="/login"
               className="text-sm font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white px-4 py-2 cursor-pointer transition-colors"
             >
@@ -177,18 +177,17 @@ export default function Navbar() {
                 <button
                   key={item.id}
                   onClick={() => scrollTo(item.id)}
-                  className={`block w-full text-left py-3 px-4 rounded-lg text-base font-medium transition-colors cursor-pointer ${
-                    activeSection === item.id
+                  className={`block w-full text-left py-3 px-4 rounded-lg text-base font-medium transition-colors cursor-pointer ${activeSection === item.id
                       ? "bg-[#FF6B00]/10 text-[#FF6B00]"
                       : "text-[#0F172A]/70 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#0F172A] dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </button>
               ))}
 
               <div className="pt-4 border-t border-gray-200/20 dark:border-white/8 flex flex-col space-y-3 px-4">
-                <a 
+                <a
                   href="/login"
                   className="w-full text-center py-2.5 text-base font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white transition-colors cursor-pointer"
                 >

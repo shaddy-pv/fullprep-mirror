@@ -593,13 +593,19 @@ function ProblemDetailsPage() {
                 <button
                   className="w-full py-2.5 rounded-lg text-sm font-semibold border border-border-card bg-background/50 hover:bg-background transition-colors flex justify-center items-center gap-2 text-text-primary disabled:opacity-50"
                   onClick={() => {
-                    if (confirm(`Are you sure you want to rejudge all submissions for ${p.name}? This will reset them to PENDING.`)) {
+                    if (
+                      confirm(
+                        `Are you sure you want to rejudge all submissions for ${p.name}? This will reset them to PENDING.`,
+                      )
+                    ) {
                       rejudgeMutation.mutate();
                     }
                   }}
                   disabled={rejudgeMutation.isPending}
                 >
-                  <RefreshCcw className={`h-4 w-4 ${rejudgeMutation.isPending ? "animate-spin" : ""}`} /> 
+                  <RefreshCcw
+                    className={`h-4 w-4 ${rejudgeMutation.isPending ? "animate-spin" : ""}`}
+                  />
                   {rejudgeMutation.isPending ? "Rejudging..." : "Trigger Rejudge"}
                 </button>
 

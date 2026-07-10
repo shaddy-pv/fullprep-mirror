@@ -13,6 +13,7 @@ import {
   ChevronsRight,
   X,
   Trophy,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar, useAuth } from "@/store/admin";
@@ -50,6 +51,11 @@ const NAV: Array<{
     to: "/learning-paths",
     label: "Learning Paths",
     icon: BookOpen,
+  },
+  {
+    to: "/jobs",
+    label: "Jobs",
+    icon: Briefcase,
   },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/problems/sync", label: "Sync Tool", icon: RefreshCcw },

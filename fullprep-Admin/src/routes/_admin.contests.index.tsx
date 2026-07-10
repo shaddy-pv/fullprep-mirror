@@ -50,9 +50,7 @@ function ContestsPage() {
     {
       key: "problems",
       header: "Problems",
-      cell: (c) => (
-        <span className="text-text-secondary">{c.problems?.length || 0}</span>
-      ),
+      cell: (c) => <span className="text-text-secondary">{c.problems?.length || 0}</span>,
     },
     {
       key: "startTime",
@@ -68,9 +66,7 @@ function ContestsPage() {
       key: "endTime",
       header: "End Time",
       cell: (c) => (
-        <span className="text-xs text-text-secondary">
-          {new Date(c.endTime).toLocaleString()}
-        </span>
+        <span className="text-xs text-text-secondary">{new Date(c.endTime).toLocaleString()}</span>
       ),
       sortValue: (c) => new Date(c.endTime),
     },

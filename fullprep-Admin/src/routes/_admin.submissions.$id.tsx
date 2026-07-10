@@ -66,7 +66,7 @@ function SubmissionDetailPage() {
     },
     onError: (err: any) => {
       alert("Failed to flag submission: " + err.message);
-    }
+    },
   });
 
   if (isLoading)
@@ -618,7 +618,9 @@ function SubmissionDetailPage() {
                   onClick={() => flagMutation.mutate()}
                   disabled={flagMutation.isPending}
                 >
-                  <AlertTriangle className={`h-4 w-4 ${flagMutation.isPending ? "animate-pulse" : ""}`} /> 
+                  <AlertTriangle
+                    className={`h-4 w-4 ${flagMutation.isPending ? "animate-pulse" : ""}`}
+                  />
                   {s.isFlagged ? "Unflag Submission" : "Flag Suspicious Activity"}
                 </button>
 
