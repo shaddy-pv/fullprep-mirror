@@ -31,8 +31,8 @@ router.post("/run",  runCode);      // Run button — public tests only (synchro
 router.post("/",     submitCode);   // Submit button — hidden tests (async + poll)
 router.get("/",      getSubmissions);
 router.get("/:id",   getSubmission);
-router.post("/:id/rejudge", restrictTo('admin'), rejudgeSubmission);
-router.patch("/:id/flag", restrictTo('admin'), flagSubmission);
-router.delete("/:id", restrictTo('admin'), deleteSubmission);
+router.post("/:id/rejudge", restrictTo('admin', 'mentor'), rejudgeSubmission);
+router.patch("/:id/flag", restrictTo('admin', 'mentor'), flagSubmission);
+router.delete("/:id", restrictTo('admin', 'mentor'), deleteSubmission);
 
 export default router;

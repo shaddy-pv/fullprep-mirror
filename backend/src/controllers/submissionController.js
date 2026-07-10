@@ -250,8 +250,8 @@ export const getSubmissions = async (req, res) => {
 
   const filter = {};
   // Always default to current user's submissions.
-  // Admins can view any user's submissions by passing ?userId=xxx, or view all if no userId is provided.
-  if (req.user.role === "admin") {
+  // Admins and Mentors can view any user's submissions by passing ?userId=xxx, or view all if no userId is provided.
+  if (req.user.role === "admin" || req.user.role === "mentor") {
     if (req.query.userId) {
       filter.user = req.query.userId;
     }
