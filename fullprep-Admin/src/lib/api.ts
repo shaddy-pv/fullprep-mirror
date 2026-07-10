@@ -48,9 +48,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password: _password }),
     });
-    if (r.user.role !== "admin") {
+    if (r.user.role !== "admin" && r.user.role !== "mentor") {
       setToken(null);
-      throw new Error("Access denied. Admin privileges required.");
+      throw new Error("Access denied. Admin or Mentor privileges required.");
     }
     setToken(r.token);
     return r;
