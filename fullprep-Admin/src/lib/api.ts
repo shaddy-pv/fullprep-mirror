@@ -70,7 +70,7 @@ export const api = {
   },
 
   async listUsers() {
-    const r = await request<{ data: AdminUser[] }>("/users?limit=1000");
+    const r = await request<{ data: AdminUser[] }>("/users?limit=10000");
     return r.data;
   },
 
