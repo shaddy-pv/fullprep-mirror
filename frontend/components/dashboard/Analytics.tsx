@@ -76,7 +76,7 @@ export default function Analytics() {
       <ChartCard />
 
       {/* Topic Strength Card */}
-      <DashboardCard className="h-[230px] p-5 flex flex-col justify-between">
+      <DashboardCard className="h-auto md:h-[230px] p-4 md:p-5 flex flex-col justify-between">
         <SectionHeader title="Topic Strength" />
 
         <div className="flex flex-col gap-[12.5px] mt-2">

@@ -26,14 +26,14 @@ export default function DashboardPage() {
       {/* Lower Body: Problems Table (Left) + Analytics Sidebar (Right) */}
       <SectionWrapper>
         {/* Left Column: Problems Table */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full lg:flex-1 min-w-0">
           <ErrorBoundary>
             <ProblemsTable />
           </ErrorBoundary>
         </div>
 
         {/* Right Column: Analytics Charts & Topic Strength */}
-        <div className="shrink-0">
+        <div className="shrink-0 w-full min-w-0 lg:w-auto">
           <ErrorBoundary>
             <Analytics />
           </ErrorBoundary>

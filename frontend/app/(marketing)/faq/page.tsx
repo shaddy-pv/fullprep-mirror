@@ -18,7 +18,7 @@ export default function FaqPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#050816]">
       <Navbar />
-      <main className="flex-grow pt-20">
+      <main className="flex-grow">
         <PremiumPageWrapper title="Frequently Asked Questions" description="Everything you need to know about the product and billing.">
           <div className="max-w-3xl mx-auto space-y-4">
             {faqs.map((faq, index) => (

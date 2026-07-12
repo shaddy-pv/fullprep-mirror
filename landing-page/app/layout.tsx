@@ -17,6 +17,18 @@ export const metadata: Metadata = {
   title: "FullPrep - Crack Placements. Master DSA. Build Real Skills.",
   description: "FullPrep helps you learn, practice, and master Data Structures and Algorithms with AI-powered hints, contests, and real-time progress tracking.",
   keywords: ["DSA", "Data Structures", "Algorithms", "Interview Prep", "Coding Contests", "AI Hints", "LeetCode", "Placement Prep"],
+  appleWebApp: {
+    title: "FullPrep",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-96x96.png?v=7", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg?v=7", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico?v=7",
+    apple: "/apple-touch-icon.png?v=7",
+  },
+  manifest: "/site.webmanifest?v=7",
 };
 
 export default function RootLayout({

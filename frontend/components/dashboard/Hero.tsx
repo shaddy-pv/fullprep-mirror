@@ -13,7 +13,7 @@ export default function Hero() {
   const firstName = user?.name ? user.name.split(" ")[0] : "Coder";
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#fffbf8] via-[#fffefc] to-white dark:from-[#111827] dark:via-[#161f30] dark:to-[#111827] border border-border-card rounded-[24px] p-8 flex items-center justify-between shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] relative overflow-hidden h-[240px] shrink-0 transition-colors duration-300">
+    <div className="w-full min-w-0 bg-gradient-to-r from-[#fffbf8] via-[#fffefc] to-white dark:from-[#111827] dark:via-[#161f30] dark:to-[#111827] border border-border-card rounded-[24px] p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] relative overflow-hidden h-auto md:h-[240px] shrink-0 transition-colors duration-300">
       {/* Background Soft Glows */}
       <div className="absolute top-0 right-0 w-[450px] h-[300px] bg-gradient-to-br from-[#ffece0] via-[#f5edff] to-transparent dark:from-brand-orange/8 dark:via-[#7c3aed]/5 opacity-60 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20" />
 
@@ -26,11 +26,11 @@ export default function Hero() {
           Let&apos;s continue your coding journey and build something amazing today.
         </p>
 
-        <div className="flex items-center gap-4 mt-6">
+        <div className="flex flex-col md:flex-row md:flex-wrap items-center gap-3 md:gap-4 mt-5 md:mt-6 w-full">
           {/* Start Solving Button */}
           <Button 
             variant="primary" 
-            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.55),_0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)]"
+            className="py-3 w-full md:w-auto cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.55),_0_6px_16px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.35)]"
             onClick={() => router.push("/problems")}
           >
             <span>Start Solving</span>
@@ -40,7 +40,7 @@ export default function Hero() {
           {/* Join Contest Button */}
           <Button 
             variant="secondary" 
-            className="py-3 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-[2px] active:scale-[0.98] hover:border-brand-orange/40 hover:shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.18)]"
+            className="py-3 w-full md:w-auto cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:-translate-y-[2px] active:scale-[0.98] hover:border-brand-orange/40 hover:shadow-[0_0_15px_rgba(var(--brand-accent-rgb, 255, 106, 0),0.18)]"
             onClick={() => router.push("/contests")}
           >
             <span>Join Contest</span>
@@ -51,7 +51,7 @@ export default function Hero() {
 
       {/* Right: State-of-the-Art Premium 3D-Style Illustration */}
       <div 
-        className="relative w-[380px] h-[190px] flex items-center justify-center select-none z-10 mr-2"
+        className="hidden md:flex relative w-[380px] h-[190px] items-center justify-center select-none z-10 mr-2"
         style={{ perspective: "1200px" }}
       >
         {/* Soft Radial Ambient Glow */}

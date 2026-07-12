@@ -58,7 +58,7 @@ export default function ProblemsTable() {
     fetchData();
   }, []);
 
-  const tabs = ["Recent Problems", "Upcoming Contests", "Recommended for You"];
+  const tabs = ["Recent Problems", "Upcoming Contests", "Recommended"];
 
   const getDisplayedContent = () => {
     if (activeTab === "Recent Problems") {
@@ -110,17 +110,17 @@ export default function ProblemsTable() {
   };
 
   return (
-    <DashboardCard className="h-[490px] p-6 flex flex-col justify-between">
-      <div>
+    <DashboardCard className="h-auto md:h-[490px] p-4 md:p-6 flex flex-col justify-between">
+      <div className="flex flex-col w-full min-w-0">
         {/* Table Tabs Header */}
-        <div className="flex border-b border-border-card mb-4 gap-6">
+        <div className="flex border-b border-border-card mb-4 gap-4 md:gap-6 overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-1 w-full min-w-0 pr-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab;
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-[14px] font-semibold tracking-[-0.01em] relative cursor-pointer transition-colors duration-200 ${
+                className={`pb-3 text-[13px] md:text-[14px] font-semibold tracking-[-0.01em] relative cursor-pointer transition-colors duration-200 shrink-0 ${
                   isActive ? "text-brand-orange" : "text-text-secondary hover:text-text-primary"
                 }`}
               >

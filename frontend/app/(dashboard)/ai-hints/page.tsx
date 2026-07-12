@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { 
   Sparkles, 
   Send, 
@@ -197,7 +198,7 @@ export default function AIHintsPage() {
   };
 
   return (
-    <div className="h-auto lg:h-[calc(100vh-124px)] flex flex-col overflow-y-auto lg:overflow-hidden w-full max-w-[1300px] mx-auto select-none font-sans">
+    <div className="h-auto lg:h-[calc(100vh-124px)] flex flex-col overflow-y-visible lg:overflow-hidden w-full max-w-[1300px] mx-auto px-2 lg:px-0 pb-[120px] lg:pb-0 select-none font-sans">
       
       {/* Top Header Row (Strict mockup alignment) */}
       <div className="flex items-center justify-between gap-4 mb-4 shrink-0">
@@ -254,19 +255,19 @@ export default function AIHintsPage() {
       </div>
 
       {/* Viewport-Locked Split Section (Absolutely stable, no overflow layout jumping) */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-5 items-start w-full overflow-y-auto lg:overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-8 lg:gap-5 items-start w-full overflow-y-visible lg:overflow-hidden">
         
         {/* Left Column: Chat Conversation Card (Consolidated single dashboard block) */}
-        <div className="flex-1 min-w-0 w-full h-[500px] lg:h-full flex flex-col bg-white dark:bg-[#11131c] border border-border-card rounded-[24px] overflow-hidden shadow-sm">
+        <div className="flex-1 min-w-0 w-full min-h-[500px] h-auto lg:h-full flex flex-col bg-white dark:bg-[#11131c] border border-border-card rounded-[24px] overflow-hidden shadow-sm">
           
           {/* Chat scroll box (min-h-0 and flex-1 creates isolated scrollable container) */}
-          <div className="flex-1 overflow-y-auto p-5 md:p-6 flex flex-col gap-6 scrollbar min-h-0">
+          <div className="flex-1 overflow-y-visible lg:overflow-y-auto p-4 md:p-6 flex flex-col gap-6 scrollbar min-h-0">
             {messages.map((msg, idx) => {
               const isUser = msg.sender === "user";
               return (
                 <div 
                   key={msg._id || idx}
-                  className={`flex gap-4 max-w-[85%] text-left ${
+                  className={`flex gap-3 md:gap-4 max-w-[95%] md:max-w-[85%] text-left ${
                     isUser ? "self-end flex-row-reverse" : "self-start"
                   }`}
                 >
@@ -299,7 +300,7 @@ export default function AIHintsPage() {
                     }`}>
                       <span>{isUser ? "YOU" : "FULLPREP AI"}</span>
                       <span>•</span>
-                      <span>{msg.timestamp}</span>
+                      <span>{msg.timestamp.includes("T") ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : msg.timestamp}</span>
                     </div>
 
                     {/* Chat Bubble Body (mockup styled user amber bubble) */}
@@ -308,7 +309,22 @@ export default function AIHintsPage() {
                         ? "bg-brand-orange/5 border border-brand-orange/20 text-brand-orange dark:text-[#ffece0] rounded-tr-none" 
                         : "bg-[#fcfcfa] dark:bg-[#0f1118]/60 border border-border-card text-text-primary rounded-tl-none"
                     }`}>
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                      ) : (
+                        <ReactMarkdown
+                          components={{
+                            ul: ({node, ...props}) => <ul className="list-disc pl-5 space-y-4 my-4" {...props} />,
+                            ol: ({node, ...props}) => <ol className="list-decimal pl-5 space-y-4 my-4" {...props} />,
+                            li: ({node, ...props}) => <li className="pl-1 leading-relaxed" {...props} />,
+                            p: ({node, ...props}) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
+                            strong: ({node, ...props}) => <strong className="font-bold text-text-primary" {...props} />,
+                            h3: ({node, ...props}) => <h3 className="text-[15px] font-bold mt-5 mb-3 text-text-primary" {...props} />,
+                          }}
+                        >
+                          {msg.text}
+                        </ReactMarkdown>
+                      )}
                     </div>
 
                     {/* Expandable Approach Section (AI Only) */}
@@ -573,7 +589,7 @@ export default function AIHintsPage() {
         </div>
 
         {/* Right Sidebar Column with strict width constraints preventing collapse, scrollable independently */}
-        <div className="w-full lg:w-[380px] shrink-0 h-auto lg:h-full overflow-y-visible lg:overflow-y-auto flex flex-col gap-5 pr-1 pb-4 scrollbar">
+        <div className="w-full lg:w-[380px] shrink-0 h-auto lg:h-full overflow-y-visible lg:overflow-y-auto flex flex-col gap-6 lg:gap-5 pr-1 pb-4 scrollbar">
           
           {/* AI Assistant Stats Card */}
           <DashboardCard className="p-5 flex flex-col justify-between h-[210px] shadow-sm select-none text-left shrink-0">

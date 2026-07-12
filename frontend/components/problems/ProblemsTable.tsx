@@ -155,7 +155,7 @@ export default function ProblemsTable({
   return (
     <DashboardCard className="p-5 flex flex-col justify-between shadow-sm select-none min-w-0 transition-colors duration-300 h-[831px]">
       {/* Table grid container */}
-      <div className="overflow-x-auto overflow-y-auto w-full -mx-4 px-4 flex-1 min-h-0 custom-scrollbar">
+      <div className="overflow-x-auto overflow-y-auto -mx-4 px-4 flex-1 min-h-0 min-w-0 custom-scrollbar">
         <table className="w-full text-left border-collapse min-w-[800px] align-middle">
           {/* Header Row */}
           <thead>

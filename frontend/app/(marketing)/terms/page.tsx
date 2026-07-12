@@ -8,7 +8,7 @@ export default function termsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#050816]">
       <Navbar />
-      <main className="flex-grow pt-20">
+      <main className="flex-grow">
         <PremiumPageWrapper title="Terms of Service" description="Please read these terms carefully before using FullPrep.">
           <div className="bg-white/50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded-[32px] p-8 md:p-12 shadow-xl backdrop-blur-sm">
             

@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Navbar />
 
         {/* Scrollable Dashboard Body - Theme Adaptive Content */}
-        <main className="flex-1 overflow-y-auto px-8 py-6 bg-bg-page text-text-primary transition-colors duration-300">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full min-w-0 px-4 md:px-8 pt-6 pb-[120px] md:py-6 bg-bg-page text-text-primary transition-colors duration-300">
           {children}
         </main>
       </div>

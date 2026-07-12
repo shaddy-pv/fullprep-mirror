@@ -19,7 +19,7 @@ export default function PremiumPageWrapper({ children, title, description }: Pre
         <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] bg-purple-500/10 dark:bg-purple-500/15 blur-[120px] rounded-full mix-blend-screen" />
       </div>
 
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {title && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

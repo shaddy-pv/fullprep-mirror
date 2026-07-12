@@ -48,6 +48,24 @@ const getRole = (name: string) => {
   return "Software Engineer";
 };
 
+const getSocialLinks = (name: string, originalLinks: any) => {
+  if (name.toLowerCase().includes("shadan")) {
+    return {
+      ...originalLinks,
+      github: "https://github.com/shaddy-pv",
+      linkedin: "https://www.linkedin.com/in/md-shadan-siddiqui/"
+    };
+  }
+  if (name.toLowerCase().includes("khushi")) {
+    return {
+      ...originalLinks,
+      github: "https://github.com/khushi897920-lang",
+      linkedin: "https://www.linkedin.com/in/khushii-singh01/"
+    };
+  }
+  return originalLinks;
+};
+
 export default function TeamPage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +105,7 @@ export default function TeamPage() {
     <div className="flex flex-col min-h-screen bg-white dark:bg-[#050816]">
       <Navbar />
 
-      <main className="flex-grow pt-20">
+      <main className="flex-grow">
         <PremiumPageWrapper 
           title="Meet Our Team" 
           description="We are a passionate group of developers dedicated to building the best platform for your technical interview preparation."
@@ -104,7 +122,9 @@ export default function TeamPage() {
               animate="show"
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"
             >
-              {team.map((member) => (
+              {team.map((member) => {
+                const social = getSocialLinks(member.name, member.socialLinks);
+                return (
                 <motion.div 
                   key={member._id}
                   variants={itemVariants}
@@ -120,25 +140,26 @@ export default function TeamPage() {
                     <p className="text-sm font-medium text-orange-500 dark:text-orange-400 mb-6">{getRole(member.name)}</p>
                     
                     <div className="flex items-center justify-center gap-4">
-                      {member.socialLinks?.github && (
-                        <a href={member.socialLinks.github} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                      {social?.github && (
+                        <a href={social.github} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                           <GithubIcon className="w-4 h-4" />
                         </a>
                       )}
-                      {member.socialLinks?.linkedin && (
-                        <a href={member.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-[#0077B5] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                      {social?.linkedin && (
+                        <a href={social.linkedin} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-[#0077B5] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
                           <LinkedinIcon className="w-4 h-4" />
                         </a>
                       )}
-                      {member.socialLinks?.twitter && (
-                        <a href={member.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-[#1DA1F2] hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all">
+                      {social?.twitter && (
+                        <a href={social.twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 hover:text-[#1DA1F2] hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all">
                           <TwitterIcon className="w-4 h-4" />
                         </a>
                       )}
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </motion.div>
           ) : (
             <div className="text-center py-20">

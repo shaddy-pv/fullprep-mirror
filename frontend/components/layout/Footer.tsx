@@ -80,7 +80,7 @@ export default function Footer() {
         { label: "Hall of Fame", href: "/community" },
         { label: "Community Rules", href: "/community" },
         { label: "Events", href: "/community" },
-        { label: "Feedback", href: "mailto:support@fullprep.com" }
+        { label: "Feedback", href: "mailto:shivkush512@gmail.com" }
       ]
     },
     {
@@ -92,7 +92,7 @@ export default function Footer() {
         { label: "Code of Conduct", href: "/terms" },
         { label: "Refund Policy", href: "/refund-policy" },
         { label: "DMCA", href: "/terms" },
-        { label: "Contact Us", href: "mailto:support@fullprep.com" }
+        { label: "Contact Us", href: "mailto:shivkush512@gmail.com" }
       ]
     }
   ];
@@ -158,6 +158,8 @@ export default function Footer() {
                     <li key={lIdx}>
                       <Link 
                         href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="inline-block text-[13px] font-medium text-slate-500 dark:text-white/60 hover:text-brand-orange dark:hover:text-brand-orange hover:translate-x-1 transition-all duration-300 ease-out leading-none"
                       >
                         {link.label}

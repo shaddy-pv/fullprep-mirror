@@ -13,8 +13,47 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FullPrep - Premium Coding Dashboard",
-  description: "Recreated pixel-perfect FullPrep coding dashboard",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  title: "FullPrep - Premium Coding Platform",
+  description: "The ultimate platform for coding interviews and competitive programming. Practice problems, get AI-powered hints, and track your progress.",
+  openGraph: {
+    title: "FullPrep - Premium Coding Platform",
+    description: "The ultimate platform for coding interviews and competitive programming. Practice problems, get AI-powered hints, and track your progress.",
+    url: "/",
+    siteName: "FullPrep",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "FullPrep Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FullPrep - Premium Coding Platform",
+    description: "The ultimate platform for coding interviews and competitive programming. Practice problems, get AI-powered hints, and track your progress.",
+    images: ["/og-image.png"],
+  },
+  appleWebApp: {
+    title: "FullPrep",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-96x96.png?v=7", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg?v=7", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico?v=7",
+    apple: "/apple-touch-icon.png?v=7",
+  },
+  manifest: "/site.webmanifest",
+};
+
+export const viewport = {
+  themeColor: "#050816",
 };
 
 export default function RootLayout({

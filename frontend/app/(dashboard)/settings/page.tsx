@@ -527,7 +527,7 @@ export default function SettingsPage() {
     }, 50);
   };
 
-  const cardBase = cn(DESIGN_SYSTEM_TOKENS.surfaces.card, DESIGN_SYSTEM_TOKENS.surfaces.cardHover, "p-6 flex flex-col w-full text-left gap-6 rounded-[20px]");
+  const cardBase = cn(DESIGN_SYSTEM_TOKENS.surfaces.card, DESIGN_SYSTEM_TOKENS.surfaces.cardHover, "p-4 lg:p-6 flex flex-col w-full text-left gap-4 lg:gap-6 rounded-[20px]");
   const inputStyle = cn(DESIGN_SYSTEM_TOKENS.forms.input, activeAccent.focusGlow);
   const textareaStyle = cn(DESIGN_SYSTEM_TOKENS.forms.textarea, activeAccent.focusGlow);
   const labelStyle = DESIGN_SYSTEM_TOKENS.typography.label;
@@ -537,13 +537,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <ContentContainer className="pb-16 min-h-screen text-text-primary font-sans antialiased select-none max-w-[1600px] mx-auto px-6 xl:px-8 relative overflow-x-hidden">
+    <ContentContainer className="pb-24 lg:pb-16 min-h-screen text-text-primary font-sans antialiased select-none max-w-[1600px] mx-auto px-4 lg:px-6 xl:px-8 relative overflow-x-hidden">
       {/* Decorative Radial Glows for Premium Aesthetic in both Light and Dark modes */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-orange/5 dark:bg-brand-orange/[0.03] rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-purple-500/5 dark:bg-purple-500/[0.02] rounded-full blur-3xl pointer-events-none -z-10" />
       
       {/* Top Header Panel */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4 mb-8 text-left border-b border-slate-900/[0.06] dark:border-white/[0.04] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-4 mb-5 lg:mb-8 text-left border-b border-slate-900/[0.06] dark:border-white/[0.04] pb-4 lg:pb-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-[#111827] dark:text-white flex items-center gap-2.5">
             <Settings className="w-7 h-7 text-brand-orange" />
@@ -561,10 +561,10 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-[28px] w-full items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-5 lg:gap-[28px] w-full items-start">
         
         {/* LEFT COLUMN: Premium Sticky Settings Navigation Panel */}
-        <div className="w-full lg:w-[320px] bg-white dark:bg-[#0a0c14]/88 border border-slate-900/[0.08] dark:border-white/[0.05] backdrop-blur-[16px] rounded-[28px] p-6 shadow-lg flex flex-col gap-[20px] text-left shrink-0 lg:sticky lg:top-[96px] h-fit self-start z-30 pb-8">
+        <div className="w-full lg:w-[320px] bg-white dark:bg-[#0a0c14]/88 border border-slate-900/[0.08] dark:border-white/[0.05] backdrop-blur-[16px] rounded-[20px] lg:rounded-[28px] p-4 lg:p-6 shadow-lg flex flex-col gap-4 lg:gap-[20px] text-left shrink-0 lg:sticky lg:top-[96px] h-fit self-start z-30 pb-6 lg:pb-8">
           <div>
             <span className="text-[10px] text-slate-400 dark:text-white/45 font-bold tracking-[0.22em] uppercase block mb-[18px] leading-none select-none">
               SETTINGS PANEL
@@ -1511,7 +1511,7 @@ export default function SettingsPage() {
                   <span className="text-[11px] text-slate-500 dark:text-text-secondary/50 leading-none font-medium">Wipe your profile and solutions repository permanently.</span>
                 </div>
                 <a
-                  href={`mailto:support@fullprep.com?subject=Account Deletion Request - ${user?.email}&body=Hi Support Team,%0D%0A%0D%0AI would like to request the deletion of my FullPrep account. %0D%0A%0D%0AReason for deletion:%0D%0A[Please type your reason here]%0D%0A%0D%0AAccount Details:%0D%0AEmail: ${user?.email}%0D%0AName: ${user?.name}%0D%0A`}
+                  href={`mailto:shivkush512@gmail.com?subject=Account Deletion Request - ${user?.email}&body=Hi Support Team,%0D%0A%0D%0AI would like to request the deletion of my FullPrep account. %0D%0A%0D%0AReason for deletion:%0D%0A[Please type your reason here]%0D%0A%0D%0AAccount Details:%0D%0AEmail: ${user?.email}%0D%0AName: ${user?.name}%0D%0A`}
                   className="bg-red-500/15 hover:bg-red-500/20 border border-red-500/30 text-red-500 text-[11px] font-bold rounded-lg px-4.5 py-2.5 transition-all cursor-pointer h-[32px] leading-none shrink-0 self-center flex items-center justify-center"
                 >
                   Request Deletion

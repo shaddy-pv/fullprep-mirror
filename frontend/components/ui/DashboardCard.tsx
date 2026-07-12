@@ -26,7 +26,7 @@ export default function DashboardCard({
       <motion.div
         whileHover={{ y: -3, transition: { duration: 0.15 } }}
         className={cn(
-          "bg-card-bg border border-border-card rounded-[24px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-all duration-300 cursor-pointer",
+          "w-full min-w-0 bg-card-bg border border-border-card rounded-[24px] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-all duration-300 cursor-pointer",
           className
         )}
         onClick={onClick}
@@ -41,7 +41,7 @@ export default function DashboardCard({
   return (
     <div
       className={cn(
-        "bg-card-bg border border-border-card rounded-[24px] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-all duration-300",
+        "w-full min-w-0 bg-card-bg border border-border-card rounded-[24px] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.35)] transition-all duration-300",
         className
       )}
       onClick={onClick}

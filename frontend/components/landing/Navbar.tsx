@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthStore } from "@/store/authStore";
+import { usePathname } from "next/navigation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -22,7 +24,10 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export default function Navbar() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const isLandingPage = pathname === "/";
   // G3: mounted guard prevents hydration mismatch on theme-dependent UI
   const [mounted, setMounted] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -84,40 +89,47 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full transition-all duration-300 border-b border-gray-200/20 bg-[#FAFAFA]/80 dark:bg-[#050816]/80 backdrop-blur-md dark:border-white/8">
       <nav aria-label="Main navigation" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between relative">
 
           {/* Logo */}
-          <div className="flex items-center cursor-pointer" onClick={() => scrollTo("home")}>
-            <span className="flex items-center text-xl font-bold tracking-tight text-[#0F172A] dark:text-white font-sans">
-              <span className="mr-2 flex items-center justify-center font-mono text-[#FF6B00] font-bold text-2xl">
-                &lt;/&gt;
-              </span>
-              FullPrep
-            </span>
+          <div 
+            className={`flex items-center cursor-pointer ${!isLandingPage ? "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10" : ""}`} 
+            onClick={() => isLandingPage ? scrollTo("home") : window.location.href = "/?show_landing=true"}
+          >
+            {theme === "dark" ? (
+              <img src="/logo-horizontal-dark.png" alt="FullPrep Logo" className={isLandingPage ? "h-[76px] w-auto" : "h-[110px] w-auto"} />
+            ) : (
+              <img src="/logo-horizontal-light.png" alt="FullPrep Logo" className={isLandingPage ? "h-[76px] w-auto" : "h-[110px] w-auto"} />
+            )}
           </div>
 
+          {/* Placeholder to keep flex justify-between working when logo is absolute */}
+          {!isLandingPage && <div className="w-10" />}
+
           {/* Desktop nav */}
-          <div className="hidden md:flex items-stretch space-x-8 h-16">
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollTo(item.id)}
-                className={`relative flex items-center text-sm font-medium transition-colors duration-200 cursor-pointer h-full ${activeSection === item.id
-                    ? "text-[#FF6B00]"
-                    : "text-[#0F172A]/70 dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white"
-                  }`}
-              >
-                <span>{item.label}</span>
-                {activeSection === item.id && (
-                  <motion.div
-                    layoutId="activeNavBorder"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B00] rounded-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </button>
-            ))}
-          </div>
+          {isLandingPage && (
+            <div className="hidden md:flex items-stretch space-x-8 h-16">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollTo(item.id)}
+                  className={`relative flex items-center text-sm font-medium transition-colors duration-200 cursor-pointer h-full ${activeSection === item.id
+                      ? "text-[#FF6B00]"
+                      : "text-[#0F172A]/70 dark:text-white/70 hover:text-[#0F172A] dark:hover:text-white"
+                    }`}
+                >
+                  <span>{item.label}</span>
+                  {activeSection === item.id && (
+                    <motion.div
+                      layoutId="activeNavBorder"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B00] rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Desktop actions */}
           <div className="hidden md:flex items-center space-x-4">
@@ -128,18 +140,29 @@ export default function Navbar() {
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <a
-              href="/login"
-              className="text-sm font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white px-4 py-2 cursor-pointer transition-colors"
-            >
-              Log In
-            </a>
-            <a
-              href="/signup"
-              className="rounded-lg bg-[#FF6B00] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
-            >
-              Get Started
-            </a>
+            {isAuthenticated ? (
+              <a
+                href="/"
+                className="rounded-lg bg-[#FF6B00] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
+              >
+                Go to Dashboard
+              </a>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="text-sm font-medium text-[#0F172A]/80 dark:text-white/80 hover:text-[#0F172A] dark:hover:text-white px-4 py-2 cursor-pointer transition-colors"
+                >
+                  Log In
+                </a>
+                <a
+                  href="/signup"
+                  className="rounded-lg bg-[#FF6B00] px-4 py-2 text-sm font-semibold text-white hover:bg-[#E56000] active:scale-95 transition-all duration-200 shadow-[0_0_15px_rgba(255,107,0,0.3)] cursor-pointer"
+                >
+                  Get Started
+                </a>
+              </>
+            )}
           </div>
 
           {/* Mobile controls */}
@@ -173,7 +196,7 @@ export default function Navbar() {
             className="md:hidden border-t border-gray-200/20 bg-[#FAFAFA] dark:bg-[#050816] dark:border-white/8 overflow-hidden"
           >
             <div className="space-y-1 px-4 py-4 sm:px-6">
-              {NAV_ITEMS.map((item) => (
+              {isLandingPage && NAV_ITEMS.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollTo(item.id)}

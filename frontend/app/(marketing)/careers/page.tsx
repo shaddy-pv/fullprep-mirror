@@ -179,7 +179,7 @@ export default function CareersPage() {
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#050816]">
       <Navbar />
 
-      <main className="flex-grow pt-20">
+      <main className="flex-grow">
         <PremiumPageWrapper 
           title="Join Our Team" 
           description="Help us build the next generation of problem solvers and developers. We're looking for passionate individuals to join our mission."

@@ -181,7 +181,7 @@ function ProblemsContent() {
       {/* Main problems workspace grid */}
       <SectionWrapper>
         {/* Left column Problems Table */}
-        <div className="flex-1 min-w-0">
+        <div className="w-full lg:flex-1 min-w-0">
           <ErrorBoundary>
             <ProblemsTable
               problems={paginatedProblems}
@@ -195,7 +195,7 @@ function ProblemsContent() {
         </div>
 
         {/* Right column Analytics Sidebar */}
-        <div className="shrink-0">
+        <div className="w-full lg:w-[380px] shrink-0 min-w-0">
           <ErrorBoundary>
             <AnalyticsSidebar />
           </ErrorBoundary>
@@ -215,8 +215,8 @@ function ProblemsLoadingFallback() {
       />
       <div className="w-full h-10 bg-card-bg border border-border-card rounded-xl animate-pulse my-4" />
       <SectionWrapper>
-        <div className="flex-1 h-[500px] bg-card-bg border border-border-card rounded-[24px] animate-pulse" />
-        <div className="w-[380px] h-[500px] bg-card-bg border border-border-card rounded-[24px] animate-pulse shrink-0" />
+        <div className="w-full lg:flex-1 h-[500px] bg-card-bg border border-border-card rounded-[24px] animate-pulse" />
+        <div className="w-full lg:w-[380px] h-[500px] bg-card-bg border border-border-card rounded-[24px] animate-pulse shrink-0" />
       </SectionWrapper>
     </ContentContainer>
   );

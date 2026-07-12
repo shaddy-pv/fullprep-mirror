@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable standalone output for Docker
-  output: 'standalone',
+  // output: 'standalone', // Disabled for local npm start
   allowedDevOrigins: ['192.168.31.240'],
   
   // Optimize images
@@ -55,7 +55,14 @@ const nextConfig = {
   }
 };
 
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+});
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);

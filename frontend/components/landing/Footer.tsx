@@ -105,7 +105,7 @@ const FOOTER_COLUMNS: FooterColumn[] = [
       { label: "Help Center", href: "/help" },
       { label: "FAQs", href: "/faq" },
       { label: "Community", href: "/community" },
-      { label: "Report a Bug", href: "mailto:support@fullprep.com" },
+      { label: "Report a Bug", href: "mailto:shivkush512@gmail.com" },
     ],
   },
 ];
@@ -120,12 +120,10 @@ export default function Footer() {
 
           {/* Brand column */}
           <div className="lg:col-span-2 space-y-4">
-            <span className="flex items-center text-xl font-bold tracking-tight text-[#0F172A] dark:text-white font-sans cursor-default">
-              <span className="mr-2 flex items-center justify-center font-mono text-[#FF6B00] font-bold text-2xl">
-                &lt;/&gt;
-              </span>
-              FullPrep
-            </span>
+            <div className="flex items-center cursor-default -my-6 -ml-3">
+              <img src="/logo-horizontal-light.png" alt="FullPrep Logo" className="h-[86px] w-auto dark:hidden" />
+              <img src="/logo-horizontal-dark.png" alt="FullPrep Logo" className="h-[86px] w-auto hidden dark:block" />
+            </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
               Empowering developers to become problem solvers and build exceptional careers.
             </p>
@@ -158,6 +156,8 @@ export default function Footer() {
                   <li key={link.label}>
                     <a
                       href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#FF6B00] dark:hover:text-white transition-colors duration-200 truncate block"
                     >
                       {link.label}

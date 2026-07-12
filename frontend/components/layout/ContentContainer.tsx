@@ -13,7 +13,7 @@ export default function ContentContainer({
   className,
 }: ContentContainerProps) {
   return (
-    <div className={cn("flex flex-col gap-6 max-w-[1300px] mx-auto w-full", className)}>
+    <div className={cn("flex flex-col gap-6 max-w-[1300px] mx-auto w-full min-w-0", className)}>
       {children}
     </div>
   );

@@ -96,13 +96,19 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-border-card px-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-primary to-brand-emerald text-primary-foreground shadow-[0_4px_12px_-2px_oklch(0.78_0.18_152/0.4)]">
-              <Shield className="h-5 w-5" />
-            </div>
-            {!collapsed && (
-              <div className="leading-tight">
-                <p className="text-sm font-semibold text-text-primary">FullPrep</p>
-                <p className="text-[10px] uppercase tracking-widest text-text-muted">Admin</p>
+            {collapsed ? (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-primary to-brand-emerald text-primary-foreground shadow-[0_4px_12px_-2px_oklch(0.78_0.18_152/0.4)]">
+                <Shield className="h-5 w-5" />
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <div>
+                  <img src="/logo-horizontal-light.png" alt="FullPrep" className="h-[58px] w-auto dark:hidden" />
+                  <img src="/logo-horizontal-dark.png" alt="FullPrep" className="h-[58px] w-auto hidden dark:block" />
+                </div>
+                <span className="rounded-md bg-brand-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-brand-primary mt-1">
+                  ADMIN
+                </span>
               </div>
             )}
           </Link>

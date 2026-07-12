@@ -87,12 +87,11 @@ export default function Navbar() {
 
           {/* Logo */}
           <div className="flex items-center cursor-pointer" onClick={() => scrollTo("home")}>
-            <span className="flex items-center text-xl font-bold tracking-tight text-[#0F172A] dark:text-white font-sans">
-              <span className="mr-2 flex items-center justify-center font-mono text-[#FF6B00] font-bold text-2xl">
-                &lt;/&gt;
-              </span>
-              FullPrep
-            </span>
+            {theme === "dark" ? (
+              <img src="/logo-horizontal-dark.png" alt="FullPrep Logo" className="h-[68px] w-auto" />
+            ) : (
+              <img src="/logo-horizontal-light.png" alt="FullPrep Logo" className="h-[68px] w-auto" />
+            )}
           </div>
 
           {/* Desktop nav */}

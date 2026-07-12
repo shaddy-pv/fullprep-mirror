@@ -93,16 +93,17 @@ export default function Sidebar() {
       {/* Top Section: Logo & Mobile Close Button */}
       <div className={cn("flex-1 min-h-0 flex flex-col overflow-y-auto transition-all duration-300", isSidebarCollapsed ? "p-4" : "p-6")}>
         <div className={cn("flex items-center", isSidebarCollapsed ? "justify-center" : "justify-between")}>
-          <Link href="/" className="text-brand-orange flex items-center font-bold tracking-[-0.02em] mx-auto md:mx-0">
-            <span className="text-[18px] font-extrabold font-mono">&lt;/&gt;</span>
-            <span 
+          <Link href="/?show_landing=true" className="flex items-center mx-auto md:mx-0 -mt-6 -mb-5">
+            <span className={cn("text-[18px] font-extrabold font-mono text-brand-orange transition-all duration-300", !isSidebarCollapsed && "hidden")}>&lt;/&gt;</span>
+            <div 
               className={cn(
-                "transition-all duration-300 overflow-hidden whitespace-nowrap text-[16px] font-bold ml-1.5",
+                "transition-all duration-300 overflow-hidden flex items-center",
                 isSidebarCollapsed ? "w-0 opacity-0 pointer-events-none" : "w-auto opacity-100"
               )}
             >
-              FullPrep
-            </span>
+              <img src="/logo-horizontal-light.png" alt="FullPrep" className="h-[68px] w-auto dark:hidden" />
+              <img src="/logo-horizontal-dark.png" alt="FullPrep" className="h-[68px] w-auto hidden dark:block" />
+            </div>
           </Link>
 
           {/* Close Drawer Button for Mobile Screens */}

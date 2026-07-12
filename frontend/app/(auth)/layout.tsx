@@ -108,9 +108,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <header className="absolute top-0 left-0 right-0 h-20 px-6 md:px-12 flex items-center justify-between z-40 pointer-events-none">
         {/* Logo Branding */}
         <div className="pointer-events-auto">
-          <Link href="/" className="text-brand-orange flex items-center font-bold text-2xl tracking-[-0.03em]">
-            <span className="text-2.5xl font-black font-mono">&lt;/&gt;</span>
-            <span className="ml-2 font-bold text-[#111827] dark:text-white transition-colors duration-200">FullPrep</span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo-horizontal-light.png" alt="FullPrep" className="h-[76px] w-auto dark:hidden" />
+            <img src="/logo-horizontal-dark.png" alt="FullPrep" className="h-[76px] w-auto hidden dark:block" />
           </Link>
         </div>
 

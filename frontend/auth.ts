@@ -34,6 +34,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   // Use JWT strategy (no database adapter needed — we sync to our own backend)
   session: { strategy: "jwt" },
+  trustHost: true,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 
   callbacks: {
     /**

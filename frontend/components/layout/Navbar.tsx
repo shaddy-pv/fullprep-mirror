@@ -330,7 +330,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="h-[76px] bg-white/80 dark:bg-[#0b0f17]/80 backdrop-blur-xl border-b border-black/5 dark:border-white/[0.06] px-8 flex items-center justify-between shrink-0 transition-colors duration-300 relative z-30 select-none text-text-primary">
+    <header className="h-[76px] bg-white/80 dark:bg-[#0b0f17]/80 backdrop-blur-xl border-b border-black/5 dark:border-white/[0.06] px-4 md:px-8 flex items-center justify-between shrink-0 transition-colors duration-300 relative z-30 select-none text-text-primary">
       {/* Left side: Menu Toggle Button + Search Bar */}
       <div className="flex items-center gap-4">
         {/* Clean Menu Toggle Button */}
@@ -357,7 +357,7 @@ export default function Navbar() {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 md:gap-6">
         {/* Theme Toggle Switch */}
         <ThemeToggle />
 

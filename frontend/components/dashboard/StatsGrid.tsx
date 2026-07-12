@@ -81,7 +81,7 @@ export default function StatsGrid() {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-5 w-full shrink-0">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 w-full shrink-0">
       {stats.map((stat, idx) => (
         <StatCard
           key={idx}

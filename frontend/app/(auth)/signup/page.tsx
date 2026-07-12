@@ -202,11 +202,11 @@ export default function SignupPage() {
             />
             <span>
               I agree to the{" "}
-              <Link href="#" className="text-brand-orange hover:underline">
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="#" className="text-brand-orange hover:underline">
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-orange hover:underline">
                 Privacy Policy
               </Link>
             </span>

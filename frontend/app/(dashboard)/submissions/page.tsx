@@ -201,7 +201,7 @@ export default function SubmissionsPage() {
     }
 
     return (
-      <div className={cn("flex items-center justify-start select-none font-bold text-[13.5px]", textColor)}>
+      <div className={cn("flex items-center justify-start select-none font-bold text-[13.5px] whitespace-nowrap", textColor)}>
         <span className={cn("w-2 h-2 rounded-full mr-2 shrink-0 shadow-sm", dotBg)} />
         <span>{label}</span>
       </div>
@@ -218,7 +218,7 @@ export default function SubmissionsPage() {
     const displayLabel = isPython ? "Python 3" : isCpp ? "C++" : isJava ? "Java" : isJs ? "JavaScript" : lang;
 
     return (
-      <div className="flex items-center gap-2 text-text-primary font-semibold text-[13px] tracking-[-0.01em]">
+      <div className="flex items-center gap-2 text-text-primary font-semibold text-[13px] tracking-[-0.01em] whitespace-nowrap">
         {isPython ? (
           <PythonIcon />
         ) : isCpp ? (
@@ -365,7 +365,7 @@ export default function SubmissionsPage() {
 
                         {/* Problem */}
                         <td className="py-[13px] px-4 align-middle text-left">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
                             <span className="text-[14px] font-semibold text-text-primary group-hover:text-brand-orange transition-colors leading-tight tracking-[-0.01em]">
                               {sub.problemName}
                             </span>
@@ -384,17 +384,17 @@ export default function SubmissionsPage() {
                         </td>
 
                         {/* Runtime */}
-                        <td className="py-[13px] px-4 align-middle text-left text-text-primary font-bold text-[13px]">
+                        <td className="py-[13px] px-4 align-middle text-left text-text-primary font-bold text-[13px] whitespace-nowrap">
                           {sub.runtime}
                         </td>
 
                         {/* Memory */}
-                        <td className="py-[13px] px-4 align-middle text-left text-text-secondary font-semibold text-[13px]">
+                        <td className="py-[13px] px-4 align-middle text-left text-text-secondary font-semibold text-[13px] whitespace-nowrap">
                           {sub.memory}
                         </td>
 
                         {/* Submitted time */}
-                        <td className="py-[13px] px-4 align-middle text-left text-text-secondary font-medium select-none text-[13px]">
+                        <td className="py-[13px] px-4 align-middle text-left text-text-secondary font-medium select-none text-[13px] whitespace-nowrap">
                           {sub.submittedAt}
                         </td>
 

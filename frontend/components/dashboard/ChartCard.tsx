@@ -49,7 +49,7 @@ export default function ChartCard() {
 
   return (
     <DashboardCard 
-      className="h-[240px] p-5 flex flex-col justify-between hover:scale-[1.01] hover:shadow-[0_0_20px_var(--brand-accent-15,rgba(var(--brand-accent-rgb, 255, 106, 0),0.12))] hover:border-brand-orange/30 transition-all duration-300 cursor-pointer"
+      className="h-[240px] p-4 md:p-5 flex flex-col justify-between hover:scale-[1.01] hover:shadow-[0_0_20px_var(--brand-accent-15,rgba(var(--brand-accent-rgb, 255, 106, 0),0.12))] hover:border-brand-orange/30 transition-all duration-300 cursor-pointer"
       onClick={() => router.push("/stats")}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
