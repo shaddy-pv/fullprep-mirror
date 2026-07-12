@@ -49,14 +49,14 @@ jobs:
 
       - name: Run npm audit (Frontend)
         run: |
-          npm ci
+          npm install --prefer-offline
           npm audit --audit-level=critical || true
         working-directory: ./frontend
         continue-on-error: true
 
       - name: Run npm audit (Backend)
         run: |
-          npm ci
+          npm install --prefer-offline
           npm audit --audit-level=critical || true
         working-directory: ./backend
         continue-on-error: true
