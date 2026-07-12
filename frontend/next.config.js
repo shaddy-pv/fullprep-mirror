@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Docker
-  // output: 'standalone', // Disabled for local npm start
+  // Enable standalone output for Docker deployments
+  output: 'standalone',
   allowedDevOrigins: ['192.168.31.240'],
   
   // Optimize images
