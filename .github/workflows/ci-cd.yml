@@ -83,7 +83,7 @@ jobs:
 
       # --- Frontend Checks ---
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./frontend
 
       - name: Run Frontend Linter
@@ -96,7 +96,7 @@ jobs:
 
       # --- Backend Checks ---
       - name: Install Backend Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./backend
 
       - name: Run Backend Linter
@@ -125,7 +125,7 @@ jobs:
 
       # --- Backend Unit Tests ---
       - name: Install Backend Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./backend
 
       - name: Run Backend Unit Tests (Native Test Runner)
@@ -154,7 +154,7 @@ jobs:
 
       # --- Frontend Build check ---
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./frontend
 
       - name: Build Frontend Application
@@ -229,7 +229,7 @@ jobs:
           fi
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./frontend
 
       - name: Install Playwright Browsers and System Dependencies
