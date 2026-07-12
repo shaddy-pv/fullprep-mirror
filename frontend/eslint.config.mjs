@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     ".vercel/**",
+    // Generated PWA service worker files (not source code)
+    "public/sw.js",
+    "public/workbox-*.js",
   ]),
   {
     linterOptions: {
