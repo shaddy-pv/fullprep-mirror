@@ -300,7 +300,7 @@ export default function AIHintsPage() {
                     }`}>
                       <span>{isUser ? "YOU" : "FULLPREP AI"}</span>
                       <span>•</span>
-                      <span>{msg.timestamp.includes("T") ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : msg.timestamp}</span>
+                      <span>{msg.timestamp ? (msg.timestamp.includes("T") ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : msg.timestamp) : ""}</span>
                     </div>
 
                     {/* Chat Bubble Body (mockup styled user amber bubble) */}
