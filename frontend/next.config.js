@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable standalone output for Docker deployments
-  output: 'standalone',
+  // Enable standalone output for Docker deployments (not needed on Vercel)
+  ...(process.env.DOCKER_BUILD === '1' ? { output: 'standalone' } : {}),
   allowedDevOrigins: ['192.168.31.240'],
   
   // Optimize images

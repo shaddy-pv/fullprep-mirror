@@ -39,6 +39,7 @@ ENV NODE_ENV=production
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 
 # Build Next.js application
+ENV DOCKER_BUILD=1
 RUN npm run build
 
 # Stage 4: Runner (Production)
