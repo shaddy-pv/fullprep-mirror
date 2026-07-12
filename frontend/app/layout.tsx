@@ -26,8 +26,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "FullPrep Logo",
+        alt: "FullPrep - Premium Coding Platform",
       },
+      {
+        url: "/logo-horizontal-dark.png",
+        width: 800,
+        height: 240,
+        alt: "FullPrep Logo",
+      }
     ],
     locale: "en_US",
     type: "website",
@@ -36,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FullPrep - Premium Coding Platform",
     description: "The ultimate platform for coding interviews and competitive programming. Practice problems, get AI-powered hints, and track your progress.",
-    images: ["/og-image.png"],
+    images: ["/og-image.png", "/logo-horizontal-dark.png"],
   },
   appleWebApp: {
     title: "FullPrep",
