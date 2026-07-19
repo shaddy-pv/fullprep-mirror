@@ -13,6 +13,17 @@ const router = express.Router();
  * @desc    Health check endpoint
  * @access  Public
  */
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     summary: Health check
+ *     description: Returns the health status of the API.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ */
 router.get('/health', (req, res) => {
   const healthcheck = {
     uptime: process.uptime(),
@@ -35,6 +46,17 @@ router.get('/health', (req, res) => {
  * @route   GET /api/ready
  * @desc    Readiness check endpoint
  * @access  Public
+ */
+/**
+ * @openapi
+ * /api/ready:
+ *   get:
+ *     summary: Readiness check
+ *     description: Checks if the API and database are fully ready to accept requests.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: API is ready
  */
 router.get('/ready', (req, res) => {
   // Check if database is connected

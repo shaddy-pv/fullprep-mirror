@@ -8,7 +8,7 @@
     "start": "node --max-http-header-size=256000 --import ./instrument.js server.js",
     "dev": "nodemon --exec \"node --max-http-header-size=256000\" --import ./instrument.js server.js",
     "seed": "node seed.js",
-    "test": "node --test src/tests/**/*.test.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "lint": "eslint ."
   },
   "keywords": [
@@ -43,6 +43,8 @@
     "multer": "^2.2.0",
     "nodemailer": "^9.0.1",
     "razorpay": "^2.9.6",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "validator": "^13.12.0"
   },
   "overrides": {
@@ -50,7 +52,10 @@
   },
   "devDependencies": {
     "eslint": "^9.16.0",
-    "nodemon": "^3.1.4"
+    "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.4",
+    "supertest": "^7.2.2"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -7,6 +7,39 @@ const router = express.Router();
 // Configure multer to hold file in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
+/**
+ * @openapi
+ * /api/contact:
+ *   post:
+ *     summary: Submit contact form
+ *     description: Submits a contact form with an optional file attachment (e.g., resume).
+ *     tags: [Contact]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, email, subject, message]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               subject:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               resume:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *       500:
+ *         description: Server error or email failed to send
+ */
 router.post("/", upload.single("resume"), async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;

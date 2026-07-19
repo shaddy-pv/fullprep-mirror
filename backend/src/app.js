@@ -15,6 +15,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
 
 import authRoutes       from "./routes/authRoutes.js";
 import healthRoutes    from "./routes/healthRoutes.js";
@@ -53,7 +55,7 @@ app.use(helmet()); // Sets secure HTTP response headers
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:5000")
   .split(",")
   .map((o) => o.trim());
 
@@ -119,6 +121,44 @@ app.get("/health", (_req, res) => {
 import { checkSystemSettings } from "./middleware/settingsMiddleware.js";
 
 // ── API Routes ────────────────────────────────────────────────────────────────
+
+// ── Swagger API Documentation ──────────────────────────────────────────────────
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "FullPrep API",
+      version: "1.0.0",
+      description: "API documentation for the FullPrep backend",
+    },
+    servers: [
+      {
+        url: process.env.SERVER_URL || "http://localhost:5000",
+        description: "API Server",
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
+  },
+  // Paths to files containing OpenAPI definitions
+  apis: ["./src/routes/*.js"],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Enforce System Settings globally (e.g. Maintenance Mode)
 app.use("/api", checkSystemSettings);
