@@ -498,6 +498,14 @@ terraform apply
 
 Automated verification pipelines ensure platform integrity across all modules.
 
+### Interactive API Testing (Swagger & Postman)
+The backend features an automatically generated **OpenAPI / Swagger documentation** interface that serves as a live testing ground for all 80+ endpoints.
+- **Swagger UI**: Accessible at `http://localhost:5000/api-docs` when the backend is running.
+- **Postman Import**: You can instantly import all 80+ pre-configured requests into Postman by importing via link: `http://localhost:5000/api-docs.json`.
+- For detailed setup, see the [Postman Testing Guide](testing/postman_guide.md) and [Swagger Testing Guide](testing/swagger_testing_guide.md).
+
+### Automated Testing
+
 ```bash
 # Validate frontend TypeScript compilation types
 cd frontend && npm run type-check
@@ -505,7 +513,7 @@ cd frontend && npm run type-check
 # Audit code quality syntax using ESLint
 cd frontend && npm run lint
 
-# Run backend controller unit tests (Jest)
+# Run backend automated integration tests (Jest)
 cd backend && npm test
 
 # Run E2E integrations tests via Playwright (requires servers running)
